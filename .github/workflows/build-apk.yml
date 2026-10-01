@@ -1,0 +1,76 @@
+name: Construire GABON 360 AI APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - principal
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Télécharger le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Installer Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Préparer le projet Android
+        shell: bash
+        run: |
+          set -e
+
+          ZIP=$(find . -maxdepth 2 -type f -iname "*.zip" | head -n 1)
+
+          if [ -n "$ZIP" ]; then
+            echo "ZIP trouvé : $ZIP"
+            mkdir -p android_project
+            unzip -o "$ZIP" -d android_project
+          else
+            echo "Aucun ZIP trouvé. Recherche du projet Android..."
+            mkdir -p android_project
+            cp -r ./* android_project/ 2>/dev/null || true
+          fi
+
+          echo "Recherche de gradlew..."
+          GRADLEW=$(find android_project -type f -name "gradlew" | head -n 1)
+
+          if [ -z "$GRADLEW" ]; then
+            echo "ERREUR : gradlew introuvable."
+            find android_project -maxdepth 4 -type f | head -100
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$GRADLEW")
+          echo "Projet Android trouvé : $PROJECT_DIR"
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Construire APK
+        shell: bash
+        run: |
+          cd "$PROJECT_DIR"
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Chercher APK
+        shell: bash
+        run: |
+          find "$PROJECT_DIR" -type f -name "*.apk" -print
+
+      - name: Publier APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GABON-360-AI-APK
+          path: |
+            **/build/outputs/apk/**/*.apk
+          if-no-files-found: error
