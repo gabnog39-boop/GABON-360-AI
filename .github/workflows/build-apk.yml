@@ -7,6 +7,9 @@ on:
       - principal
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,7 +25,11 @@ jobs:
           java-version: '17'
 
       - name: Installer Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: true
+          packages: platform-tools
 
       - name: Préparer le projet Android
         shell: bash
@@ -33,24 +40,28 @@ jobs:
 
           if [ -n "$ZIP" ]; then
             echo "ZIP trouvé : $ZIP"
+            rm -rf android_project
             mkdir -p android_project
             unzip -o "$ZIP" -d android_project
           else
-            echo "Aucun ZIP trouvé. Recherche du projet Android..."
+            echo "Aucun ZIP trouvé."
             mkdir -p android_project
             cp -r ./* android_project/ 2>/dev/null || true
           fi
 
           echo "Recherche de gradlew..."
+
           GRADLEW=$(find android_project -type f -name "gradlew" | head -n 1)
 
           if [ -z "$GRADLEW" ]; then
             echo "ERREUR : gradlew introuvable."
-            find android_project -maxdepth 4 -type f | head -100
+            echo "Contenu du projet :"
+            find android_project -maxdepth 5 -type f | head -150
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$GRADLEW")
+
           echo "Projet Android trouvé : $PROJECT_DIR"
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
@@ -65,6 +76,7 @@ jobs:
       - name: Chercher APK
         shell: bash
         run: |
+          echo "APK généré :"
           find "$PROJECT_DIR" -type f -name "*.apk" -print
 
       - name: Publier APK
