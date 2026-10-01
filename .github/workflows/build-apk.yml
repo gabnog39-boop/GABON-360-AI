@@ -5,10 +5,6 @@ on:
   push:
     branches:
       - principal
-      - main
-
-permissions:
-  contents: read
 
 jobs:
   build:
@@ -36,53 +32,63 @@ jobs:
         run: |
           set -e
 
-          ZIP=$(find . -maxdepth 2 -type f -iname "*.zip" | head -n 1)
+          ZIP=$(find . -maxdepth 2 -type f -name "*.zip" | head -n 1)
+
+          mkdir -p android_project
 
           if [ -n "$ZIP" ]; then
             echo "ZIP trouvé : $ZIP"
-            rm -rf android_project
-            mkdir -p android_project
             unzip -o "$ZIP" -d android_project
           else
             echo "Aucun ZIP trouvé."
-            mkdir -p android_project
             cp -r ./* android_project/ 2>/dev/null || true
           fi
 
-          echo "Recherche de gradlew..."
+          echo "Recherche du projet Android..."
 
-          GRADLEW=$(find android_project -type f -name "gradlew" | head -n 1)
+          PROJECT_DIR=$(find android_project -type f -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1 | xargs -r dirname)
 
-          if [ -z "$GRADLEW" ]; then
-            echo "ERREUR : gradlew introuvable."
-            echo "Contenu du projet :"
-            find android_project -maxdepth 5 -type f | head -150
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "ERREUR : projet Android introuvable."
+            find android_project -maxdepth 4 -type f | head -100
             exit 1
           fi
 
-          PROJECT_DIR=$(dirname "$GRADLEW")
+          echo "Projet trouvé dans : $PROJECT_DIR"
 
-          echo "Projet Android trouvé : $PROJECT_DIR"
+          echo "Installation de Gradle..."
+          sudo apt-get update
+          sudo apt-get install -y gradle
 
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
-      - name: Construire APK
-        shell: bash
-        run: |
           cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+
+          echo "Gradle version :"
+          gradle --version
+
+          echo "Construction du projet..."
+
+          gradle assembleDebug --no-daemon --stacktrace
 
       - name: Chercher APK
         shell: bash
         run: |
-          echo "APK généré :"
-          find "$PROJECT_DIR" -type f -name "*.apk" -print
+          set -e
+
+          APK=$(find . -type f -name "*.apk" | head -n 1)
+
+          if [ -z "$APK" ]; then
+            echo "ERREUR : aucun APK trouvé."
+            exit 1
+          fi
+
+          echo "APK trouvé : $APK"
+
+          mkdir -p sortie
+          cp "$APK" sortie/GABON_360_AI.apk
 
       - name: Publier APK
         uses: actions/upload-artifact@v4
         with:
           name: GABON-360-AI-APK
-          path: |
-            **/build/outputs/apk/**/*.apk
+          path: sortie/GABON_360_AI.apk
           if-no-files-found: error
