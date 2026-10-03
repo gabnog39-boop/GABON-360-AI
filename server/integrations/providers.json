@@ -1,9 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "policy": {
     "live_only_when_connected": true,
     "simulation_never_presented_as_live": true,
-    "state_authorization_required_for_protected_sources": true
+    "state_authorization_required_for_protected_sources": true,
+    "satellite_access_is_tiered": true
   },
   "providers": {
     "open_meteo": {
@@ -36,6 +37,14 @@
       "auth_required": false,
       "purpose": "api_connectivity_and_sync_health"
     },
+    "satellite_public_data": {
+      "enabled": true,
+      "class": "public_satellite_data",
+      "status": "connectable_now",
+      "auth_required": false,
+      "purpose": "public_remote_sensing_and_environmental_context",
+      "note": "Use only datasets/providers whose terms and technical access permit the application to consume them. Public access does not imply official authorization or continuous live coverage."
+    },
     "official_gis": {
       "enabled": false,
       "class": "protected_official_source",
@@ -43,12 +52,12 @@
       "auth_required": true,
       "purpose": "official_boundaries_parks_roads_waterways_and_authorized_layers"
     },
-    "satellite_feeds": {
+    "satellite_protected_feeds": {
       "enabled": false,
       "class": "protected_observation_source",
       "status": "awaiting_authorization_and_provider_contract",
       "auth_required": true,
-      "purpose": "authorized_remote_observation"
+      "purpose": "authorized_restricted_or_contractual_satellite_observation"
     },
     "drone_feeds": {
       "enabled": false,
