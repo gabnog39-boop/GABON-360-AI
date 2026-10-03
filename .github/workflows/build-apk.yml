@@ -37,32 +37,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           ZIP="GABON_360_AI_FINAL_CONSOLIDATED_V183_ICON.zip"
-
           if [ ! -f "$ZIP" ]; then
             echo "ERREUR : le ZIP canonique $ZIP est introuvable."
-            echo "ZIP disponibles :"
             find . -maxdepth 2 -type f -name "*.zip" -print
             exit 1
           fi
-
           rm -rf android_project
           mkdir -p android_project
           unzip -o "$ZIP" -d android_project
-
           echo "Recherche du projet Android dans le ZIP canonique..."
           SETTINGS=$(find android_project -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -print -quit)
-
           if [ -z "$SETTINGS" ]; then
             echo "ERREUR : settings.gradle/settings.gradle.kts introuvable."
             find android_project -maxdepth 6 -type f -print
             exit 1
           fi
-
           PROJECT_DIR=$(dirname "$SETTINGS")
           echo "Projet Android trouvé : $PROJECT_DIR"
           echo "project_dir=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Intégrer le panneau satellites publics Copernicus
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/inject_satellite_ui.py
 
       - name: Construire APK
         shell: bash
@@ -76,14 +75,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           APK=$(find "$project_dir" -type f -name "*.apk" -print -quit)
-
           if [ -z "$APK" ]; then
             echo "ERREUR : aucun APK trouvé après la compilation."
             exit 1
           fi
-
           mkdir -p resultat
           cp "$APK" resultat/GABON_360_AI.apk
           ls -lh resultat/GABON_360_AI.apk
