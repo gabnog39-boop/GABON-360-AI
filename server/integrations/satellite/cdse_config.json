@@ -1,0 +1,18 @@
+{
+  "provider": "copernicus_data_space_ecosystem",
+  "enabled": true,
+  "access_tier": "public_open_data",
+  "catalog": "https://stac.dataspace.copernicus.eu/v1/",
+  "search_endpoint": "https://stac.dataspace.copernicus.eu/v1/search",
+  "collections": ["sentinel-2-l2a", "sentinel-2-l1c", "sentinel-1-grd"],
+  "default_area": "Gabon",
+  "bbox_wgs84": [8.5, -4.0, 14.5, 2.5],
+  "status": "ready_for_live_catalog_queries",
+  "auth_required_for_catalog": false,
+  "notes": [
+    "Public Copernicus catalog access is enabled for discovery of permitted datasets.",
+    "Free access is subject to provider quotas and applicable licence/terms.",
+    "Catalog metadata is not the same as continuous live satellite video.",
+    "Restricted, contractual or institutional satellite feeds remain separately protected."
+  ]
+}
