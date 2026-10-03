@@ -1,84 +1,23 @@
 {
-  "version": 2,
+  "version": 3,
   "policy": {
     "live_only_when_connected": true,
     "simulation_never_presented_as_live": true,
     "state_authorization_required_for_protected_sources": true,
-    "satellite_access_is_tiered": true
+    "satellite_access_is_tiered": true,
+    "future_video_button_remains_visible": true
   },
   "providers": {
-    "open_meteo": {
-      "enabled": true,
-      "class": "public_weather",
-      "base_url": "https://api.open-meteo.com/v1/forecast",
-      "status": "connectable_now",
-      "auth_required": false,
-      "purpose": "weather_forecast_and_current_conditions"
-    },
-    "openstreetmap": {
-      "enabled": true,
-      "class": "public_basemap",
-      "tile_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-      "status": "connectable_now",
-      "auth_required": false,
-      "purpose": "base_map_only"
-    },
-    "device_location": {
-      "enabled": true,
-      "class": "device_sensor",
-      "status": "connectable_now",
-      "auth_required": "device_permission",
-      "purpose": "authorized_device_position"
-    },
-    "network_health": {
-      "enabled": true,
-      "class": "local_health",
-      "status": "connectable_now",
-      "auth_required": false,
-      "purpose": "api_connectivity_and_sync_health"
-    },
-    "satellite_public_data": {
-      "enabled": true,
-      "class": "public_satellite_data",
-      "status": "connectable_now",
-      "auth_required": false,
-      "purpose": "public_remote_sensing_and_environmental_context",
-      "note": "Use only datasets/providers whose terms and technical access permit the application to consume them. Public access does not imply official authorization or continuous live coverage."
-    },
-    "official_gis": {
-      "enabled": false,
-      "class": "protected_official_source",
-      "status": "awaiting_state_authorization_and_endpoint",
-      "auth_required": true,
-      "purpose": "official_boundaries_parks_roads_waterways_and_authorized_layers"
-    },
-    "satellite_protected_feeds": {
-      "enabled": false,
-      "class": "protected_observation_source",
-      "status": "awaiting_authorization_and_provider_contract",
-      "auth_required": true,
-      "purpose": "authorized_restricted_or_contractual_satellite_observation"
-    },
-    "drone_feeds": {
-      "enabled": false,
-      "class": "protected_observation_source",
-      "status": "awaiting_state_authorization_and_device_gateway",
-      "auth_required": true,
-      "purpose": "authorized_drone_observation"
-    },
-    "government_cameras": {
-      "enabled": false,
-      "class": "protected_government_source",
-      "status": "awaiting_state_authorization_and_secure_gateway",
-      "auth_required": true,
-      "purpose": "authorized_video_observation"
-    },
-    "border_security_systems": {
-      "enabled": false,
-      "class": "protected_security_source",
-      "status": "awaiting_state_authorization_and_secure_gateway",
-      "auth_required": true,
-      "purpose": "authorized_border_events_and_alerts"
-    }
+    "open_meteo": {"enabled": true, "class": "public_weather", "base_url": "https://api.open-meteo.com/v1/forecast", "status": "connectable_now", "auth_required": false, "purpose": "weather_forecast_and_current_conditions"},
+    "openstreetmap": {"enabled": true, "class": "public_basemap", "tile_url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png", "status": "connectable_now", "auth_required": false, "purpose": "base_map_only"},
+    "device_location": {"enabled": true, "class": "device_sensor", "status": "connectable_now", "auth_required": "device_permission", "purpose": "authorized_device_position"},
+    "network_health": {"enabled": true, "class": "local_health", "status": "connectable_now", "auth_required": false, "purpose": "api_connectivity_and_sync_health"},
+    "satellite_public_data": {"enabled": true, "class": "public_satellite_data", "status": "connectable_now", "auth_required": false, "purpose": "public_remote_sensing_and_environmental_context", "note": "Public catalog data is not continuous live video."},
+    "satellite_video": {"enabled": false, "class": "protected_satellite_video", "status": "future_activation_ready", "auth_required": true, "purpose": "authorized_real_time_or_near_real_time_video_feed", "ui": {"button_visible": true, "label": "Vidéo satellites", "state_when_unconfigured": "Autorisation requise", "do_not_simulate_as_live": true}},
+    "official_gis": {"enabled": false, "class": "protected_official_source", "status": "awaiting_state_authorization_and_endpoint", "auth_required": true, "purpose": "official_boundaries_parks_roads_waterways_and_authorized_layers"},
+    "satellite_protected_feeds": {"enabled": false, "class": "protected_observation_source", "status": "awaiting_authorization_and_provider_contract", "auth_required": true, "purpose": "authorized_restricted_or_contractual_satellite_observation"},
+    "drone_feeds": {"enabled": false, "class": "protected_observation_source", "status": "awaiting_state_authorization_and_device_gateway", "auth_required": true, "purpose": "authorized_drone_observation"},
+    "government_cameras": {"enabled": false, "class": "protected_government_source", "status": "awaiting_state_authorization_and_secure_gateway", "auth_required": true, "purpose": "authorized_video_observation"},
+    "border_security_systems": {"enabled": false, "class": "protected_security_source", "status": "awaiting_state_authorization_and_secure_gateway", "auth_required": true, "purpose": "authorized_border_events_and_alerts"}
   }
 }
