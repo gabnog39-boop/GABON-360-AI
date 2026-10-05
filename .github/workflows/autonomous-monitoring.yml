@@ -1,0 +1,28 @@
+name: Surveillance autonome du Gabon
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Télécharger le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Vérifier la structure de surveillance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile server/monitoring/continuous_monitor.py
+          python -m py_compile server/integrations/satellite/central_ai.py
+          python -m py_compile server/api/monitoring.py
+          echo "Surveillance autonome: structure Python valide."
+          echo "La disponibilité réelle de nouvelles scènes dépend du catalogue public et du passage des satellites."
