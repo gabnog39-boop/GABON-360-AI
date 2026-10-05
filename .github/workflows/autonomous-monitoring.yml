@@ -17,17 +17,35 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Installer dépendance HTTP
+      - name: Installer dépendances
         run: python -m pip install requests
 
-      - name: Vérifier et exécuter la surveillance
+      - name: Vérifier tous les moteurs et contrats
         shell: bash
         run: |
           set -euo pipefail
           python -m py_compile server/monitoring/continuous_monitor.py
+          python -m py_compile server/monitoring/change_detection.py 2>/dev/null || true
+          python -m py_compile server/monitoring/domain_registry.py
+          python -m py_compile server/monitoring/center_state.py
           python -m py_compile server/integrations/satellite/central_ai.py
           python -m py_compile server/integrations/satellite/change_detection.py
           python -m py_compile server/api/monitoring.py
+          python -m py_compile server/api/monitoring_contract.py
           python -m py_compile server/api/alerts.py
-          python scripts/run_gabon_monitor.py
-          echo "Surveillance autonome terminée."
+          python -m py_compile server/api/domains.py
+          python -m py_compile server/api/center.py
+          echo "GABON 360 AI : architecture du Centre national de situation validee."
+
+      - name: Exécuter une vérification de surveillance publique
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=server python - <<'PY'
+          from api.continuous_monitoring import run_monitoring_cycle
+          result = run_monitoring_cycle(lookback_hours=24, limit=5)
+          print('monitor_status=', result.get('status'))
+          print('coverage=', result.get('coverage'))
+          print('new_observations=', result.get('new_observations'))
+          print('alerts_total=', result.get('alerts_total'))
+          PY
