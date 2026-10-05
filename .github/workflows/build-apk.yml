@@ -83,3 +83,5 @@ jobs:
           name: GABON-360-AI-APK
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
+
+# Build marker: force a fresh APK after the latest GABON 360 AI integration.
