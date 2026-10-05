@@ -1,12 +1,12 @@
-"""Stable response contract consumed by the Android situation center."""
+"""Stable response contract consumed by the Android national situation center."""
 from __future__ import annotations
-
 from typing import Any
+from monitoring.domain_registry import domain_summary
 
 
 def build_situation_contract(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {
-        "version": "1.0",
+        "version": "1.1",
         "centre": "GABON 360 AI",
         "coverage": "Gabon",
         "automatic_surveillance": True,
@@ -21,4 +21,6 @@ def build_situation_contract(snapshot: dict[str, Any]) -> dict[str, Any]:
         "live_satellite_video": False,
         "human_validation_required": True,
         "source_policy": "authorized_or_public_observations_only",
+        "domains": domain_summary(),
+        "display_modes": ["mobile", "tablet", "desktop", "wall_display"],
     }
