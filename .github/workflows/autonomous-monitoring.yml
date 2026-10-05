@@ -17,12 +17,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Vérifier la structure de surveillance
+      - name: Installer dépendance HTTP
+        run: python -m pip install requests
+
+      - name: Vérifier et exécuter la surveillance
         shell: bash
         run: |
           set -euo pipefail
           python -m py_compile server/monitoring/continuous_monitor.py
           python -m py_compile server/integrations/satellite/central_ai.py
+          python -m py_compile server/integrations/satellite/change_detection.py
           python -m py_compile server/api/monitoring.py
-          echo "Surveillance autonome: structure Python valide."
-          echo "La disponibilité réelle de nouvelles scènes dépend du catalogue public et du passage des satellites."
+          python -m py_compile server/api/alerts.py
+          python scripts/run_gabon_monitor.py
+          echo "Surveillance autonome terminée."
