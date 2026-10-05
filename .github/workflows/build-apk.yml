@@ -38,8 +38,10 @@ jobs:
           set -euo pipefail
           python -m py_compile server/monitoring/domain_registry.py
           python -m py_compile server/monitoring/continuous_monitor.py
+          python -m py_compile server/monitoring/central_ai_orchestrator.py
           python -m py_compile server/api/monitoring.py
           python -m py_compile server/api/monitoring_contract.py
+          python -m py_compile server/api/central_assistant.py
           python -m py_compile server/integrations/satellite/change_detection.py
       - name: Préparer le projet Android consolidé
         shell: bash
