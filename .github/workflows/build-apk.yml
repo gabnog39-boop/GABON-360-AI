@@ -44,7 +44,7 @@ jobs:
           python -m py_compile server/api/central_assistant.py
           python -m py_compile server/integrations/satellite/change_detection.py
           python -m py_compile server/payments/access_ai.py
-          for f in scripts/inject_national_center_ui.py scripts/inject_satellite_ui.py scripts/inject_control_modules.py scripts/inject_source_controls.py scripts/inject_terrain_navigation.py scripts/inject_terrain_navigation_v2.py scripts/inject_national_pages.py scripts/inject_page_completeness_v2.py scripts/inject_functional_page_actions_v1.py scripts/inject_avatar_central.py scripts/inject_avatar_life.py scripts/inject_avatar_living_v2.py scripts/inject_control_center_hardening.py scripts/inject_avatar_home_fix.py scripts/inject_scroll_fix.py scripts/inject_mobile_ui_polish.py scripts/inject_real_gabon_map.py scripts/inject_final_mobile_interaction.py scripts/inject_mobile_runtime_v2.py scripts/inject_native_android_bridge.py scripts/inject_native_interactions_v3.py scripts/inject_map_coordinates_v3.py scripts/preflight_apk_audit.py scripts/inject_final_native_io_repair.py scripts/inject_avatar_native_status_fix.py scripts/inject_native_bridge_runtime_fix_v2.py scripts/inject_ai_relay.py scripts/inject_final_duplicate_id_repair.py scripts/inject_final_runtime_duplicate_repair.py scripts/inject_runtime_integrity_audit_v1.py; do python -m py_compile "$f"; done
+          for f in scripts/inject_national_center_ui.py scripts/inject_satellite_ui.py scripts/inject_control_modules.py scripts/inject_source_controls.py scripts/inject_terrain_navigation.py scripts/inject_terrain_navigation_v2.py scripts/inject_national_pages.py scripts/inject_page_completeness_v2.py scripts/inject_functional_page_actions_v1.py scripts/inject_avatar_central.py scripts/inject_avatar_life.py scripts/inject_avatar_living_v2.py scripts/inject_control_center_hardening.py scripts/inject_avatar_home_fix.py scripts/inject_scroll_fix.py scripts/inject_mobile_ui_polish.py scripts/inject_real_gabon_map.py scripts/inject_final_mobile_interaction.py scripts/inject_mobile_runtime_v2.py scripts/inject_native_android_bridge.py scripts/inject_native_interactions_v3.py scripts/inject_map_coordinates_v3.py scripts/preflight_apk_audit.py scripts/inject_final_native_io_repair.py scripts/inject_avatar_native_status_fix.py scripts/inject_native_bridge_runtime_fix_v2.py scripts/inject_avatar_controls_repair_v3.py scripts/inject_ai_relay.py scripts/inject_final_duplicate_id_repair.py scripts/inject_final_runtime_duplicate_repair.py scripts/inject_runtime_integrity_audit_v1.py; do python -m py_compile "$f"; done
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -108,6 +108,8 @@ jobs:
         run: python3 scripts/inject_final_native_io_repair.py
       - name: Corriger l état vocal de l avatar après les injecteurs précédents
         run: python3 scripts/inject_avatar_native_status_fix.py
+      - name: Réparer définitivement les boutons et le fallback vocal de l avatar
+        run: python3 scripts/inject_avatar_controls_repair_v3.py
       - name: Relier toutes les IA et modules au relais central
         run: python3 scripts/inject_ai_relay.py
       - name: Nettoyer uniquement les vrais IDs HTML dupliqués
@@ -166,4 +168,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: centre national + pages + actions fonctionnelles + intégrité runtime + audit JS + relais IA + voix/micro natifs + pont runtime V2 + carte/coordonnées + GNSS V2 + traçabilité. Paiement différé.
+# Build marker: centre national + pages + actions fonctionnelles + intégrité runtime + audit JS + relais IA + voix/micro natifs + réparation contrôles avatar V3 + carte/coordonnées + GNSS V2 + traçabilité. Paiement différé.
