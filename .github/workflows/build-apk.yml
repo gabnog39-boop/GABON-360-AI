@@ -43,6 +43,7 @@ jobs:
           python -m py_compile server/api/monitoring_contract.py
           python -m py_compile server/api/central_assistant.py
           python -m py_compile server/integrations/satellite/change_detection.py
+          python -m py_compile server/payments/access_ai.py
           python -m py_compile scripts/inject_national_center_ui.py
           python -m py_compile scripts/inject_satellite_ui.py
           python -m py_compile scripts/inject_control_modules.py
@@ -94,4 +95,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: final control-center integration, source controls and validation build.
+# Build marker: payment access engine validation added.
