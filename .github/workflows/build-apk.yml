@@ -54,6 +54,7 @@ jobs:
           python -m py_compile scripts/inject_page_completeness_v2.py
           python -m py_compile scripts/inject_avatar_central.py
           python -m py_compile scripts/inject_avatar_life.py
+          python -m py_compile scripts/inject_avatar_living_v2.py
           python -m py_compile scripts/inject_control_center_hardening.py
           python -m py_compile scripts/inject_avatar_home_fix.py
           python -m py_compile scripts/inject_scroll_fix.py
@@ -107,6 +108,9 @@ jobs:
       - name: Activer la voix et l animation vivante de l IA
         shell: bash
         run: python3 scripts/inject_avatar_life.py
+      - name: Ajouter l animation vivante V2 de l avatar
+        shell: bash
+        run: python3 scripts/inject_avatar_living_v2.py
       - name: Renforcer le Centre national et la traçabilité
         shell: bash
         run: python3 scripts/inject_control_center_hardening.py
@@ -147,4 +151,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: centre national + carte Gabon persistante + routes/rivières + couche satellite + modules + navigation terrain GNSS V2 + coordonnées sur clic + boussole + waypoints + tracés + GOTO + navigation IA vocale + catalogue complet des fonctions de chaque page + avatar central vivant + runtime mobile V2 + micro + permissions GNSS + traçabilité. Paiement différé jusqu à validation du cœur de l application.
+# Build marker: centre national + carte Gabon persistante + routes/rivières + couche satellite + navigation terrain GNSS V2 + catalogue complet des fonctions de chaque page + avatar central vivant V2 (voix + lèvres + yeux + gestes mains/corps) + runtime mobile V2 + micro + permissions GNSS + traçabilité. Paiement différé jusqu à validation du cœur de l application.
