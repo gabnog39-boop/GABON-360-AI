@@ -44,24 +44,7 @@ jobs:
           python -m py_compile server/api/central_assistant.py
           python -m py_compile server/integrations/satellite/change_detection.py
           python -m py_compile server/payments/access_ai.py
-          python -m py_compile scripts/inject_national_center_ui.py
-          python -m py_compile scripts/inject_satellite_ui.py
-          python -m py_compile scripts/inject_control_modules.py
-          python -m py_compile scripts/inject_source_controls.py
-          python -m py_compile scripts/inject_terrain_navigation.py
-          python -m py_compile scripts/inject_terrain_navigation_v2.py
-          python -m py_compile scripts/inject_national_pages.py
-          python -m py_compile scripts/inject_page_completeness_v2.py
-          python -m py_compile scripts/inject_avatar_central.py
-          python -m py_compile scripts/inject_avatar_life.py
-          python -m py_compile scripts/inject_avatar_living_v2.py
-          python -m py_compile scripts/inject_control_center_hardening.py
-          python -m py_compile scripts/inject_avatar_home_fix.py
-          python -m py_compile scripts/inject_scroll_fix.py
-          python -m py_compile scripts/inject_mobile_ui_polish.py
-          python -m py_compile scripts/inject_real_gabon_map.py
-          python -m py_compile scripts/inject_final_mobile_interaction.py
-          python -m py_compile scripts/inject_mobile_runtime_v2.py
+          for f in scripts/inject_national_center_ui.py scripts/inject_satellite_ui.py scripts/inject_control_modules.py scripts/inject_source_controls.py scripts/inject_terrain_navigation.py scripts/inject_terrain_navigation_v2.py scripts/inject_national_pages.py scripts/inject_page_completeness_v2.py scripts/inject_avatar_central.py scripts/inject_avatar_life.py scripts/inject_avatar_living_v2.py scripts/inject_control_center_hardening.py scripts/inject_avatar_home_fix.py scripts/inject_scroll_fix.py scripts/inject_mobile_ui_polish.py scripts/inject_real_gabon_map.py scripts/inject_final_mobile_interaction.py scripts/inject_mobile_runtime_v2.py scripts/inject_native_android_bridge.py scripts/inject_native_interactions_v3.py scripts/inject_map_coordinates_v3.py; do python -m py_compile "$f"; done
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -76,58 +59,46 @@ jobs:
           PROJECT_DIR=$(dirname "$SETTINGS")
           echo "project_dir=$PROJECT_DIR" >> "$GITHUB_ENV"
       - name: Intégrer le Centre national de situation
-        shell: bash
         run: python3 scripts/inject_national_center_ui.py
       - name: Intégrer le panneau satellites publics Copernicus
-        shell: bash
         run: python3 scripts/inject_satellite_ui.py
       - name: Intégrer la carte réelle Gabon, routes, rivières et couche satellite
-        shell: bash
         run: python3 scripts/inject_real_gabon_map.py
+      - name: Activer le clic carte pour coordonnées
+        run: python3 scripts/inject_map_coordinates_v3.py
       - name: Intégrer les modules de contrôle complémentaires
-        shell: bash
         run: python3 scripts/inject_control_modules.py
       - name: Intégrer les contrôles des sources en attente
-        shell: bash
         run: python3 scripts/inject_source_controls.py
       - name: Intégrer la Navigation terrain de base
-        shell: bash
         run: python3 scripts/inject_terrain_navigation.py
       - name: Remplacer la navigation terrain par le module GNSS complet V2
-        shell: bash
         run: python3 scripts/inject_terrain_navigation_v2.py
       - name: Intégrer les pages nationales manuelles et la navigation IA
-        shell: bash
         run: python3 scripts/inject_national_pages.py
       - name: Vérifier la complétude de chaque page et de ses fonctions
-        shell: bash
         run: python3 scripts/inject_page_completeness_v2.py
       - name: Intégrer l avatar IA centrale
-        shell: bash
         run: python3 scripts/inject_avatar_central.py
       - name: Activer la voix et l animation vivante de l IA
-        shell: bash
         run: python3 scripts/inject_avatar_life.py
       - name: Ajouter l animation vivante V2 de l avatar
-        shell: bash
         run: python3 scripts/inject_avatar_living_v2.py
+      - name: Ajouter le moteur natif voix, micro et animation V3
+        run: python3 scripts/inject_native_interactions_v3.py
+      - name: Ajouter le pont Android natif pour TTS et reconnaissance vocale
+        run: python3 scripts/inject_native_android_bridge.py
       - name: Renforcer le Centre national et la traçabilité
-        shell: bash
         run: python3 scripts/inject_control_center_hardening.py
       - name: Corriger le défilement vertical
-        shell: bash
         run: python3 scripts/inject_scroll_fix.py
       - name: Appliquer la finition mobile et supprimer les chevauchements
-        shell: bash
         run: python3 scripts/inject_mobile_ui_polish.py
       - name: Forcer la présence de l avatar sur l accueil mobile
-        shell: bash
         run: python3 scripts/inject_avatar_home_fix.py
       - name: Appliquer la correction finale du défilement et de l avatar
-        shell: bash
         run: python3 scripts/inject_final_mobile_interaction.py
       - name: Appliquer le runtime mobile V2, micro et permissions GNSS
-        shell: bash
         run: python3 scripts/inject_mobile_runtime_v2.py
       - name: Construire APK
         shell: bash
@@ -151,4 +122,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: centre national + carte Gabon persistante + routes/rivières + couche satellite + navigation terrain GNSS V2 + catalogue complet des fonctions de chaque page + avatar central vivant V2 (voix + lèvres + yeux + gestes mains/corps) + runtime mobile V2 + micro + permissions GNSS + traçabilité. Paiement différé jusqu à validation du cœur de l application.
+# Build marker: carte clic-coordonnées + navigation GNSS V2 + pages complètes + avatar vivant + pont Android natif TTS/reconnaissance vocale + micro + traçabilité. Paiement différé jusqu'à validation du cœur.
