@@ -40,31 +40,17 @@ PAYLOAD=r'''<!-- GABON360-TERRAIN-NAV-V1 -->
  const accEl=document.getElementById('g360-terrain-acc');
  const frame=document.getElementById('g360-terrain-frame');
  let last=null, watchId=null;
- const say=t=>{if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}};
- function map(lat,lon){
-   const d=.08; frame.src='https://www.openstreetmap.org/export/embed.html?bbox='+(lon-d)+'%2C'+(lat-d)+'%2C'+(lon+d)+'%2C'+(lat+d)+'&layer=mapnik&marker='+lat+'%2C'+lon;
- }
- function success(p){
-   last=p; const c=p.coords;
-   posEl.textContent=c.latitude.toFixed(6)+'°, '+c.longitude.toFixed(6)+'°';
-   altEl.textContent=(Number.isFinite(c.altitude)?c.altitude.toFixed(1)+' m':'Non fournie par le GNSS');
-   accEl.textContent=(Number.isFinite(c.accuracy)?c.accuracy.toFixed(1)+' m':'Non fournie');
-   status.textContent='GNSS/GPS : position reçue à '+new Date(p.timestamp).toLocaleTimeString();
-   map(c.latitude,c.longitude);
- }
- function error(e){status.textContent='GNSS/GPS indisponible : '+(e&&e.message?e.message:'autorisation refusée ou signal indisponible')+'.';}
- function locate(){
-   if(!navigator.geolocation){error({message:'la géolocalisation n’est pas supportée par ce WebView'});return;}
-   status.textContent='GNSS/GPS : recherche de position…';
-   navigator.geolocation.getCurrentPosition(success,error,{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
-   if(watchId===null) watchId=navigator.geolocation.watchPosition(success,error,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
- }
- document.getElementById('g360-terrain-open').onclick=()=>{modal.style.display='flex'; if(last)map(last.coords.latitude,last.coords.longitude); else locate();};
+ const say=t=>{window.dispatchEvent(new CustomEvent('gabon360:ai-speak',{detail:{text:t}}));if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}};
+ function map(lat,lon){const d=.08;frame.src='https://www.openstreetmap.org/export/embed.html?bbox='+(lon-d)+'%2C'+(lat-d)+'%2C'+(lon+d)+'&layer=mapnik&marker='+lat+'%2C'+lon;}
+ function success(p){last=p;const c=p.coords;posEl.textContent=c.latitude.toFixed(6)+'°, '+c.longitude.toFixed(6)+'°';altEl.textContent=(Number.isFinite(c.altitude)?c.altitude.toFixed(1)+' m':'Non fournie par le GNSS');accEl.textContent=(Number.isFinite(c.accuracy)?c.accuracy.toFixed(1)+' m':'Non fournie');status.textContent='GNSS/GPS : position reçue à '+new Date(p.timestamp).toLocaleTimeString();map(c.latitude,c.longitude);say('Navigation terrain active. Position GPS reçue. Latitude '+c.latitude.toFixed(4)+' degrés, longitude '+c.longitude.toFixed(4)+' degrés.');}
+ function error(e){status.textContent='GNSS/GPS indisponible : '+(e&&e.message?e.message:'autorisation refusée ou signal indisponible')+'.';say('La position GPS n’est pas disponible. Vérifiez l’autorisation de localisation et le signal GNSS.');}
+ function locate(){if(!navigator.geolocation){error({message:'la géolocalisation n’est pas supportée par ce WebView'});return}status.textContent='GNSS/GPS : recherche de position…';navigator.geolocation.getCurrentPosition(success,error,{enableHighAccuracy:true,timeout:15000,maximumAge:5000});if(watchId===null)watchId=navigator.geolocation.watchPosition(success,error,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});}
+ document.getElementById('g360-terrain-open').onclick=()=>{modal.style.display='flex';say('Navigation terrain ouverte. Je recherche votre position GPS.');if(last)map(last.coords.latitude,last.coords.longitude);else locate()};
  document.getElementById('g360-terrain-close').onclick=()=>modal.style.display='none';
  modal.onclick=e=>{if(e.target===modal)modal.style.display='none'};
  document.getElementById('g360-terrain-locate').onclick=locate;
- document.getElementById('g360-terrain-voice').onclick=()=>{if(!last){say('Position GPS non disponible. Autorisez la localisation et attendez un signal.');return;} const c=last.coords; say('Position reçue. Latitude '+c.latitude.toFixed(4)+' degrés, longitude '+c.longitude.toFixed(4)+' degrés. '+(Number.isFinite(c.altitude)?'Altitude '+Math.round(c.altitude)+' mètres.':'Altitude non fournie.'));};
- document.getElementById('g360-terrain-stopvoice').onclick=()=>{if('speechSynthesis' in window)speechSynthesis.cancel();};
+ document.getElementById('g360-terrain-voice').onclick=()=>{if(!last){say('Position GPS non disponible. Autorisez la localisation et attendez un signal.');return}const c=last.coords;say('Position reçue. Latitude '+c.latitude.toFixed(4)+' degrés, longitude '+c.longitude.toFixed(4)+' degrés. '+(Number.isFinite(c.altitude)?'Altitude '+Math.round(c.altitude)+' mètres.':'Altitude non fournie.'))};
+ document.getElementById('g360-terrain-stopvoice').onclick=()=>{if('speechSynthesis' in window)speechSynthesis.cancel()};
 })();
 </script>
 '''
@@ -77,6 +63,6 @@ def main():
             print('already:',p); return
         i=t.lower().rfind('</body>')
         if i>=0:
-            p.write_text(t[:i]+PAYLOAD+'\n'+t[i:],encoding='utf-8'); print('injected:',p); return
+            p.write_text(t[:i]+PAYLOAD+'\n'+t[i:],encoding='utf-8');print('injected:',p);return
     raise SystemExit('No suitable index.html found')
-if __name__=='__main__': main()
+if __name__=='__main__':main()
