@@ -44,7 +44,7 @@ jobs:
           python -m py_compile server/api/central_assistant.py
           python -m py_compile server/integrations/satellite/change_detection.py
           python -m py_compile server/payments/access_ai.py
-          for f in scripts/inject_national_center_ui.py scripts/inject_satellite_ui.py scripts/inject_control_modules.py scripts/inject_source_controls.py scripts/inject_terrain_navigation.py scripts/inject_terrain_navigation_v2.py scripts/inject_national_pages.py scripts/inject_page_completeness_v2.py scripts/inject_avatar_central.py scripts/inject_avatar_life.py scripts/inject_avatar_living_v2.py scripts/inject_control_center_hardening.py scripts/inject_avatar_home_fix.py scripts/inject_scroll_fix.py scripts/inject_mobile_ui_polish.py scripts/inject_real_gabon_map.py scripts/inject_final_mobile_interaction.py scripts/inject_mobile_runtime_v2.py scripts/inject_native_android_bridge.py scripts/inject_native_interactions_v3.py scripts/inject_map_coordinates_v3.py scripts/preflight_apk_audit.py; do python -m py_compile "$f"; done
+          for f in scripts/inject_national_center_ui.py scripts/inject_satellite_ui.py scripts/inject_control_modules.py scripts/inject_source_controls.py scripts/inject_terrain_navigation.py scripts/inject_terrain_navigation_v2.py scripts/inject_national_pages.py scripts/inject_page_completeness_v2.py scripts/inject_avatar_central.py scripts/inject_avatar_life.py scripts/inject_avatar_living_v2.py scripts/inject_control_center_hardening.py scripts/inject_avatar_home_fix.py scripts/inject_scroll_fix.py scripts/inject_mobile_ui_polish.py scripts/inject_real_gabon_map.py scripts/inject_final_mobile_interaction.py scripts/inject_mobile_runtime_v2.py scripts/inject_native_android_bridge.py scripts/inject_native_interactions_v3.py scripts/inject_map_coordinates_v3.py scripts/preflight_apk_audit.py scripts/inject_final_native_io_repair.py; do python -m py_compile "$f"; done
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -100,6 +100,8 @@ jobs:
         run: python3 scripts/inject_final_mobile_interaction.py
       - name: Appliquer le runtime mobile V2, micro et permissions GNSS
         run: python3 scripts/inject_mobile_runtime_v2.py
+      - name: Réparer définitivement le branchement voix/micro natif final
+        run: python3 scripts/inject_final_native_io_repair.py
       - name: Audit préliminaire obligatoire du Centre
         shell: bash
         run: |
@@ -127,4 +129,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: preflight obligatoire + carte clic-coordonnées + navigation GNSS V2 + pages complètes + avatar vivant + pont Android natif TTS/reconnaissance vocale + traçabilité. Paiement différé jusqu'à validation du cœur.
+# Build marker: audit préflight + réparation native finale + carte clic-coordonnées + navigation GNSS V2 + pages complètes + avatar vivant + pont Android natif TTS/reconnaissance vocale + traçabilité. Paiement différé jusqu'à validation du cœur.
