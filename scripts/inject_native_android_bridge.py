@@ -44,7 +44,7 @@ public final class G360NativeBridge {{
       if(sr==null){{sr=SpeechRecognizer.createSpeechRecognizer(a);sr.setRecognitionListener(Bridge.this);}}
       Intent i=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);i.putExtra(RecognizerIntent.EXTRA_LANGUAGE,"fr-FR");i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);i.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS,false);sr.startListening(i);
     }}}});}}
-    @JavascriptInterface public void stopListening(){{if(sr!=null)sr.stopListening();}}
+    @JavascriptInterface public void stopListening(){{if(sr!=null)sr.stopListening();}}\n    @JavascriptInterface public void stopSpeaking(){{if(tts!=null)tts.stop();}}
     void js(String s){{w.post(new Runnable(){{public void run(){{w.evaluateJavascript(s,null);}}}});}}
     String q(String s){{return "'"+s.replace("\\","\\\\").replace("'","\\'").replace("\n"," ")+"'";}}
     void error(String s){{js("window.G360NativeSpeechError&&window.G360NativeSpeechError("+q(s)+")");}}
@@ -53,7 +53,7 @@ public final class G360NativeBridge {{
     public void onEndOfSpeech(){{js("window.G360NativeSpeechState&&window.G360NativeSpeechState('processing')");}}
     public void onResults(Bundle b){{ArrayList<String>x=b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);if(x!=null&&!x.isEmpty())js("window.G360NativeSpeechResult&&window.G360NativeSpeechResult("+q(x.get(0))+")");}}
     public void onError(int e){{error("erreur "+e);}} public void onRmsChanged(float r){{}} public void onBufferReceived(byte[] b){{}} public void onPartialResults(Bundle b){{}} public void onEvent(int a,Bundle b){{}}
-    public void onInit(int status){{if(status==TextToSpeech.SUCCESS)tts.setLanguage(Locale.FRENCH);}}
+    public void onInit(int status){{if(status==TextToSpeech.SUCCESS){{tts.setLanguage(Locale.FRENCH);js("window.G360NativeSpeechState&&window.G360NativeSpeechState(\'voice-ready\')");}}}}
   }}
 }}
 '''
