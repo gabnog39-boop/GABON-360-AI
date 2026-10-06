@@ -46,6 +46,7 @@ jobs:
           python -m py_compile scripts/inject_national_center_ui.py
           python -m py_compile scripts/inject_satellite_ui.py
           python -m py_compile scripts/inject_control_modules.py
+          python -m py_compile scripts/inject_source_controls.py
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -68,6 +69,9 @@ jobs:
       - name: Intégrer les modules de contrôle complémentaires
         shell: bash
         run: python3 scripts/inject_control_modules.py
+      - name: Intégrer les contrôles des sources en attente
+        shell: bash
+        run: python3 scripts/inject_source_controls.py
       - name: Construire APK
         shell: bash
         run: |
@@ -90,4 +94,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: final control-center integration and validation build.
+# Build marker: final control-center integration, source controls and validation build.
