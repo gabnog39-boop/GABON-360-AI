@@ -43,6 +43,9 @@ jobs:
           python -m py_compile server/api/monitoring_contract.py
           python -m py_compile server/api/central_assistant.py
           python -m py_compile server/integrations/satellite/change_detection.py
+          python -m py_compile scripts/inject_national_center_ui.py
+          python -m py_compile scripts/inject_satellite_ui.py
+          python -m py_compile scripts/inject_control_modules.py
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -62,6 +65,9 @@ jobs:
       - name: Intégrer le panneau satellites publics Copernicus
         shell: bash
         run: python3 scripts/inject_satellite_ui.py
+      - name: Intégrer les modules de contrôle complémentaires
+        shell: bash
+        run: python3 scripts/inject_control_modules.py
       - name: Construire APK
         shell: bash
         run: |
@@ -84,4 +90,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: fresh APK rebuild requested after final integration check.
+# Build marker: final control-center integration and validation build.
