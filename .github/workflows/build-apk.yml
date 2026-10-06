@@ -56,6 +56,7 @@ jobs:
           python -m py_compile scripts/inject_avatar_home_fix.py
           python -m py_compile scripts/inject_scroll_fix.py
           python -m py_compile scripts/inject_mobile_ui_polish.py
+          python -m py_compile scripts/inject_real_gabon_map.py
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -75,6 +76,9 @@ jobs:
       - name: Intégrer le panneau satellites publics Copernicus
         shell: bash
         run: python3 scripts/inject_satellite_ui.py
+      - name: Intégrer la carte réelle Gabon, routes, rivières et couche satellite
+        shell: bash
+        run: python3 scripts/inject_real_gabon_map.py
       - name: Intégrer les modules de contrôle complémentaires
         shell: bash
         run: python3 scripts/inject_control_modules.py
@@ -127,4 +131,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: centre national + modules + navigation IA + avatar central vivant et visible + état opérationnel + traçabilité + scrolling + finition mobile. Paiement différé jusqu à validation du cœur de l application.
+# Build marker: centre national + carte Gabon persistante + routes/rivières + couche satellite + modules + navigation IA + avatar central vivant et visible + état opérationnel + traçabilité + scrolling + finition mobile. Paiement différé jusqu à validation du cœur de l application.
