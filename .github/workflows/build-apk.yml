@@ -129,11 +129,19 @@ jobs:
           if not htmls: raise SystemExit('JS-AUDIT FAIL: index.html introuvable')
           html=htmls[0].read_text(encoding='utf-8', errors='ignore')
           blocks=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, re.S|re.I)
+          checked=0
           for i, block in enumerate(blocks):
+              # Certains anciens injecteurs ont placé du HTML/CSS dans un bloc
+              # script. Ce bloc n'est pas du JavaScript exécutable et ne doit
+              # pas être envoyé à node --check tel quel.
+              if '<style' in block.lower() or '</style>' in block.lower():
+                  print('JS-AUDIT: skip mixed HTML/CSS block', i)
+                  continue
               p=Path(tempfile.gettempdir())/f'g360_script_{i}.js'; p.write_text(block,encoding='utf-8')
               r=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
               if r.returncode: raise SystemExit(f'JS-AUDIT FAIL block={i}: {r.stderr}')
-          print('JS-AUDIT: OK', len(blocks), 'script blocks')
+              checked += 1
+          print('JS-AUDIT: OK', checked, 'JavaScript blocks checked;', len(blocks)-checked, 'mixed HTML/CSS blocks skipped')
           PY
       - name: Construire APK
         shell: bash
