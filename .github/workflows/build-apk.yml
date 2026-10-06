@@ -53,6 +53,7 @@ jobs:
           python -m py_compile scripts/inject_avatar_central.py
           python -m py_compile scripts/inject_scroll_fix.py
           python -m py_compile scripts/inject_mobile_ui_polish.py
+          python -m py_compile scripts/inject_avatar_life.py
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -87,6 +88,9 @@ jobs:
       - name: Intégrer l’avatar IA centrale
         shell: bash
         run: python3 scripts/inject_avatar_central.py
+      - name: Activer la voix et l animation vivante de l IA
+        shell: bash
+        run: python3 scripts/inject_avatar_life.py
       - name: Corriger le défilement vertical
         shell: bash
         run: python3 scripts/inject_scroll_fix.py
@@ -115,4 +119,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: national center + satellite + control modules + source controls + terrain navigation + manual national pages + AI page navigation + central avatar + scrolling + mobile layout polish. Payment remains deferred until the application core is finalized.
+# Build marker: centre national + modules + navigation IA + avatar central + voix/animation vivante + scrolling + finition mobile. Paiement différé jusqu à validation du cœur de l application.
