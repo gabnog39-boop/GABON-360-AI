@@ -128,6 +128,29 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/preflight_apk_audit.py android_project
+      - name: Vérifier les fonctionnalités critiques du Centre
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          htmls=sorted(Path('android_project').rglob('index.html'), key=lambda p: len(p.parts))
+          if not htmls: raise SystemExit('CRITICAL-AUDIT FAIL: index.html introuvable')
+          html=htmls[0].read_text(encoding='utf-8', errors='ignore')
+          required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','g360-universal-launch','G360AvatarSpeak','G360AvatarListen','G360AvatarStop','GABON360_SATELLITE_RESULTS','gabon360:page-action']
+          missing=[x for x in required if x not in html]
+          if missing: raise SystemExit('CRITICAL-AUDIT FAIL: '+', '.join(missing))
+          print('CRITICAL-AUDIT: OK — pages, avatar, satellite and action relay present')
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          bridges=list(Path('android_project').rglob('G360NativeBridge.java'))
+          if not bridges: raise SystemExit('CRITICAL-AUDIT FAIL: G360NativeBridge.java absent')
+          src=bridges[0].read_text(encoding='utf-8', errors='ignore')
+          for item in ['speak(String text)','startListening()','stopListening()','stopSpeaking()']:
+              if item not in src: raise SystemExit('CRITICAL-AUDIT FAIL: native method absent: '+item)
+          print('CRITICAL-AUDIT: OK — native voice bridge complete')
+          PY
       - name: Audit syntaxique JavaScript final
         shell: bash
         run: |
