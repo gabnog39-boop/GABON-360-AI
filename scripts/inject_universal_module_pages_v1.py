@@ -75,7 +75,7 @@ if(a==='Situation actuelle'||a==='Prévisions'||a==='Température'||a==='Pluie'|
 fetch('https://api.open-meteo.com/v1/forecast?latitude=0.3901&longitude=9.4544&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&forecast_days=3').then(function(r){return r.json()}).then(function(d){var c=d.current||{};status('Météo publique — Libreville\nTempérature : '+(c.temperature_2m==null?'—':c.temperature_2m)+' °C\nHumidité : '+(c.relative_humidity_2m==null?'—':c.relative_humidity_2m)+' %\nPluie : '+(c.precipitation==null?'—':c.precipitation)+' mm\nVent : '+(c.wind_speed_10m==null?'—':c.wind_speed_10m)+' km/h');dispatch(id,a)}).catch(function(e){status('Météo indisponible : '+e.message)});return;
 }}
 if(id==='sat'&&(a==='Sentinel-2'||a==='Sentinel-1'||a==='Recherche zone'||a==='Recherche date'||a==='Nuages / qualité'||a==='Métadonnées'||a==='Source / catalogue')){
-var r=window.GABON360_SATELLITE_RESULTS;status(r&&r.length?'Observations satellite disponibles : '+r.length+'\nUtilisez le panneau satellite pour actualiser.':'Aucune observation chargée. Lancez une recherche Copernicus.');dispatch(id,a);return;
+var r=window.GABON360_SATELLITE_RESULTS;var n=r?(Number(r.count)||((r.features||[]).length)):0;status(n?'Observations satellite disponibles : '+n+'\nUtilisez le panneau satellite pour actualiser.':'Aucune observation chargée. Lancez une recherche Copernicus.');dispatch(id,a);return;
 }
 if(id==='reports'&&a==='Nouveau rapport'){
 var key='gabon360_operational_records_v1',db={reports:[],events:[],waypoints:[],tracks:[]};try{db=JSON.parse(localStorage.getItem(key)||JSON.stringify(db))}catch(e){}
