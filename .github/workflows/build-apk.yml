@@ -49,6 +49,7 @@ jobs:
           python -m py_compile scripts/inject_control_modules.py
           python -m py_compile scripts/inject_source_controls.py
           python -m py_compile scripts/inject_terrain_navigation.py
+          python -m py_compile scripts/inject_national_pages.py
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -77,6 +78,9 @@ jobs:
       - name: Intégrer la Navigation terrain
         shell: bash
         run: python3 scripts/inject_terrain_navigation.py
+      - name: Intégrer les pages nationales manuelles et la navigation IA
+        shell: bash
+        run: python3 scripts/inject_national_pages.py
       - name: Construire APK
         shell: bash
         run: |
@@ -99,4 +103,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: national center + satellite + control modules + source controls + terrain navigation. Payment will be integrated separately after the application core is finalized.
+# Build marker: national center + satellite + control modules + source controls + terrain navigation + manual national pages + AI page navigation. Payment remains deferred until the application core is finalized.
