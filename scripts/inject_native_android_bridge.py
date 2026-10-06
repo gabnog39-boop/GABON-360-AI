@@ -68,13 +68,17 @@ def main():
     p,t=candidates[0]
     m=re.search(r'^\s*package\s+([A-Za-z0-9_.]+)',t,re.M)
     if not m: raise SystemExit('No package found')
-    pkg=m.group(1); target=root/Path(*pkg.split('.'))/'G360NativeBridge.java';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(JAVA.format(pkg=pkg),encoding='utf-8')
+    pkg=m.group(1)
+    # Put the bridge beside MainActivity, not at the Android project root.
+    target=p.parent/'G360NativeBridge.java'
+    target.write_text(JAVA.format(pkg=pkg),encoding='utf-8')
     if MARK not in t:
         oc=re.search(r'onCreate\s*\([^)]*\)\s*\{',t)
         if not oc: raise SystemExit('No onCreate found')
         t=t[:oc.end()]+'\n        '+MARK+'\n'+t[oc.end():];p.write_text(t,encoding='utf-8')
     for mf in root.rglob('AndroidManifest.xml'):
         mt=mf.read_text(encoding='utf-8')
-        if 'android.permission.RECORD_AUDIO' not in mt: mt=mt.replace('</manifest>','    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n</manifest>',1);mf.write_text(mt,encoding='utf-8')
-    print('Native Android bridge installed')
+        if 'android.permission.RECORD_AUDIO' not in mt:
+            mt=mt.replace('</manifest>','    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n</manifest>',1);mf.write_text(mt,encoding='utf-8')
+    print('Native Android bridge installed beside MainActivity:',target)
 if __name__=='__main__':main()
