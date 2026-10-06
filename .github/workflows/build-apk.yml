@@ -52,6 +52,7 @@ jobs:
           python -m py_compile scripts/inject_national_pages.py
           python -m py_compile scripts/inject_avatar_central.py
           python -m py_compile scripts/inject_scroll_fix.py
+          python -m py_compile scripts/inject_mobile_ui_polish.py
       - name: Préparer le projet Android consolidé
         shell: bash
         run: |
@@ -89,6 +90,9 @@ jobs:
       - name: Corriger le défilement vertical
         shell: bash
         run: python3 scripts/inject_scroll_fix.py
+      - name: Appliquer la finition mobile et supprimer les chevauchements
+        shell: bash
+        run: python3 scripts/inject_mobile_ui_polish.py
       - name: Construire APK
         shell: bash
         run: |
@@ -111,4 +115,4 @@ jobs:
           path: resultat/GABON_360_AI.apk
           if-no-files-found: error
 
-# Build marker: national center + satellite + control modules + source controls + terrain navigation + manual national pages + AI page navigation + central avatar + vertical scrolling fix. Payment remains deferred until the application core is finalized.
+# Build marker: national center + satellite + control modules + source controls + terrain navigation + manual national pages + AI page navigation + central avatar + scrolling + mobile layout polish. Payment remains deferred until the application core is finalized.
