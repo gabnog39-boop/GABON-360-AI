@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Inject the public Copernicus satellite discovery panel into the APK web UI.
-
-The injector is build-time and self-contained: it does not embed credentials and
-it never presents catalog metadata as continuous live video.
-"""
+"""Inject the public Copernicus satellite discovery panel into the APK web UI."""
 from __future__ import annotations
 from pathlib import Path
 
-INJECTOR_VERSION = "1.1"
+INJECTOR_VERSION = "1.2"
 MARKER = "<!-- GABON360-SATELLITE-PANEL-V1 -->"
 PAYLOAD = r'''<!-- GABON360-SATELLITE-PANEL-V1 -->
 <style>
 #g360-satellite-panel{position:fixed;right:14px;bottom:14px;z-index:99999;width:min(390px,calc(100vw - 28px));max-height:62vh;overflow:auto;background:rgba(8,16,28,.96);color:#eef6ff;border:1px solid rgba(77,170,255,.45);border-radius:16px;box-shadow:0 12px 36px rgba(0,0,0,.42);font:14px/1.4 system-ui,sans-serif;backdrop-filter:blur(10px)}
+#g360-satellite-panel.g360-hidden{display:none}
 #g360-satellite-panel .g360-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
-#g360-satellite-panel .g360-title{font-weight:700}.g360-pill{font-size:11px;padding:3px 7px;border-radius:999px;background:#173b2a;color:#9ff0bf}
+#g360-satellite-panel .g360-title{font-weight:700}.g360-pill{font-size:11px;padding:3px 7px;border-radius:999px;background:#173b2a;color:#9ff0bf}.g360-close{border:0!important;background:transparent!important;color:#fff!important;font-size:20px!important;line-height:1!important;padding:2px 6px!important;cursor:pointer}
 #g360-satellite-panel .g360-body{padding:12px 14px}.g360-row{display:flex;gap:8px;align-items:center;margin-bottom:9px}.g360-row select,.g360-row button{border-radius:9px;border:1px solid rgba(255,255,255,.16);padding:8px;background:#152236;color:#fff}.g360-row button{cursor:pointer;font-weight:600}.g360-status{font-size:12px;opacity:.82;margin:6px 0 10px}.g360-card{padding:9px 10px;margin:7px 0;border-radius:10px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08)}.g360-card b{display:block;margin-bottom:3px}.g360-meta{font-size:11px;opacity:.72}.g360-note{font-size:11px;opacity:.68;margin-top:10px}
+#g360-satellite-open{position:fixed;right:14px;bottom:14px;z-index:99998;border:1px solid rgba(77,170,255,.45);border-radius:999px;padding:10px 14px;background:#152236;color:#fff;font:600 13px/1 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);display:none}
+#g360-satellite-open.g360-visible{display:block}
 </style>
+<button id="g360-satellite-open" type="button">🛰️ Satellites</button>
 <div id="g360-satellite-panel" aria-label="Données satellites publiques Copernicus">
-  <div class="g360-head"><span class="g360-title">🛰️ Satellites — Gabon</span><span class="g360-pill">PUBLIC / CATALOGUE</span></div>
+  <div class="g360-head"><span class="g360-title">🛰️ Satellites — Gabon</span><span><span class="g360-pill">PUBLIC / CATALOGUE</span><button id="g360-sat-close" class="g360-close" type="button" aria-label="Fermer">×</button></span></div>
   <div class="g360-body">
     <div class="g360-row"><select id="g360-sat-collection"><option value="sentinel-2-l2a">Sentinel-2 L2A</option><option value="sentinel-2-l1c">Sentinel-2 L1C</option><option value="sentinel-1-grd">Sentinel-1 GRD</option></select><button id="g360-sat-refresh" type="button">Actualiser</button></div>
     <div id="g360-sat-status" class="g360-status">Prêt à interroger le catalogue Copernicus…</div>
@@ -30,8 +30,11 @@ PAYLOAD = r'''<!-- GABON360-SATELLITE-PANEL-V1 -->
   const ENDPOINT='https://stac.dataspace.copernicus.eu/v1/search';
   const BBOX=[8.5,-4.0,14.5,2.5];
   const s=document.getElementById('g360-sat-status'),o=document.getElementById('g360-sat-results'),c=document.getElementById('g360-sat-collection'),b=document.getElementById('g360-sat-refresh');
-  if(!s||!o||!c||!b)return;
+  const p=document.getElementById('g360-satellite-panel'),x=document.getElementById('g360-sat-close'),open=document.getElementById('g360-satellite-open');
+  if(!s||!o||!c||!b||!p||!x||!open)return;
   const esc=v=>String(v??'').replace(/[&<>\"']/g,q=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[q]));
+  x.onclick=()=>{p.classList.add('g360-hidden');open.classList.add('g360-visible');};
+  open.onclick=()=>{p.classList.remove('g360-hidden');open.classList.remove('g360-visible');};
   function publish(features){
     window.GABON360_SATELLITE_RESULTS={provider:'copernicus_data_space_ecosystem',area:'Gabon',live:false,received_at:new Date().toISOString(),count:features.length,features:features};
     window.dispatchEvent(new CustomEvent('gabon360:satellite-results',{detail:window.GABON360_SATELLITE_RESULTS}));
