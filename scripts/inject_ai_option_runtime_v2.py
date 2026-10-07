@@ -23,8 +23,6 @@ def main():
 (function () {
   "use strict";
   const MARKER = "GABON360-AI-OPTION-RUNTIME-V2";
-  const ORDER = ["avatar","map","nav","sat","drones","cameras","maritime","forests","alerts","reports","stats","weather","sources","security","memory"];
-
   const AI_BY_PAGE = {
     avatar:"avatar", map:"sig", nav:"navigation", sat:"satellite",
     drones:"drones", cameras:"cameras", maritime:"maritime", forests:"forests",
@@ -49,14 +47,18 @@ def main():
       if (typeof window.G360Speak === "function") { window.G360Speak(text); return true; }
       if (window.speechSynthesis) {
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = "fr-FR"; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); return true;
+        u.lang = "fr-FR";
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+        return true;
       }
     } catch(e) {}
     return false;
   }
 
   function notify(event){
-    const important = ["CRITICAL","ALERT","HIGH","WARNING","IMPORTANT","ALERTE"].includes(String(event.severity||"").toUpperCase());
+    const important = ["CRITICAL","ALERT","HIGH","WARNING","IMPORTANT","ALERTE"]
+      .includes(String(event.severity||"").toUpperCase());
     state.events.push(event);
     if (state.events.length > 300) state.events.shift();
     if (important) {
@@ -69,7 +71,9 @@ def main():
         (event.requires_human_validation ? ". Validation humaine requise." : ".");
       avatarSpeak(text);
     }
-    try { window.dispatchEvent(new CustomEvent("gabon360:ai-option-event",{detail:event})); } catch(e) {}
+    try {
+      window.dispatchEvent(new CustomEvent("gabon360:ai-option-event",{detail:event}));
+    } catch(e) {}
     try {
       if (window.GABON360_AI_RELAY && typeof window.GABON360_AI_RELAY.publish === "function")
         window.GABON360_AI_RELAY.publish(event.module || event.ai || "orchestrator", event.event || "ai-option-event", event);
@@ -99,7 +103,11 @@ def main():
   function setPage(page){
     if (!page) return;
     state.currentPage = page;
-    dispatch(page,"page-opened",{event:"page-opened",observation:"Page ouverte et prise en charge par son IA spécialisée.",severity:"INFO"});
+    dispatch(page,"page-opened",{
+      event:"page-opened",
+      observation:"Page ouverte et prise en charge par son IA spécialisée.",
+      severity:"INFO"
+    });
   }
 
   function bind(){
@@ -126,8 +134,14 @@ def main():
   window.GABON360_AI_OPTION_NOTIFY = notify;
   window.GABON360_AI_OPTION_PAGE_AI = pageAI;
   window.GABON360_AI_OPTION_HEALTH = function(){
-    return {status:"active", currentPage:state.currentPage, events:state.events.length,
-      proactiveAvatar:true, centralRelay:true, humanValidationBoundary:true};
+    return {
+      status:"active",
+      currentPage:state.currentPage,
+      events:state.events.length,
+      proactiveAvatar:true,
+      centralRelay:true,
+      humanValidationBoundary:true
+    };
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded",bind);
@@ -136,9 +150,7 @@ def main():
 })();
 </script>
 '''
-    html += "
-" + block + "
-"
+    html += "\n" + block + "\n"
     path.write_text(html, encoding="utf-8")
     print("Runtime IA optionnel V2 intégré dans", path)
 
