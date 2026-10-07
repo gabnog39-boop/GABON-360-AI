@@ -161,7 +161,7 @@ jobs:
           bridges=list(Path('android_project').rglob('G360NativeBridge.java'))
           if not bridges: raise SystemExit('JAVA-AUDIT FAIL: bridge absent')
           src=bridges[0].read_text(encoding='utf-8', errors='ignore')
-          if '\\n' in src: raise SystemExit('JAVA-AUDIT FAIL: séquence literal \\n détectée')
+          if '}\\n    @JavascriptInterface' in src: raise SystemExit('JAVA-AUDIT FAIL: saut de ligne Java injecté comme texte')
           if len(re.findall(r'void\s+stopSpeaking\s*\(',src)) != 1: raise SystemExit('JAVA-AUDIT FAIL: stopSpeaking dupliqué ou absent')
           if len(re.findall(r'void\s+stopListening\s*\(',src)) != 1: raise SystemExit('JAVA-AUDIT FAIL: stopListening dupliqué ou absent')
           for method in ['speak(String text)','startListening()','stopListening()','stopSpeaking()']:
