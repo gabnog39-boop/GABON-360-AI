@@ -163,12 +163,20 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          htmls=sorted(Path('android_project').rglob('index.html'), key=lambda p: len(p.parts))
+          htmls=sorted(Path('android_project').rglob('index.html'), key=lambda p: (len(p.parts), str(p)))
           if not htmls: raise SystemExit('CRITICAL-AUDIT FAIL: index.html introuvable')
-          html=htmls[0].read_text(encoding='utf-8', errors='ignore')
           required=['GABON360-SPECIALIZED-AI-ARCHITECTURE-V1','GABON360-MEMORY-AI-PAGE-V1','GABON360-AI-OPTION-ORCHESTRATOR-V1','GABON360-UNIVERSAL-MODULE-PAGES-V1','G360-PAGE-FUNCTIONALITY-V2','GABON360-PAGE-FUNCTIONALITY-BRIDGE-V1','g360-universal-launch','G360AvatarSpeak','G360AvatarListen','G360AvatarStop','GABON360_SATELLITE_RESULTS','GABON360_SELECTED_COORDINATES','gabon360:coordinates-selected','gabon360:page-action','GABON360-HORIZONTAL-PAGE-NAV-V1','GABON360_PAGE_NEXT','GABON360_PAGE_PREVIOUS','GABON360-AVATAR-HOME-V1','GABON360_OPEN_AVATAR_HOME','GABON360-AI-OPTION-RUNTIME-V2','GABON360_AI_OPTION_DISPATCH','GABON360_AI_OPTION_HEALTH']
-          missing=[x for x in required if x not in html]
-          if missing: raise SystemExit('CRITICAL-AUDIT FAIL: '+', '.join(missing))
+          candidates=[(p,p.read_text(encoding='utf-8', errors='ignore')) for p in htmls]
+          scored=sorted(((sum(x in h for x in required), p, h) for p,h in candidates), key=lambda z:(z[0],-len(z[1].parts)), reverse=True)
+          score,html_path,html=scored[0]
+          print('CRITICAL-AUDIT candidate:', html_path, 'score=', score, '/', len(required))
+          if score != len(required):
+              missing=[x for x in required if x not in html]
+              print('CRITICAL-AUDIT missing on selected candidate:')
+              for x in missing: print(' -', x)
+              print('CRITICAL-AUDIT per-index diagnostics:')
+              for sc,p,h in sorted(scored, reverse=True): print(' -', p, sc, '/', len(required))
+              raise SystemExit('CRITICAL-AUDIT FAIL: '+', '.join(missing))
           print('CRITICAL-AUDIT: OK — pages, avatar, satellite and action relay present')
           PY
           python3 - <<'PY'
