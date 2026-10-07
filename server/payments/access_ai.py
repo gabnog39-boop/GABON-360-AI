@@ -146,3 +146,56 @@ def direct_payment_entitlement(
         product_id=product_id,
         expires_at=expires_at,
     )
+
+
+@dataclass(frozen=True)
+class AutomaticAccessStatus:
+    user_id: str
+    enabled: bool
+    state: AccessState
+    reason: str
+
+
+class AutomaticAccessAI:
+    """Synchronise automatiquement l'accès selon les paiements vérifiés.
+
+    Cette IA ne considère jamais une simple déclaration client comme un paiement.
+    Elle agit uniquement sur l'état de paiement vérifié par GABON 360.
+    """
+
+    def synchronize(
+        self,
+        user_id: str,
+        payment: Optional[PaymentEvidence],
+        verified_by_gabon360: bool,
+        expires_at: Optional[datetime] = None,
+    ) -> AutomaticAccessStatus:
+        if not user_id:
+            raise ValueError("user_id requis")
+
+        if payment is None or not verified_by_gabon360:
+            return AutomaticAccessStatus(
+                user_id=user_id,
+                enabled=False,
+                state=AccessState.PENDING if payment else AccessState.UNVERIFIED,
+                reason="Accès désactivé ou maintenu bloqué jusqu'à vérification du paiement GABON 360.",
+            )
+
+        if expires_at is not None:
+            expiry = expires_at
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            if expiry <= datetime.now(timezone.utc):
+                return AutomaticAccessStatus(
+                    user_id=user_id,
+                    enabled=False,
+                    state=AccessState.EXPIRED,
+                    reason="Accès automatiquement désactivé : droit expiré.",
+                )
+
+        return AutomaticAccessStatus(
+            user_id=user_id,
+            enabled=True,
+            state=AccessState.ACTIVE,
+            reason="Accès automatiquement activé : paiement vérifié par GABON 360.",
+        )
