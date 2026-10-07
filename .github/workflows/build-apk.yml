@@ -115,6 +115,10 @@ jobs:
         run: python3 scripts/inject_avatar_controls_repair_v3.py
       - name: Créer une page dédiée pour chaque module et chaque fonction
         run: python3 scripts/inject_universal_module_pages_v1.py
+      - name: Renforcer chaque page avec ses outils opérationnels
+        run: python3 scripts/inject_page_functionality_v2.py
+      - name: Relier chaque page aux outils renforcés
+        run: python3 scripts/inject_page_functionality_bridge_v1.py
       - name: Relier toutes les IA et modules au relais central
         run: python3 scripts/inject_ai_relay.py
       - name: Nettoyer uniquement les vrais IDs HTML dupliqués
@@ -139,7 +143,7 @@ jobs:
           htmls=sorted(Path('android_project').rglob('index.html'), key=lambda p: len(p.parts))
           if not htmls: raise SystemExit('CRITICAL-AUDIT FAIL: index.html introuvable')
           html=htmls[0].read_text(encoding='utf-8', errors='ignore')
-          required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','g360-universal-launch','G360AvatarSpeak','G360AvatarListen','G360AvatarStop','GABON360_SATELLITE_RESULTS','gabon360:page-action']
+          required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','G360-PAGE-FUNCTIONALITY-V2','GABON360-PAGE-FUNCTIONALITY-BRIDGE-V1','g360-universal-launch','G360AvatarSpeak','G360AvatarListen','G360AvatarStop','GABON360_SATELLITE_RESULTS','GABON360_SELECTED_COORDINATES','gabon360:coordinates-selected','gabon360:page-action']
           missing=[x for x in required if x not in html]
           if missing: raise SystemExit('CRITICAL-AUDIT FAIL: '+', '.join(missing))
           print('CRITICAL-AUDIT: OK — pages, avatar, satellite and action relay present')
