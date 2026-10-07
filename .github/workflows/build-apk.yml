@@ -44,6 +44,7 @@ jobs:
           python -m py_compile server/api/central_assistant.py
           python -m py_compile server/integrations/satellite/change_detection.py
           python -m py_compile server/payments/access_ai.py
+          python -m py_compile server/ai/specialized_registry.py
           python -m py_compile scripts/repair_html_script_boundaries.py
           for f in scripts/inject_national_center_ui.py scripts/inject_satellite_ui.py scripts/inject_control_modules.py scripts/inject_source_controls.py scripts/inject_terrain_navigation.py scripts/inject_terrain_navigation_v2.py scripts/inject_national_pages.py scripts/inject_page_completeness_v2.py scripts/inject_functional_page_actions_v1.py scripts/inject_avatar_central.py scripts/inject_avatar_life.py scripts/inject_avatar_living_v2.py scripts/inject_control_center_hardening.py scripts/inject_avatar_home_fix.py scripts/inject_scroll_fix.py scripts/inject_mobile_ui_polish.py scripts/inject_real_gabon_map.py scripts/inject_final_mobile_interaction.py scripts/inject_mobile_runtime_v2.py scripts/inject_native_android_bridge.py scripts/inject_native_interactions_v3.py scripts/inject_map_coordinates_v3.py scripts/preflight_apk_audit.py scripts/inject_final_native_io_repair.py scripts/inject_avatar_native_status_fix.py scripts/inject_native_bridge_runtime_fix_v2.py scripts/inject_avatar_controls_repair_v3.py scripts/inject_universal_module_pages_v1.py scripts/inject_ai_relay.py scripts/inject_final_duplicate_id_repair.py scripts/inject_final_runtime_duplicate_repair.py scripts/inject_runtime_integrity_audit_v1.py scripts/inject_terrain_navigation_garmin_class_v1.py scripts/inject_page_functionality_v2.py scripts/inject_page_functionality_bridge_v1.py scripts/inject_navigation_page_bridge_v1.py scripts/inject_cybersecurity_page_v1.py scripts/inject_cybersecurity_ai_avatar_v1.py; do python -m py_compile "$f"; done
       - name: Préparer le projet Android consolidé
@@ -127,6 +128,8 @@ jobs:
         run: python3 scripts/inject_navigation_page_bridge_v1.py
       - name: Relier toutes les IA et modules au relais central
         run: python3 scripts/inject_ai_relay.py
+      - name: Activer l architecture IA spécialisée vers le relais et l avatar
+        run: python3 scripts/inject_specialized_ai_architecture_v1.py
       - name: Nettoyer uniquement les vrais IDs HTML dupliqués
         run: python3 scripts/inject_final_duplicate_id_repair.py
       - name: Réparer les doublons JavaScript runtime après toutes les injections
@@ -149,7 +152,7 @@ jobs:
           htmls=sorted(Path('android_project').rglob('index.html'), key=lambda p: len(p.parts))
           if not htmls: raise SystemExit('CRITICAL-AUDIT FAIL: index.html introuvable')
           html=htmls[0].read_text(encoding='utf-8', errors='ignore')
-          required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','G360-PAGE-FUNCTIONALITY-V2','GABON360-PAGE-FUNCTIONALITY-BRIDGE-V1','g360-universal-launch','G360AvatarSpeak','G360AvatarListen','G360AvatarStop','GABON360_SATELLITE_RESULTS','GABON360_SELECTED_COORDINATES','gabon360:coordinates-selected','gabon360:page-action']
+          required=['GABON360-SPECIALIZED-AI-ARCHITECTURE-V1','GABON360-UNIVERSAL-MODULE-PAGES-V1','G360-PAGE-FUNCTIONALITY-V2','GABON360-PAGE-FUNCTIONALITY-BRIDGE-V1','g360-universal-launch','G360AvatarSpeak','G360AvatarListen','G360AvatarStop','GABON360_SATELLITE_RESULTS','GABON360_SELECTED_COORDINATES','gabon360:coordinates-selected','gabon360:page-action']
           missing=[x for x in required if x not in html]
           if missing: raise SystemExit('CRITICAL-AUDIT FAIL: '+', '.join(missing))
           print('CRITICAL-AUDIT: OK — pages, avatar, satellite and action relay present')
