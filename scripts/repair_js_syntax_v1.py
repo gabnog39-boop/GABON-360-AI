@@ -4,7 +4,7 @@ import re
 import subprocess
 import tempfile
 
-MARKER = "GABON360-JS-SYNTAX-REPAIR-V3"
+MARKER = "GABON360-JS-SYNTAX-REPAIR-V4"
 REQUIRED = [
     "GABON360-UNIVERSAL-MODULE-PAGES-V1",
     "GABON360-PAGE-FUNCTIONALITY-V2",
@@ -16,31 +16,67 @@ WEATHER_FIX = r'''function weatherPage(){
 shell('🌦️ Météo opérationnelle','<div class="g360-v2-actions"><button id="g360-weather-gps" type="button">📍 Position GPS</button><button id="g360-weather-lib" type="button">🇬🇦 Libreville</button></div><div class="g360-v2-box g360-v2-result">Sélectionnez une zone.</div>');
 function load(lat,lon,label){
   var url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&forecast_days=3';
-  fetch(url)
-    .then(function(response){ return response.json(); })
-    .then(function(data){
-      var c=data.current||{};
-      var message=label+
-        '\\nTempérature : '+(c.temperature_2m??'—')+' °C'+
-        '\\nHumidité : '+(c.relative_humidity_2m??'—')+' %'+
-        '\\nPluie : '+(c.precipitation??'—')+' mm'+
-        '\\nVent : '+(c.wind_speed_10m??'—')+' km/h'+
-        '\\nCode météo : '+(c.weather_code??'—');
-      out(message);
-    })
-    .catch(function(error){ out('Météo indisponible : '+error.message); });
+  fetch(url).then(function(response){return response.json();}).then(function(data){
+    var c=data.current||{};
+    out(label+'\\nTempérature : '+(c.temperature_2m??'—')+' °C\\nHumidité : '+(c.relative_humidity_2m??'—')+' %\\nPluie : '+(c.precipitation??'—')+' mm\\nVent : '+(c.wind_speed_10m??'—')+' km/h\\nCode météo : '+(c.weather_code??'—'));
+  }).catch(function(error){out('Météo indisponible : '+error.message);});
 }
 var weatherLibreville=card.querySelector('#g360-weather-lib');
 var weatherGps=card.querySelector('#g360-weather-gps');
-if(weatherLibreville)weatherLibreville.onclick=function(){ load(0.3901,9.4544,'Libreville'); };
+if(weatherLibreville)weatherLibreville.onclick=function(){load(0.3901,9.4544,'Libreville');};
 if(weatherGps)weatherGps.onclick=function(){
-  if(!navigator.geolocation){ out('GPS indisponible.'); return; }
-  navigator.geolocation.getCurrentPosition(
-    function(position){ load(position.coords.latitude,position.coords.longitude,'Position GPS'); },
-    function(error){ out('GPS indisponible : '+error.message); },
-    {enableHighAccuracy:true,timeout:15000}
-  );
+  if(!navigator.geolocation){out('GPS indisponible.');return;}
+  navigator.geolocation.getCurrentPosition(function(position){
+    load(position.coords.latitude,position.coords.longitude,'Position GPS');
+  },function(error){out('GPS indisponible : '+error.message);},{enableHighAccuracy:true,timeout:15000});
 };
+}
+
+'''
+
+MAP_FIX = r'''function mapPage(){
+shell('🗺️ Carte / SIG — sélection interactive','<div class="g360-v2-box">Touchez ou cliquez directement sur la carte pour placer un point.</div><div id="g360-v2-map" class="g360-v2-map"></div><div class="g360-v2-box"><b>Point sélectionné</b><div id="g360-v2-coord">Aucun point.</div><div class="g360-v2-actions"><button id="g360-v2-savepoint">📌 Enregistrer</button><button id="g360-v2-gps">📍 GPS</button><button id="g360-v2-clearpoints">🗑 Effacer</button></div></div><div class="g360-v2-box"><b>Points enregistrés</b><div id="g360-v2-list" class="g360-v2-list"></div></div><div class="g360-v2-box g360-v2-result">Touchez la carte.</div>');
+var m=window.GABON360_REAL_LEAFLET_MAP||null;
+function ready(mm){
+ if(!mm)return;
+ window.GABON360_REAL_LEAFLET_MAP=mm;
+ var marker=null;
+ function pick(e){
+  var c={lat:e.latlng.lat,lon:e.latlng.lng,time:Date.now()};
+  window.GABON360_SELECTED_COORDINATES=c;
+  if(marker)mm.removeLayer(marker);
+  marker=L.marker([c.lat,c.lon]).addTo(mm);
+  card.querySelector('#g360-v2-coord').textContent=c.lat.toFixed(6)+'°, '+c.lon.toFixed(6)+'°';
+  out('Point sélectionné : '+c.lat.toFixed(6)+'°, '+c.lon.toFixed(6)+'°');
+  window.dispatchEvent(new CustomEvent('gabon360:coordinates-selected',{detail:c}));
+ }
+ mapClickSetup(mm,pick);
+ card.querySelector('#g360-v2-savepoint').onclick=function(){
+  var c=selected();
+  if(!c){out('Sélectionnez d’abord un point.');return;}
+  var d=db();d.waypoints=d.waypoints||[];
+  d.waypoints.push({lat:c.lat,lon:c.lon,created_at:new Date().toISOString(),source:'carte'});
+  save(d);renderList();out('Point enregistré.');
+ };
+ card.querySelector('#g360-v2-gps').onclick=function(){
+  if(!navigator.geolocation){out('GPS indisponible.');return;}
+  navigator.geolocation.getCurrentPosition(function(p){
+   var c=p.coords;mm.setView([c.latitude,c.longitude],15);
+   pick({latlng:L.latLng(c.latitude,c.longitude)});
+  },function(e){out('GPS indisponible : '+e.message);},{enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+ };
+ card.querySelector('#g360-v2-clearpoints').onclick=function(){
+  var d=db();d.waypoints=[];save(d);renderList();out('Points locaux effacés.');
+ };
+ function renderList(){
+  var d=db(),l=card.querySelector('#g360-v2-list');
+  l.innerHTML=(d.waypoints||[]).slice(-50).reverse().map(function(w){
+   return '<div class="g360-v2-item">📌 '+Number(w.lat).toFixed(6)+', '+Number(w.lon).toFixed(6)+'<br><small>'+esc(w.created_at||'')+'</small></div>';
+  }).join('')||'Aucun point enregistré.';
+ }
+ renderList();
+}
+if(m)ready(m);else mapLoader(card.querySelector('#g360-v2-map'),[-0.65,11.65],6).then(ready);
 }
 
 '''
@@ -48,119 +84,77 @@ if(weatherGps)weatherGps.onclick=function(){
 def node_check(src):
     with tempfile.NamedTemporaryFile("w", suffix=".js", encoding="utf-8", delete=False) as f:
         f.write(src)
-        name = f.name
+        name=f.name
     try:
-        r = subprocess.run(["node", "--check", name], capture_output=True, text=True)
-        return r.returncode == 0, (r.stderr or "")
+        r=subprocess.run(["node","--check",name],capture_output=True,text=True)
+        return r.returncode==0,(r.stderr or "")
     finally:
         Path(name).unlink(missing_ok=True)
 
 def select_index():
-    htmls = sorted(Path("android_project").rglob("index.html"), key=lambda p: (len(p.parts), str(p)))
-    if not htmls:
-        raise SystemExit("JS-SYNTAX-REPAIR FAIL: index.html introuvable")
-    candidates = []
+    htmls=sorted(Path("android_project").rglob("index.html"),key=lambda p:(len(p.parts),str(p)))
+    if not htmls: raise SystemExit("JS-SYNTAX-REPAIR FAIL: index.html introuvable")
+    candidates=[]
     for p in htmls:
-        h = p.read_text(encoding="utf-8", errors="ignore")
-        score = sum(x in h for x in REQUIRED)
-        candidates.append((score, p, h))
-    score, path, html = max(candidates, key=lambda x: (x[0], -len(x[1].parts), str(x[1])))
-    if score < len(REQUIRED):
-        raise SystemExit(f"JS-SYNTAX-REPAIR FAIL: mauvais index.html sélectionné score={score}/{len(REQUIRED)}")
-    return path, html
+        h=p.read_text(encoding="utf-8",errors="ignore")
+        candidates.append((sum(x in h for x in REQUIRED),p,h))
+    score,path,html=max(candidates,key=lambda x:(x[0],-len(x[1].parts),str(x[1])))
+    if score<len(REQUIRED): raise SystemExit(f"JS-SYNTAX-REPAIR FAIL: mauvais index.html sélectionné score={score}/{len(REQUIRED)}")
+    return path,html
 
-def repair_confirmed_weather(html):
-    start = html.find("function weatherPage(){")
-    if start < 0:
-        return html, False
-    end = html.find("function maritimePage(){", start)
-    if end < 0:
-        return html, False
-    current = html[start:end]
-    ok, _ = node_check(current)
-    if ok:
-        return html, False
-    repaired = html[:start] + WEATHER_FIX + html[end:]
-    ok2, err2 = node_check(WEATHER_FIX)
-    if not ok2:
-        raise SystemExit("JS-SYNTAX-REPAIR FAIL: correction météo invalide: " + err2)
-    return repaired, True
-
-def repair_script_block(block):
-    ok, err = node_check(block)
-    if ok:
-        return block, False
-    if "Unexpected token ')'" not in err and "Unexpected token ')' " not in err:
-        return block, False
-    m = re.search(r"\.js:(\d+)", err)
-    if not m:
-        return block, False
-    line_no = int(m.group(1))
-    lines = block.splitlines(keepends=True)
-    if not (1 <= line_no <= len(lines)):
-        return block, False
-    line = lines[line_no - 1]
-    candidates = []
-    for idx, ch in enumerate(line):
-        if ch != ")":
-            continue
-        trial_lines = list(lines)
-        trial_lines[line_no - 1] = line[:idx] + line[idx + 1:]
-        trial = "".join(trial_lines)
-        ok2, _ = node_check(trial)
-        if ok2:
-            candidates.append(trial)
-            if len(candidates) > 1:
-                return block, False
-    if len(candidates) == 1:
-        return candidates[0], True
-    return block, False
+def replace_function(html,name,next_name,fixed):
+    start=html.find("function "+name+"(){")
+    if start<0:return html,False
+    end=html.find("function "+next_name+"(){",start)
+    if end<0:return html,False
+    current=html[start:end]
+    ok,_=node_check(current)
+    if ok:return html,False
+    ok2,err2=node_check(fixed)
+    if not ok2: raise SystemExit("JS-SYNTAX-REPAIR FAIL: correction invalide pour "+name+": "+err2)
+    return html[:start]+fixed+html[end:],True
 
 def main():
-    path, html = select_index()
-    html, weather_changed = repair_confirmed_weather(html)
-    if weather_changed:
-        print("JS-SYNTAX-REPAIR: correction ciblée du bloc weatherPage() confirmée")
-        path.write_text(html, encoding="utf-8")
+    path,html=select_index()
+    changes=0
 
-    pattern = re.compile(r"(<script(?:\s[^>]*)?>)(.*?)(</script>)", re.I | re.S)
-    matches = list(pattern.finditer(html))
-    out = []
-    last = 0
-    changes = 0
-    failing_blocks = []
+    html,changed=replace_function(html,"mapPage","satPage",MAP_FIX)
+    changes+=int(changed)
+    if changed: print("JS-SYNTAX-REPAIR: correction ciblée mapPage()")
 
-    for idx, m in enumerate(matches):
-        out.append(html[last:m.start()])
-        opening, body, closing = m.group(1), m.group(2), m.group(3)
-        fixed, changed = repair_script_block(body)
-        if changed:
-            changes += 1
-            print(f"JS-SYNTAX-REPAIR: correction sûre dans le bloc {idx}")
-        else:
-            ok, err = node_check(body)
-            if not ok:
-                failing_blocks.append((idx, err))
-        out.append(opening + fixed + closing)
-        last = m.end()
-    out.append(html[last:])
+    html,changed=replace_function(html,"weatherPage","maritimePage",WEATHER_FIX)
+    changes+=int(changed)
+    if changed: print("JS-SYNTAX-REPAIR: correction ciblée weatherPage()")
 
-    html2 = "".join(out)
-    if failing_blocks:
+    # Confirmed defect in the Memory AI page: a ternary expression was missing its ':' branch.
+    bad="}).join('')||'<div>Aucun historique enregistré. Aucune donnée fictive n’est ajoutée.</div>';"
+    good="}).join(''):'<div>Aucun historique enregistré. Aucune donnée fictive n’est ajoutée.</div>';"
+    if bad in html:
+        html=html.replace(bad,good,1)
+        changes+=1
+        print("JS-SYNTAX-REPAIR: correction ciblée du rendu de la Mémoire territoriale")
+
+    # Validate every inline JavaScript block after the targeted repairs.
+    pattern=re.compile(r"(<script(?:\\s[^>]*)?>)(.*?)(</script>)",re.I|re.S)
+    failures=[]
+    for idx,m in enumerate(pattern.finditer(html)):
+        ok,err=node_check(m.group(2))
+        if not ok: failures.append((idx,err))
+
+    if failures:
         print("JS-SYNTAX-REPAIR: blocs encore invalides:")
-        for idx, err in failing_blocks:
-            print(f" - bloc {idx}: {err}")
+        for idx,err in failures: print(f" - bloc {idx}: {err}")
         raise SystemExit("JS-SYNTAX-REPAIR FAIL: syntaxe JavaScript encore invalide")
 
-    if changes or weather_changed:
-        if MARKER not in html2:
-            marker = f"<!-- {MARKER} -->\n"
-            pos = html2.lower().rfind("</body>")
-            html2 = html2[:pos] + marker + html2[pos:] if pos >= 0 else html2 + "\n" + marker
-        path.write_text(html2, encoding="utf-8")
-        print("JS-SYNTAX-REPAIR: corrections=", changes + int(weather_changed))
+    if changes:
+        marker=f"<!-- {MARKER} -->\\n"
+        if MARKER not in html:
+            pos=html.lower().rfind("</body>")
+            html=html[:pos]+marker+html[pos:] if pos>=0 else html+"\\n"+marker
+        path.write_text(html,encoding="utf-8")
+        print("JS-SYNTAX-REPAIR: corrections=",changes)
     else:
         print("JS-SYNTAX-REPAIR: aucune correction nécessaire")
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()
