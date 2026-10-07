@@ -1,9 +1,14 @@
-"""GABON 360 AI payment/access decision engine.
+"""GABON 360 AI — accès payant géré directement par GABON 360.
 
-This module never trusts a client-side 'paid=true' flag. A production adapter must
-supply a verified Google Play purchase/subscription state from the secure backend.
-The engine converts verified billing state into an explicit entitlement decision.
+Le paiement commercial n'est PAS lié à Google Play.
+GABON 360 est une association : les utilisateurs règlent directement sur
+le compte officiel / les moyens de paiement officiellement déclarés par
+l'association. L'accès n'est activé qu'après vérification côté serveur.
+
+Les coordonnées bancaires ou numéros de paiement ne sont jamais codés en dur
+dans l'application. Ils doivent être configurés côté administration sécurisée.
 """
+
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -19,15 +24,21 @@ class AccessState(str, Enum):
     UNVERIFIED = "unverified"
 
 
+class PaymentChannel(str, Enum):
+    BANK_TRANSFER = "bank_transfer"
+    MOBILE_MONEY = "mobile_money"
+    OTHER_OFFICIAL = "other_official"
+
+
 @dataclass(frozen=True)
-class BillingEvidence:
-    provider: str
-    product_id: str
-    purchase_token: str
-    state: AccessState
-    expires_at: Optional[datetime] = None
-    acknowledged: bool = False
+class PaymentEvidence:
+    channel: PaymentChannel
+    reference: str
+    amount: int
+    currency: str
+    paid_at: datetime
     account_id: Optional[str] = None
+    receipt_url: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -38,60 +49,100 @@ class AccessDecision:
     product_id: Optional[str] = None
 
 
-class PaymentAccessAI:
-    """Deterministic payment gate used by the access-control API.
+class DirectGabon360PaymentAI:
+    """Contrôle déterministe des accès payants après validation de GABON 360.
 
-    The 'AI' label refers to the policy/orchestration layer. It must not invent
-    payment status; only verified billing evidence can unlock paid features.
+    Une preuve déclarée par le client ne suffit jamais à elle seule.
+    Un administrateur autorisé ou un connecteur officiel doit confirmer le
+    paiement reçu sur le compte de l'association.
     """
 
-    def decide(self, evidence: Optional[BillingEvidence]) -> AccessDecision:
+    def decide(
+        self,
+        evidence: Optional[PaymentEvidence],
+        verified_by_gabon360: bool,
+        product_id: str,
+        expires_at: Optional[datetime] = None,
+    ) -> AccessDecision:
         if evidence is None:
-            return AccessDecision(False, AccessState.UNVERIFIED,
-                                  "Aucun achat vérifié n'est disponible.")
-        if evidence.provider != "google_play":
-            return AccessDecision(False, AccessState.UNVERIFIED,
-                                  "Fournisseur de paiement non autorisé.", evidence.product_id)
-        if not evidence.purchase_token:
-            return AccessDecision(False, AccessState.UNVERIFIED,
-                                  "Jeton d'achat manquant.", evidence.product_id)
-        if evidence.state is not AccessState.ACTIVE:
-            return AccessDecision(False, evidence.state,
-                                  "Abonnement non actif.", evidence.product_id)
-        if evidence.expires_at is not None:
-            now = datetime.now(timezone.utc)
-            expiry = evidence.expires_at
+            return AccessDecision(
+                False, AccessState.UNVERIFIED,
+                "Aucun paiement direct vérifié par GABON 360."
+            )
+
+        if not evidence.reference:
+            return AccessDecision(
+                False, AccessState.UNVERIFIED,
+                "Référence de paiement manquante.", product_id
+            )
+
+        if evidence.amount <= 0 or not evidence.currency:
+            return AccessDecision(
+                False, AccessState.UNVERIFIED,
+                "Montant ou devise de paiement invalide.", product_id
+            )
+
+        if not verified_by_gabon360:
+            return AccessDecision(
+                False, AccessState.PENDING,
+                "Paiement déclaré mais encore en attente de vérification par GABON 360.",
+                product_id
+            )
+
+        if expires_at is not None:
+            expiry = expires_at
             if expiry.tzinfo is None:
                 expiry = expiry.replace(tzinfo=timezone.utc)
-            if expiry <= now:
-                return AccessDecision(False, AccessState.EXPIRED,
-                                      "Abonnement expiré.", evidence.product_id)
-        return AccessDecision(True, AccessState.ACTIVE,
-                              "Accès autorisé par un achat vérifié.", evidence.product_id)
+            if expiry <= datetime.now(timezone.utc):
+                return AccessDecision(
+                    False, AccessState.EXPIRED,
+                    "Droit d'accès expiré.", product_id
+                )
+
+        return AccessDecision(
+            True, AccessState.ACTIVE,
+            "Accès autorisé après paiement direct vérifié par GABON 360.",
+            product_id
+        )
 
 
-def subscription_entitlement(subscription_state: str, expiry_time: Optional[datetime],
-                             product_id: str, purchase_token: str,
-                             acknowledged: bool = False, account_id: Optional[str] = None) -> AccessDecision:
-    """Map a Google Play subscription state into a safe access decision.
+def direct_payment_entitlement(
+    channel: str,
+    reference: str,
+    amount: int,
+    currency: str,
+    paid_at: datetime,
+    product_id: str,
+    verified_by_gabon360: bool = False,
+    account_id: Optional[str] = None,
+    receipt_url: Optional[str] = None,
+    expires_at: Optional[datetime] = None,
+) -> AccessDecision:
+    """Construit une décision d'accès à partir d'un paiement direct.
 
-    The caller must obtain subscription_state/expiry_time from the Google Play
-    Developer API on a secure backend; never pass untrusted client values here.
+    Les coordonnées du compte de GABON 360 ne sont pas stockées ici.
+    Elles doivent rester dans la configuration sécurisée de l'association.
     """
-    mapping = {
-        "SUBSCRIPTION_STATE_ACTIVE": AccessState.ACTIVE,
-        "SUBSCRIPTION_STATE_PENDING": AccessState.PENDING,
-        "SUBSCRIPTION_STATE_CANCELED": AccessState.CANCELED,
-        "SUBSCRIPTION_STATE_EXPIRED": AccessState.EXPIRED,
-        "SUBSCRIPTION_STATE_PAUSED": AccessState.CANCELED,
-    }
-    state = mapping.get(subscription_state, AccessState.UNVERIFIED)
-    return PaymentAccessAI().decide(BillingEvidence(
-        provider="google_play",
-        product_id=product_id,
-        purchase_token=purchase_token,
-        state=state,
-        expires_at=expiry_time,
-        acknowledged=acknowledged,
+    try:
+        payment_channel = PaymentChannel(channel)
+    except ValueError:
+        return AccessDecision(
+            False, AccessState.UNVERIFIED,
+            "Canal de paiement non autorisé.", product_id
+        )
+
+    evidence = PaymentEvidence(
+        channel=payment_channel,
+        reference=reference,
+        amount=amount,
+        currency=currency,
+        paid_at=paid_at,
         account_id=account_id,
-    ))
+        receipt_url=receipt_url,
+    )
+    return DirectGabon360PaymentAI().decide(
+        evidence=evidence,
+        verified_by_gabon360=verified_by_gabon360,
+        product_id=product_id,
+        expires_at=expires_at,
+    )
