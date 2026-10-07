@@ -1,45 +1,52 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
-MARK='GABON360-NATIVE-BRIDGE-RUNTIME-FIX-V2'
-
+MARK='GABON360-NATIVE-BRIDGE-RUNTIME-FIX-V3'
 
 def patch_bridge(p):
     t=p.read_text(encoding='utf-8',errors='ignore')
     if MARK in t:
         return False
-    # Make the JS bridge visible to the page after it is attached. WebView interfaces
-    # are reliably available to page JavaScript after a reload.
     old='w.addJavascriptInterface(new Bridge(a,w),"G360Android");'
     new=old+'\n    w.postDelayed(new Runnable(){public void run(){w.reload();}},180);'
     if old in t and 'w.postDelayed(new Runnable(){public void run(){w.reload();}},180);' not in t:
         t=t.replace(old,new,1)
-    # Queue TTS until TextToSpeech has finished initialization.
-    t=t.replace('final Activity a; final WebView w; SpeechRecognizer sr; TextToSpeech tts;',
-                'final Activity a; final WebView w; SpeechRecognizer sr; TextToSpeech tts; boolean ttsReady=false; String pendingSpeech="";')
-    t=t.replace('@JavascriptInterface public void speak(String text){if(text!=null&&!text.isEmpty())tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"g360");}',
-                '@JavascriptInterface public void speak(String text){if(text==null||text.isEmpty())return; if(!ttsReady){pendingSpeech=text;return;} tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"g360");}')
-    t=t.replace('@JavascriptInterface public void stopListening(){if(sr!=null)sr.stopListening();}',
-                '@JavascriptInterface public void stopListening(){if(sr!=null)sr.stopListening();}\n    @JavascriptInterface public void stopSpeaking(){if(tts!=null)tts.stop(); pendingSpeech="";}')
-    t=t.replace('public void onInit(int status){if(status==TextToSpeech.SUCCESS)tts.setLanguage(Locale.FRENCH);}',
-                'public void onInit(int status){if(status==TextToSpeech.SUCCESS){ttsReady=true;tts.setLanguage(Locale.FRENCH);js("window.G360NativeSpeechState&&window.G360NativeSpeechState(\\\'voice-ready\\\')");if(pendingSpeech!=null&&!pendingSpeech.isEmpty()){String s=pendingSpeech;pendingSpeech="";tts.speak(s,TextToSpeech.QUEUE_FLUSH,null,"g360");}}else{js("window.G360NativeSpeechError&&window.G360NativeSpeechError(\\\'TTS Android indisponible\\\')");}}')
+
+    t=t.replace(
+        'final Activity a; final WebView w; SpeechRecognizer sr; TextToSpeech tts;',
+        'final Activity a; final WebView w; SpeechRecognizer sr; TextToSpeech tts; boolean ttsReady=false; String pendingSpeech="";'
+    )
+    t=t.replace(
+        '@JavascriptInterface public void speak(String text){if(text!=null&&!text.isEmpty())tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"g360");}',
+        '@JavascriptInterface public void speak(String text){if(text==null||text.isEmpty())return; if(!ttsReady){pendingSpeech=text;return;} tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,"g360");}'
+    )
+
+    # IMPORTANT: the base native bridge already defines stopSpeaking().
+    # Do not inject a second method; only extend the existing one to clear queued speech.
+    t=t.replace(
+        '@JavascriptInterface public void stopSpeaking(){if(tts!=null)tts.stop();}',
+        '@JavascriptInterface public void stopSpeaking(){if(tts!=null)tts.stop(); pendingSpeech="";}',
+        1
+    )
+
+    t=t.replace(
+        'public void onInit(int status){if(status==TextToSpeech.SUCCESS)tts.setLanguage(Locale.FRENCH);}',
+        'public void onInit(int status){if(status==TextToSpeech.SUCCESS){ttsReady=true;tts.setLanguage(Locale.FRENCH);js("window.G360NativeSpeechState&&window.G360NativeSpeechState(\\\\\\'voice-ready\\\\\\')");if(pendingSpeech!=null&&!pendingSpeech.isEmpty()){String s=pendingSpeech;pendingSpeech="";tts.speak(s,TextToSpeech.QUEUE_FLUSH,null,"g360");}}else{js("window.G360NativeSpeechError&&window.G360NativeSpeechError(\\\\\\'TTS Android indisponible\\\\\\')");}}'
+    )
+
     p.write_text(t,encoding='utf-8')
     return True
 
-
 def patch_js(p):
     t=p.read_text(encoding='utf-8',errors='ignore')
-    if 'GABON360-NATIVE-BRIDGE-RUNTIME-FIX-V2-JS' in t:
+    if 'GABON360-NATIVE-BRIDGE-RUNTIME-FIX-V3-JS' in t:
         return False
-    payload=r'''<!-- GABON360-NATIVE-BRIDGE-RUNTIME-FIX-V2-JS -->
+    payload=r'''<!-- GABON360-NATIVE-BRIDGE-RUNTIME-FIX-V3-JS -->
 <script>
 (function(){
-  if(window.__G360_NATIVE_BRIDGE_RUNTIME_FIX_V2)return;window.__G360_NATIVE_BRIDGE_RUNTIME_FIX_V2=true;
+  if(window.__G360_NATIVE_BRIDGE_RUNTIME_FIX_V3)return;window.__G360_NATIVE_BRIDGE_RUNTIME_FIX_V3=true;
   function bridge(){return window.G360Android&&typeof window.G360Android.speak==='function'?window.G360Android:null}
-  function status(t){
-    var ids=['g360-native-io-status','g360-avatar-mic-status','g360-avatar-life-text','g360-avatar-status'];
-    for(var i=0;i<ids.length;i++){var e=document.getElementById(ids[i]);if(e)e.textContent=t;}
-  }
+  function status(t){var ids=['g360-native-io-status','g360-avatar-mic-status','g360-avatar-life-text','g360-avatar-status'];for(var i=0;i<ids.length;i++){var e=document.getElementById(ids[i]);if(e)e.textContent=t;}}
   function ready(){status(bridge()?'Micro + voix natifs prêts':'Initialisation…');}
   function say(){var b=bridge();if(!b){status('Voix native en cours d’initialisation');return}status('IA parle…');b.speak('Bonjour Ngoua Obame. Je suis l’IA centrale de GABON 360 AI. Je suis prête à vous assister.');}
   function listen(){var b=bridge();if(!b){status('Micro natif en cours d’initialisation');return}status('Écoute…');b.startListening();}
@@ -61,7 +68,6 @@ def patch_js(p):
     if i<0: raise SystemExit('</body> introuvable')
     p.write_text(t[:i]+payload+'\n'+t[i:],encoding='utf-8')
     return True
-
 
 def main():
     root=Path('android_project')
