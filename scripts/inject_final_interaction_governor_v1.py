@@ -145,12 +145,11 @@ PAYLOAD = r'''<!-- GABON360-FINAL-INTERACTION-GOVERNOR-V1 -->
   /* Au démarrage : Avatar uniquement. */
   setTimeout(function(){
     closeAll(null);
-    var m=el('g360-avatar-modal');
-    if(m && m.style.display!=='flex' && !window.GABON360_CURRENT_PAGE){
-      window.GABON360_CURRENT_PAGE='avatar';
-    }
+    window.GABON360_CURRENT_PAGE='avatar';
     wire();
-  },120);
+    /* L'avatar est réellement la page principale : ouvrir son interface centrale. */
+    try{ window.GABON360_OPEN_AVATAR_HOME(); }catch(e){}
+  },350);
 
   window.GABON360_FINAL_INTERACTION_GOVERNOR={version:'1.0',home:'avatar',singlePanel:true,horizontalNavigation:true};
 })();
