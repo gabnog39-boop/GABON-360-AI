@@ -214,17 +214,39 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re, subprocess, tempfile
-          htmls=sorted(Path('android_project').rglob('index.html'), key=lambda p: len(p.parts))
+          required = [
+              'GABON360-UNIVERSAL-MODULE-PAGES-V1',
+              'GABON360-PAGE-FUNCTIONALITY-V2',
+              'GABON360-AI-OPTION-RUNTIME-V2',
+              'GABON360-AVATAR-HOME-V1',
+          ]
+          htmls=sorted(Path('android_project').rglob('index.html'), key=lambda p: (len(p.parts), str(p)))
           if not htmls: raise SystemExit('JS-AUDIT FAIL: index.html introuvable')
-          html=htmls[0].read_text(encoding='utf-8', errors='ignore')
+          candidates=[]
+          for p in htmls:
+              h=p.read_text(encoding='utf-8', errors='ignore')
+              score=sum(x in h for x in required)
+              candidates.append((score,p,h))
+          score,path,html=max(candidates,key=lambda x:(x[0],-len(x[1].parts),str(x[1])))
+          print('JS-AUDIT candidate:',path,'score=',score,'/',len(required))
+          if score < len(required):
+              raise SystemExit('JS-AUDIT FAIL: mauvais index.html sélectionné')
           blocks=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, re.S|re.I)
           checked=0
           for i, block in enumerate(blocks):
-              p=Path(tempfile.gettempdir())/f'g360_script_{i}.js'; p.write_text(block,encoding='utf-8')
+              p=Path(tempfile.gettempdir())/f'g360_script_{i}.js'
+              p.write_text(block,encoding='utf-8')
               r=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
-              if r.returncode: raise SystemExit(f'JS-AUDIT FAIL block={i}: {r.stderr}')
+              if r.returncode:
+                  lines=block.splitlines()
+                  print('JS-AUDIT failing block:',i,'lines=',len(lines))
+                  print('JS-AUDIT source excerpt:')
+                  for n in range(min(len(lines),80)):
+                      print(f'{n+1:04d}: {lines[n]}')
+                  print('JS-AUDIT node error:',r.stderr)
+                  raise SystemExit(f'JS-AUDIT FAIL block={i}: {r.stderr}')
               checked += 1
-          print('JS-AUDIT: OK', checked, 'JavaScript blocks checked')
+          print('JS-AUDIT: OK', checked, 'JavaScript blocks checked') 
           PY
       - name: Construire APK
         shell: bash
