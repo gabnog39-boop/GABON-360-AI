@@ -39,7 +39,8 @@ stats:{icon:'📊',name:'Statistiques',actions:['National','Province','Parc','Zo
 weather:{icon:'🌦️',name:'Météo',actions:['Situation actuelle','Prévisions','Zone','Température','Pluie','Vent','Humidité','Historique','Contexte opérationnel','Source / qualité']},
 sources:{icon:'📡',name:'Sources & connexions',actions:['Satellites','Drones','Caméras','Maritime','Météo','SIG','Institutionnel','État','Qualité','Dernière réception','Tester','Synchroniser','Hors-ligne']},
 security:{icon:'🛡️',name:'Accès / administration / audit',actions:['Utilisateurs','Rôles','Permissions','Lecture','Opération','Validation','Administration','Journal actions','Commandes IA','Configuration','Sécurité','Sessions']},
-avatar:{icon:'🤖',name:'Avatar / IA centrale',actions:['Parler','Écouter','Micro','Voix','Stop voix','Conversation','Ouvrir une page','Expliquer la carte','Lire une alerte','Recevoir les sources','Historique commandes']}
+avatar:{icon:'🤖',name:'Avatar / IA centrale',actions:['Parler','Écouter','Micro','Voix','Stop voix','Conversation','Ouvrir une page','Expliquer la carte','Lire une alerte','Recevoir les sources','Historique commandes']},
+memory:{icon:'🧠',name:'Mémoire territoriale — IA spécialisée',actions:['Historique territorial','Rechercher par zone','Rechercher par date','Comparer deux périodes','Évolution forêt / parc','Évolution eaux / littoral','Historique satellite','Historique alertes','Historique missions','Corrélations','Événements récurrents','Preuves / sources','Notifier l’avatar']}
 };
 
 var root=document.getElementById('g360-universal');
@@ -83,6 +84,10 @@ var r={id:Date.now(),title:'Rapport GABON 360 AI',created_at:new Date().toISOStr
 }
 if(id==='reports'&&a==='Exporter'){
 var key2='gabon360_operational_records_v1',raw=localStorage.getItem(key2)||'{}';var blob=new Blob([raw],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='gabon360-donnees.json';link.click();status('Export local lancé.');return;
+}
+if(id==='memory'){
+if(window.GABON360_OPEN_MEMORY_AI){window.GABON360_OPEN_MEMORY_AI();dispatch(id,a);return;}
+status('IA Mémoire territoriale en cours de chargement.');dispatch(id,a);return;
 }
 if(id==='drones'||id==='cameras'||id==='maritime'){
 status('Fonction prête, mais connexion réelle/autorisée requise. Aucune donnée fictive ne sera affichée.');dispatch(id,a);return;
