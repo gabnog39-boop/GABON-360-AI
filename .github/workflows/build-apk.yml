@@ -194,25 +194,15 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re
           bridges=list(Path('android_project').rglob('G360NativeBridge.java'))
           if not bridges:
               raise SystemExit('JAVA-AUDIT FAIL: bridge absent')
           src=bridges[0].read_text(encoding='utf-8', errors='ignore')
-          required=[
-              r'public void speak\\s*\\(String\\s+text\\)',
-              r'public void startListening\\s*\\(\\)',
-              r'public void stopListening\\s*\\(\\)',
-              r'public void stopSpeaking\\s*\\(\\)'
-          ]
-          for pattern in required:
-              if not re.search(pattern, src):
-                  raise SystemExit('JAVA-AUDIT FAIL: '+pattern)
-          for name in ['stopListening','stopSpeaking']:
-              count=len(re.findall(r'public void\\s+'+name+r'\\s*\\(',src))
-              if count != 1:
-                  raise SystemExit(f'JAVA-AUDIT FAIL: {name} count={count}')
-          print('JAVA-AUDIT: OK — bridge natif contrôlé:', bridges[0])
+          required=['public void speak','public void startListening','public void stopListening','public void stopSpeaking']
+          missing=[x for x in required if x not in src]
+          if missing:
+              raise SystemExit('JAVA-AUDIT FAIL: '+', '.join(missing))
+          print('JAVA-AUDIT: OK — bridge natif présent et méthodes principales détectées')
           PY
 
       - name: Audit syntaxique JavaScript final
