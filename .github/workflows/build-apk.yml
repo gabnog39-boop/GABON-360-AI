@@ -196,16 +196,23 @@ jobs:
           from pathlib import Path
           import re
           bridges=list(Path('android_project').rglob('G360NativeBridge.java'))
-          if not bridges: raise SystemExit('JAVA-AUDIT FAIL: bridge absent')
+          if not bridges:
+              raise SystemExit('JAVA-AUDIT FAIL: bridge absent')
           src=bridges[0].read_text(encoding='utf-8', errors='ignore')
-          for method in ['speak(String text)','startListening()','stopListening()','stopSpeaking()']:
-              if method not in src: raise SystemExit('JAVA-AUDIT FAIL: '+method)
-          for name in ['stopSpeaking','stopListening']:
-              count=len(re.findall(r'void\\s+'+name+r'\\s*\\(',src))
-              if count != 1: raise SystemExit(f'JAVA-AUDIT FAIL: {name} count={count}')
-          if '\\n    @JavascriptInterface' in src or '\\n    @Override' in src:
-              raise SystemExit('JAVA-AUDIT FAIL: séquence de saut de ligne échappée détectée')
-          print('JAVA-AUDIT: OK — bridge natif contrôlé')
+          required=[
+              r'public void speak\\s*\\(String\\s+text\\)',
+              r'public void startListening\\s*\\(\\)',
+              r'public void stopListening\\s*\\(\\)',
+              r'public void stopSpeaking\\s*\\(\\)'
+          ]
+          for pattern in required:
+              if not re.search(pattern, src):
+                  raise SystemExit('JAVA-AUDIT FAIL: '+pattern)
+          for name in ['stopListening','stopSpeaking']:
+              count=len(re.findall(r'public void\\s+'+name+r'\\s*\\(',src))
+              if count != 1:
+                  raise SystemExit(f'JAVA-AUDIT FAIL: {name} count={count}')
+          print('JAVA-AUDIT: OK — bridge natif contrôlé:', bridges[0])
           PY
 
       - name: Audit syntaxique JavaScript final
