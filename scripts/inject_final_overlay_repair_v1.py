@@ -9,7 +9,6 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
 #g360-satellite-panel { display:none!important; }
 #g360-satellite-panel.g360-visible { display:block!important; }
 #g360-satellite-open {
-  display:block!important;
   position:fixed!important;
   right:12px!important;
   bottom:82px!important;
@@ -61,6 +60,7 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
         panel.classList.remove('g360-hidden');
         panel.classList.add('g360-visible');
         panel.setAttribute('aria-hidden','false');
+        launcher.classList.remove('g360-visible');
         launcher.setAttribute('aria-expanded','true');
       };
     }
@@ -70,6 +70,7 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
         panel.classList.remove('g360-visible');
         panel.classList.add('g360-hidden');
         panel.setAttribute('aria-hidden','true');
+        launcher.classList.add('g360-visible');
         launcher.setAttribute('aria-expanded','false');
       };
     }
@@ -97,7 +98,7 @@ def main():
         print('OVERLAY-REPAIR already installed:',p); return
     i=t.lower().rfind('</body>')
     if i<0: raise SystemExit('OVERLAY-REPAIR FAIL: </body> missing')
-    p.write_text(t[:i]+PAYLOAD+'\\n'+t[i:],encoding='utf-8')
+    p.write_text(t[:i]+PAYLOAD+'\n'+t[i:],encoding='utf-8')
     print('OVERLAY-REPAIR installed:',p)
 
 if __name__ == '__main__': main()
