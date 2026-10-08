@@ -113,3 +113,46 @@ Le tableau de bord doit privilégier une lecture rapide :
 - assistant/avatar ;
 - commandes vocales et textuelles ;
 - mode démonstration clairement signalé.
+
+
+## 9. Agents spécialisés et relais proactif vers l'avatar central
+
+Chaque page et chaque option doit déclarer son agent spécialisé, son événement, ses droits, ses sources et sa politique de validation. Un registre technique ne signifie pas à lui seul qu'un modèle autonome est déployé : chaque agent doit être relié à un moteur ou à une règle réellement exécutée et testée.
+
+Flux obligatoire :
+
+```text
+Source autorisée / action utilisateur / contrôle technique
+  → horodatage et contrôle qualité
+  → IA spécialisée de la page et de l'option
+  → événement structuré, preuve, confiance et statut
+  → relais central et corrélation
+  → avatar central
+  → notification visible à l'humain, sans question préalable
+  → synthèse vocale si disponible, avec priorité et file d'attente
+```
+
+Règles du relais :
+
+- transmettre à l'avatar les informations nouvelles, les résultats négatifs utiles, les erreurs, les pertes de connexion et les états de santé des sources ;
+- ne pas attendre que l'humain ouvre la page ou pose une question ;
+- afficher la source, la date/heure, le statut réel/historique/simulé, le niveau de confiance et les preuves disponibles ;
+- prioriser les alertes critiques, puis importantes, puis les informations ordinaires ; regrouper les événements répétitifs pour éviter de saturer la voix ;
+- conserver l'historique des notifications et permettre de consulter l'événement d'origine ;
+- en l'absence de données, signaler explicitement « aucune donnée nouvelle reçue » ou « source indisponible » sans inventer d'observation ;
+- informer sans autorisation de lecture ne signifie jamais contourner les rôles d'accès aux données sensibles ;
+- toute commande d'action sensible (contrôle d'un drone/caméra, modification de droits, suppression, activation de service, mesure coercitive) exige les permissions et confirmations prévues ; aucune action sensible ne doit être déclenchée par la seule prédiction d'une IA.
+
+## 10. Modules complémentaires à vérifier et livrer
+
+- fusion et corrélation multi-source ;
+- qualité, fraîcheur, couverture et provenance des données ;
+- gestion de crise, chronologie, responsables, plans d'action et retour d'expérience ;
+- preuves et intégrité des médias/observations ;
+- mode hors-ligne, file de synchronisation, reprise et déduplication ;
+- sauvegardes, restauration vérifiée et état des services ;
+- erreurs de fonctionnement, maintenance et santé des connecteurs ;
+- notifications proactives de toutes les pages vers l'avatar central ;
+- tests automatiques des pages, options, boutons, droits, relais et états sans connexion.
+
+Ces modules doivent être marqués « intégré », « testé », « à réparer » ou « dépendant d'une source externe ». Ne pas les déclarer opérationnels uniquement parce qu'ils figurent dans un registre.
