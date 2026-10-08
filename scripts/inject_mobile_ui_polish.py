@@ -27,6 +27,14 @@ button,a,[role=button],input,select,textarea{touch-action:manipulation}
 #g360-ai-command,#g360-ai-go{display:flex!important;visibility:visible!important;pointer-events:auto!important;max-width:calc(100vw - 24px)!important}
 #g360-pages-modal,#g360-cm-modal,#g360-avatar-modal{z-index:100100!important}
 #g360-avatar-launch{max-width:calc(100vw - 24px)!important;}
+/* Keep floating launchers away from the command input and bottom navigation. */
+#g360-satellite-open{position:fixed!important;right:12px!important;bottom:184px!important;top:auto!important;left:auto!important;max-width:132px!important;z-index:100005!important}
+#g360-avatar-launch{position:fixed!important;left:12px!important;bottom:184px!important;top:auto!important;width:56px!important;height:56px!important;z-index:100006!important}
+#g360-micro-launch,#g360-mic-launch,#g360-voice-launch{position:fixed!important;left:12px!important;bottom:112px!important;top:auto!important;z-index:100006!important;max-width:64px!important}
+#g360-ai-command{position:relative!important;bottom:auto!important;left:auto!important;right:auto!important;width:100%!important;z-index:10!important}
+#g360-ai-go{position:relative!important;bottom:auto!important;z-index:10!important}
+@media(max-width:680px){#g360-pages{bottom:12px!important;max-height:calc(100dvh - 160px)!important}#g360-modules{bottom:8px!important;max-width:calc(100vw - 24px)!important}body{padding-bottom:190px!important}}
+
 /* Modals always have their own scroll and safe mobile padding. */
 #g360-pages-modal,#g360-cm-modal,#g360-avatar-modal{overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;align-items:flex-start!important;padding-top:12px!important;padding-bottom:24px!important;box-sizing:border-box!important}
 #g360-pages-card,#g360-avatar-card,.g360-cm-card{max-height:calc(100vh - 36px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;box-sizing:border-box!important}
@@ -65,10 +73,10 @@ def main():
     for p in candidates:
         original=p.read_text(encoding='utf-8')
         # Remove prior mobile polish blocks, then append the current block last.
-        text=re.sub(r'<!-- GABON360-MOBILE-POLISH-V\\d+ -->.*?</script>', '', original, flags=re.S)
+        text=re.sub(r'<!-- GABON360-MOBILE-POLISH-V\d+ -->.*?</script>', '', original, flags=re.S)
         i=text.lower().rfind('</body>')
         if i>=0:
-            p.write_text(text[:i]+PAYLOAD+'\\n'+text[i:],encoding='utf-8')
+            p.write_text(text[:i]+PAYLOAD+'\n'+text[i:],encoding='utf-8')
             print('replaced and moved final mobile polish to end:',p)
             updated+=1
     if updated == 0:
