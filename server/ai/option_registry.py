@@ -91,6 +91,22 @@ PAGE_OPTIONS: tuple[AIOption, ...] = (
     AIOption("maintenance", "sante_services", "orchestrator", "service-health", proactive=True),
     AIOption("maintenance", "erreurs", "orchestrator", "runtime-error", proactive=True),
     AIOption("administration", "sessions", "admin", "session-status", permission="owner", human_validation=True),
+    AIOption("navigation", "alerte_hors_route", "navigation", "off-route-alert", proactive=True),
+    AIOption("navigation", "proximite_danger", "navigation", "proximity-hazard", proactive=True),
+    AIOption("navigation", "risque_terrain", "navigation", "terrain-risk", proactive=True),
+    AIOption("navigation", "guidage_vocal", "navigation", "voice-guidance", proactive=True),
+    AIOption("navigation", "cap_boussole", "navigation", "heading-compass"),
+    AIOption("navigation", "distance_eta", "navigation", "distance-eta"),
+    AIOption("navigation", "retour_depart", "navigation", "trackback"),
+    AIOption("navigation", "enregistrement_trace", "navigation", "track-recording"),
+    AIOption("navigation", "import_export_gpx", "navigation", "gpx-transfer"),
+    AIOption("navigation", "cartes_hors_ligne", "navigation", "offline-map-status", proactive=True),
+    AIOption("navigation", "etat_gnss", "navigation", "gnss-status", proactive=True),
+    AIOption("navigation", "sync_centre", "navigation", "navigation-center-sync", proactive=True),
+    AIOption("navigation", "rendezvous_secours", "navigation", "emergency-location-share", permission="operator", human_validation=True),
+    AIOption("satellite", "couche_navigation", "satellite", "satellite-navigation-layer"),
+    AIOption("satellite", "etat_connexion", "satellite", "satellite-connection-status", proactive=True),
+    AIOption("satellite", "alerte_changement_terrain", "satellite", "terrain-change-alert", proactive=True),
 )
 
 
