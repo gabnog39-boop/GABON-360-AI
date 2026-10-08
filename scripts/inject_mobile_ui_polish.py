@@ -56,15 +56,17 @@ button,a,[role=button],input,select,textarea{touch-action:manipulation}
 '''
 
 def main():
+    import re
     candidates=sorted(Path('android_project').rglob('index.html'),key=lambda p:('assets' in p.parts,len(p.parts)))
     for p in candidates:
         text=p.read_text(encoding='utf-8')
-        if MARKER in text:
-            print('already:',p); return
+        # Always remove any previous polish payload, then append the current one last.
+        text=re.sub(r'<!-- GABON360-MOBILE-POLISH-V\\d+ -->.*?</script>', '', text, flags=re.S)
         i=text.lower().rfind('</body>')
         if i>=0:
-            p.write_text(text[:i]+PAYLOAD+'\n'+text[i:],encoding='utf-8')
-            print('injected:',p); return
+            p.write_text(text[:i]+PAYLOAD+'\\n'+text[i:],encoding='utf-8')
+            print('replaced and moved final mobile polish to end:',p)
+            return
     raise SystemExit('No suitable index.html found')
 
 if __name__=='__main__': main()
