@@ -2,8 +2,8 @@
 from __future__ import annotations
 from pathlib import Path
 
-MARKER='<!-- GABON360-MOBILE-POLISH-V2 -->'
-PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V2 -->
+MARKER='<!-- GABON360-MOBILE-POLISH-V3 -->'
+PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V3 -->
 <style>
 /* Final mobile layout normalization: one scrollable document, no stacked fixed toolbars. */
 html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;overflow-y:auto!important;height:auto!important;min-height:100%!important;position:relative!important}
@@ -22,11 +22,11 @@ main,#root,#app,.app,.shell,.page,.content,.main-content{max-width:100%!importan
 #g360-avatar-launch{bottom:78px!important;left:12px!important;width:56px!important;height:56px!important;z-index:100010!important}
 #g360-satellite-open{bottom:78px!important;right:12px!important;min-height:44px!important;z-index:100010!important}
 button,a,[role=button],input,select,textarea{touch-action:manipulation}
-/* AI command strip is hidden on the dashboard because the central avatar is the command entry point. */
-#g360-ai-command{display:none!important}
-#g360-ai-go{display:none!important}
 /* Avatar launcher stays above the navigation bar without covering content. */
-#g360-avatar-launch{left:12px!important;bottom:126px!important;width:72px!important;height:72px!important;z-index:100010!important}
+#g360-avatar-launch{left:12px!important;bottom:126px!important;width:60px!important;height:60px!important;z-index:100010!important}
+#g360-ai-command,#g360-ai-go{display:flex!important;visibility:visible!important;pointer-events:auto!important;max-width:calc(100vw - 24px)!important}
+#g360-pages-modal,#g360-cm-modal,#g360-avatar-modal{z-index:100100!important}
+#g360-avatar-launch{max-width:calc(100vw - 24px)!important;}
 /* Modals always have their own scroll and safe mobile padding. */
 #g360-pages-modal,#g360-cm-modal,#g360-avatar-modal{overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;align-items:flex-start!important;padding-top:12px!important;padding-bottom:24px!important;box-sizing:border-box!important}
 #g360-pages-card,#g360-avatar-card,.g360-cm-card{max-height:calc(100vh - 36px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;box-sizing:border-box!important}
