@@ -164,6 +164,8 @@ jobs:
         run: python3 scripts/inject_final_interaction_hardening_v1.py
       - name: Réparer le balayage Android droite-gauche et gauche-droite
         run: python3 scripts/inject_android_swipe_repair_v1.py
+      - name: Appliquer la finition finale des options après toutes les injections
+        run: python3 scripts/inject_mobile_ui_polish.py
       - name: Audit préliminaire obligatoire du Centre
         shell: bash
         run: |
