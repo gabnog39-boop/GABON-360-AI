@@ -18,23 +18,23 @@ def main():
     if not htmls: raise SystemExit('RUNTIME-AUDIT FAIL: index.html absent')
     p=htmls[0]; html=p.read_text(encoding='utf-8',errors='ignore')
     failures=[]
-    if MARKER not in html:
-        for x in PAGES:
+    for x in PAGES:
             if x not in html: failures.append('page token absent: '+x)
-        for x in ACTIONS:
+    for x in ACTIONS:
             if x not in html: failures.append('runtime bridge absent: '+x)
-        if html.count('// V163 — Centre de situation des patrouilles + IA terrain') > 1:
+    if html.count('// V163 — Centre de situation des patrouilles + IA terrain') > 1:
             failures.append('duplicate V163 runtime block')
-        if html.count('// V169 — FUSION CARTE + VISION + PATROUILLE') > 1:
+    if html.count('// V169 — FUSION CARTE + VISION + PATROUILLE') > 1:
             failures.append('duplicate V169 runtime block')
-        if 'GABON360_FUNCTIONAL_PAGE_ACTIONS' in html and 'gabon360:page-action' not in html:
+    if 'GABON360_FUNCTIONAL_PAGE_ACTIONS' in html and 'gabon360:page-action' not in html:
             failures.append('functional action event bus absent')
-        if 'GABON360_AI_RELAY' in html and 'gabon360:ai-command' not in html:
+    if 'GABON360_AI_RELAY' in html and 'gabon360:ai-command' not in html:
             failures.append('AI command relay event bus absent')
-        if failures:
-            print('RUNTIME-AUDIT FAIL')
-            for f in failures: print(' -',f)
-            raise SystemExit(2)
+    if failures:
+        print('RUNTIME-AUDIT FAIL')
+        for f in failures: print(' -',f)
+        raise SystemExit(2)
+    if MARKER not in html:
         html=html.replace('</body>',MARKER+'\n</body>',1) if '</body>' in html else html+'\n'+MARKER+'\n'
         p.write_text(html,encoding='utf-8')
     print('RUNTIME-AUDIT OK')
