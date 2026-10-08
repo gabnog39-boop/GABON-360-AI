@@ -12,7 +12,7 @@ body{padding-bottom:150px!important;box-sizing:border-box!important}
 main,#root,#app,.app,.shell,.page,.content,.main-content{max-width:100%!important;box-sizing:border-box!important}
 /* National launcher: compact single entry point instead of a pile of buttons over the dashboard. */
 #g360-pages{left:12px!important;right:12px!important;bottom:74px!important;top:auto!important;max-width:none!important;width:auto!important;display:block!important;background:rgba(6,21,34,.96)!important;border:1px solid #31506d!important;border-radius:12px!important;padding:7px!important;box-shadow:0 8px 24px #0009!important}
-#g360-pages button{display:none!important}
+#g360-pages button{display:flex!important;align-items:center!important;justify-content:flex-start!important;width:100%!important;min-height:44px!important;margin:3px 0!important;padding:10px 12px!important;box-sizing:border-box!important;white-space:normal!important;text-align:left!important;touch-action:manipulation!important}
 #g360-pages #g360-pages-open{display:block!important;width:100%!important;margin:0!important;padding:10px!important;font-size:14px!important}
 /* Existing modules bar becomes a single compact launcher, avoiding collision with national navigation. */
 #g360-modules{left:12px!important;right:12px!important;bottom:12px!important;top:auto!important;width:auto!important;display:flex!important;gap:7px!important;justify-content:flex-start!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain!important;box-sizing:border-box!important;padding:6px!important;scrollbar-width:thin!important;z-index:100000!important}
