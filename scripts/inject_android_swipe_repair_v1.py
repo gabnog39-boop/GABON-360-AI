@@ -85,7 +85,7 @@ def main():
         return
     i=html.lower().rfind('</body>')
     if i<0: raise SystemExit('SWIPE REPAIR FAIL: </body> introuvable')
-    p.write_text(html[:i]+PAYLOAD+'\\n'+html[i:],encoding='utf-8')
+    p.write_text(html[:i]+PAYLOAD+chr(10)+html[i:],encoding='utf-8')
     print('SWIPE REPAIR: injected',p)
 
 if __name__=='__main__':
