@@ -10,8 +10,12 @@ PAYLOAD = r'''<!-- GABON360-FINAL-INTERACTION-GOVERNOR-V1 -->
   pointer-events:auto!important;
   touch-action:manipulation!important;
 }
-#g360-avatar-launch{z-index:2147483640!important}
-#g360-universal-launch,#g360-v2-launch{z-index:2147483639!important}
+#g360-avatar-launch{z-index:100050!important}
+#g360-universal-launch,#g360-v2-launch{z-index:100040!important}
+/* Active page dialogs must sit above floating launchers, otherwise the avatar/mic steal taps. */
+#g360-pages-modal,#g360-universal,#g360-v2,#g360-avatar-modal{z-index:100100!important}
+#g360-pages-modal[aria-hidden='true'],#g360-universal[aria-hidden='true'],#g360-v2[aria-hidden='true'],#g360-avatar-modal[aria-hidden='true']{pointer-events:none!important;visibility:hidden!important}
+#g360-pages-modal[aria-hidden='false'],#g360-universal[aria-hidden='false'],#g360-v2[aria-hidden='false'],#g360-avatar-modal[aria-hidden='false']{pointer-events:auto!important;visibility:visible!important}
 #g360-avatar-modal,#g360-universal,#g360-v2,#g360-pages-modal{
   touch-action:pan-y!important;
 }
