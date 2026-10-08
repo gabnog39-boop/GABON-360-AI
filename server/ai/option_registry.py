@@ -78,6 +78,19 @@ PAGE_OPTIONS: tuple[AIOption, ...] = (
     AIOption("abonnements", "activation", "access", "access-change", permission="owner", human_validation=True),
     AIOption("administration", "utilisateurs", "admin", "user-change", permission="owner", human_validation=True),
     AIOption("administration", "roles", "admin", "role-change", permission="owner", human_validation=True),
+    AIOption("qualite_donnees", "fraicheur", "sources", "data-freshness", proactive=True),
+    AIOption("qualite_donnees", "couverture", "sources", "coverage-quality", proactive=True),
+    AIOption("crise", "chronologie", "crisis", "incident-timeline"),
+    AIOption("crise", "retour_experience", "crisis", "after-action-review"),
+    AIOption("preuves", "integrite", "memory", "evidence-integrity", permission="operator", human_validation=True),
+    AIOption("preuves", "historique", "memory", "evidence-history", permission="operator"),
+    AIOption("hors_ligne", "file_synchronisation", "orchestrator", "sync-queue", proactive=True),
+    AIOption("hors_ligne", "reprise_connexion", "orchestrator", "sync-recovered", proactive=True),
+    AIOption("sauvegardes", "etat", "admin", "backup-status", permission="admin", proactive=True),
+    AIOption("sauvegardes", "restauration_test", "admin", "restore-test", permission="admin", human_validation=True),
+    AIOption("maintenance", "sante_services", "orchestrator", "service-health", proactive=True),
+    AIOption("maintenance", "erreurs", "orchestrator", "runtime-error", proactive=True),
+    AIOption("administration", "sessions", "admin", "session-status", permission="owner", human_validation=True),
 )
 
 
