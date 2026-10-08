@@ -2,8 +2,8 @@
 from __future__ import annotations
 from pathlib import Path
 
-MARKER='<!-- GABON360-MOBILE-POLISH-V3 -->'
-PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V3 -->
+MARKER='<!-- GABON360-MOBILE-POLISH-V4 -->'
+PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V4 -->
 <style>
 /* Final mobile layout normalization: one scrollable document, no stacked fixed toolbars. */
 html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;overflow-y:auto!important;height:auto!important;min-height:100%!important;position:relative!important}
@@ -11,7 +11,7 @@ body{padding-bottom:150px!important;box-sizing:border-box!important}
 /* Keep the main content in normal flow. */
 main,#root,#app,.app,.shell,.page,.content,.main-content{max-width:100%!important;box-sizing:border-box!important}
 /* National launcher: compact single entry point instead of a pile of buttons over the dashboard. */
-#g360-pages{left:12px!important;right:12px!important;bottom:74px!important;top:auto!important;max-width:none!important;width:auto!important;display:block!important;background:rgba(6,21,34,.96)!important;border:1px solid #31506d!important;border-radius:12px!important;padding:7px!important;box-shadow:0 8px 24px #0009!important}
+#g360-pages{left:12px!important;right:12px!important;bottom:74px!important;top:auto!important;max-width:none!important;width:auto!important;background:rgba(6,21,34,.96)!important;border:1px solid #31506d!important;border-radius:12px!important;padding:7px!important;box-shadow:0 8px 24px #0009!important}
 #g360-pages button{display:flex!important;align-items:center!important;justify-content:flex-start!important;width:100%!important;min-height:44px!important;margin:3px 0!important;padding:10px 12px!important;box-sizing:border-box!important;white-space:normal!important;text-align:left!important;touch-action:manipulation!important}
 #g360-pages #g360-pages-open{display:block!important;width:100%!important;margin:0!important;padding:10px!important;font-size:14px!important}
 /* Existing modules bar becomes a single compact launcher, avoiding collision with national navigation. */
