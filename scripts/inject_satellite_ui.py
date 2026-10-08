@@ -8,7 +8,8 @@ MARKER = "<!-- GABON360-SATELLITE-PANEL-V1 -->"
 PAYLOAD = r'''<!-- GABON360-SATELLITE-PANEL-V1 -->
 <style>
 #g360-satellite-panel{display:none!important;position:fixed;right:14px;bottom:14px;z-index:99999;width:min(390px,calc(100vw - 28px));max-height:62vh;overflow:auto;background:rgba(8,16,28,.96);color:#eef6ff;border:1px solid rgba(77,170,255,.45);border-radius:16px;box-shadow:0 12px 36px rgba(0,0,0,.42);font:14px/1.4 system-ui,sans-serif;backdrop-filter:blur(10px)}
-#g360-satellite-panel.g360-hidden{display:none!important}\n#g360-satellite-panel.g360-visible{display:block!important}
+#g360-satellite-panel.g360-hidden{display:none!important}
+#g360-satellite-panel.g360-visible{display:block!important}
 #g360-satellite-panel .g360-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
 #g360-satellite-panel .g360-title{font-weight:700}.g360-pill{font-size:11px;padding:3px 7px;border-radius:999px;background:#173b2a;color:#9ff0bf}.g360-close{border:0!important;background:transparent!important;color:#fff!important;font-size:20px!important;line-height:1!important;padding:2px 6px!important;cursor:pointer}
 #g360-satellite-panel .g360-body{padding:12px 14px}.g360-row{display:flex;gap:8px;align-items:center;margin-bottom:9px}.g360-row select,.g360-row button{border-radius:9px;border:1px solid rgba(255,255,255,.16);padding:8px;background:#152236;color:#fff}.g360-row button{cursor:pointer;font-weight:600}.g360-status{font-size:12px;opacity:.82;margin:6px 0 10px}.g360-card{padding:9px 10px;margin:7px 0;border-radius:10px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08)}.g360-card b{display:block;margin-bottom:3px}.g360-meta{font-size:11px;opacity:.72}.g360-note{font-size:11px;opacity:.68;margin-top:10px}
