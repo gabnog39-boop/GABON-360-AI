@@ -61,10 +61,10 @@ def main():
     for p in candidates:
         text=p.read_text(encoding='utf-8')
         # Always remove any previous polish payload, then append the current one last.
-        text=re.sub(r'<!-- GABON360-MOBILE-POLISH-V\\d+ -->.*?</script>', '', text, flags=re.S)
+        text=re.sub(r'<!-- GABON360-MOBILE-POLISH-V\d+ -->.*?</script>', '', text, flags=re.S)
         i=text.lower().rfind('</body>')
         if i>=0:
-            p.write_text(text[:i]+PAYLOAD+'\\n'+text[i:],encoding='utf-8')
+            p.write_text(text[:i]+PAYLOAD+'\n'+text[i:],encoding='utf-8')
             print('replaced and moved final mobile polish to end:',p)
             return
     raise SystemExit('No suitable index.html found')
