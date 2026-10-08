@@ -2,8 +2,8 @@
 from __future__ import annotations
 from pathlib import Path
 
-MARKER='<!-- GABON360-MOBILE-POLISH-V1 -->'
-PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V1 -->
+MARKER='<!-- GABON360-MOBILE-POLISH-V2 -->'
+PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V2 -->
 <style>
 /* Final mobile layout normalization: one scrollable document, no stacked fixed toolbars. */
 html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;overflow-y:auto!important;height:auto!important;min-height:100%!important;position:relative!important}
