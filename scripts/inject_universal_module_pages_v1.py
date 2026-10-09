@@ -111,11 +111,28 @@ window.GABON360_OPEN_FUNCTION_PAGE=function(id,i){modulePage(id);setTimeout(func
    the operational module may list the same functions in different orders. */
 window.GABON360_OPEN_NAMED_FUNCTION=function(id,label){
  var m=modules[id]; if(!m)return false;
- var target=String(label||'').trim().toLowerCase();
- var i=m.actions.findIndex(function(a){return String(a).trim().toLowerCase()===target});
+ var norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()};
+ var target=norm(label);
+ var aliases={
+  map:{'ouvrir la carte':'carte routiere','carte':'carte routiere','ouvrir la carte sig':'carte routiere','choisir une zone':'selection par clic','clic coordonnees':'selection par clic','ouvrir sur carte':'evenements sur carte'},
+  nav:{'ma position':'gps gnss','position gps':'gps gnss','clic coordonnees':'waypoint','points de passage':'waypoint','guidage vocal':'guidage vocal'},
+  sat:{'rechercher une observation':'sentinel 2','ouvrir observation':'ouvrir observation','historique satellite':'historique','recherche par date':'recherche date'},
+  drones:{'etat des drones':'etat connexion','missions':'mission','flux video':'flux reel'},
+  cameras:{'cameras autorisees':'sites','etat des connexions':'connexion','historique des evenements':'historique'},
+  maritime:{'ocean':'cote','donnees navires':'donnees navires autorisees'},
+  forests:{'carte des zones':'carte des zones','patrouille':'patrouilles'},
+  alerts:{'nouvelles alertes':'nouvelles alertes','ouvrir sur carte':'ouvrir sur carte'},
+  reports:{'creer un rapport':'nouveau rapport','exporter un rapport':'exporter'},
+  stats:{'actualiser les statistiques':'actualiser'},
+  weather:{'meteo actuelle':'situation actuelle','conditions actuelles':'situation actuelle'},
+  memory:{'rechercher par date':'rechercher par date','rechercher par zone':'rechercher par zone','notifier avatar':'notifier l avatar'},
+  avatar:{'parler a l utilisateur':'parler','ecouter la commande':'ecouter','expliquer la carte':'expliquer la carte'}
+ };
+ var wanted=(aliases[id]&&aliases[id][target])||target;
+ var i=m.actions.findIndex(function(a){return norm(a)===wanted});
  modulePage(id);
  if(i>=0){setTimeout(function(){var b=root.querySelector('[data-g360-fn="'+id+'|'+i+'"]');if(b)b.click()},0);return true}
- status('Page '+m.name+' ouverte. Cette option est disponible dans la page, mais son libellé exact diffère du catalogue.');
+ status('Page '+m.name+' ouverte. La fonction « '+String(label)+' » nécessite un raccordement spécifique.');
  return false;
 };
 window.GABON360_MODULE_PAGES=modules;
