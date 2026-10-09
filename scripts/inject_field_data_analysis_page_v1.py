@@ -42,8 +42,10 @@ PAYLOAD = r'''<!-- GABON360-FIELD-DATA-ANALYSIS-V1 -->
     <div class="g360-fa-actions"><button id="g360-fa-analyze">Analyser les enregistrements</button><button id="g360-fa-refresh">Actualiser</button></div>
    </section>
    <section class="g360-fa-card">
-    <b>🧠 Résultat de l'analyse</b>
-    <div id="g360-fa-summary" class="g360-fa-status" style="margin-top:8px">Aucune analyse effectuée.</div>
+    <b>🧠 IA SPÉCIALISÉE — ANALYSTE TERRAIN</b>
+    <div class="g360-fa-muted">Moteur d'analyse embarqué : contrôle des coordonnées, qualité des fiches, répétitions, signaux de risque et recommandations. Une IA distante nécessitera un service autorisé connecté.</div>
+    <div id="g360-fa-summary" class="g360-fa-status" style="margin-top:8px">L'IA attend les données enregistrées pour lancer son analyse.</div>
+    <div id="g360-fa-findings" class="g360-fa-status" style="margin-top:8px"></div>
     <div class="g360-fa-actions"><button id="g360-fa-alert">Préparer une alerte</button><button id="g360-fa-report">Créer un rapport</button><button id="g360-fa-avatar">Transmettre à l'avatar</button></div>
    </section>
   </div>
@@ -81,10 +83,40 @@ function refresh(){
  recordsBox.innerHTML=last.length?last.slice().reverse().slice(0,100).map(function(r){var loc=r.location&&typeof r.location==='object'?JSON.stringify(r.location):'';return '<div class="g360-fa-record"><b>'+esc(r.event_type||r.type||r.domain||'Observation')+'</b> · '+esc(r.status||'statut non renseigné')+'<br>'+esc(r.observation||r.message||r.description||'Description absente')+'<br><small>'+esc(r.source||r._store)+' · '+esc(r.timestamp||r.date||r.created_at||'date non renseignée')+' · '+esc(loc||((coords(r))?((r.lat||r.latitude)+', '+(r.lon||r.lng||r.longitude)):'coordonnées absentes'))+'</small></div>'}).join(''):'Aucun enregistrement correspondant trouvé dans les registres locaux. Cela ne prouve pas qu'aucune activité terrain n'existe : les données peuvent ne pas avoir été synchronisées vers ce téléphone.';
  status.textContent='Registres locaux consultés : '+keys.length+'. Enregistrements disponibles : '+last.length+'. Sources externes : non supposées connectées.';
 }
-function analyze(){refresh();var n=last.length,g=last.filter(coords).length,alerts=last.filter(function(r){return /alert|critical|high|anomal|menace|incident/i.test([r.severity,r.status,r.type,r.event_type].join(' '))}).length;
- var textResult=n?'Analyse descriptive de '+n+' enregistrement(s).\n• '+g+' enregistrement(s) avec coordonnées.\n• '+alerts+' élément(s) signalé(s) comme alerte/incident à vérifier.\n• Les sources et dates sont affichées dans la liste.\n\nLimite : ce résumé ne confirme pas une anomalie environnementale. Vérifier les preuves, la qualité de la source et la validation humaine.':'Aucune donnée correspondant aux filtres n’est enregistrée localement. Synchroniser les fiches terrain ou connecter une source autorisée avant toute conclusion.';
- summary.textContent=textResult;status.textContent='Analyse terminée à '+new Date().toLocaleString('fr-FR')+'. Résultat calculé uniquement à partir des enregistrements disponibles.';
- return {module:'field-analysis',source:'Analyse locale des données terrain',timestamp:new Date().toISOString(),observation:textResult,severity:alerts?'HIGH':'INFO',status:'ANALYSIS_SUMMARY',evidence:last.slice(0,50),requires_human_validation:true};
+function analyze(){
+ refresh();
+ var n=last.length,geo=last.filter(coords).length,alerts=0,missingDate=0,missingSource=0,duplicates={},repeat=0,findings=[],recommend=[];
+ last.forEach(function(r){
+  var tx=text(r),kind=[r.severity,r.status,r.type,r.event_type,tx].join(' ').toLowerCase();
+  if(/critical|high|alert|anomal|menace|incident|braconnage|deforestation|déforestation|pollution|feu|incendie/.test(kind))alerts++;
+  if(!dateOf(r))missingDate++;
+  if(!(r.source||r._store))missingSource++;
+  var sig=tx.toLowerCase().replace(/\\s+/g,' ').trim();
+  if(sig){if(duplicates[sig])repeat++;else duplicates[sig]=1}
+ });
+ var noGeo=n-geo,quality=n?Math.round(100*((geo/n)*0.4+((n-missingDate)/n)*0.3+((n-missingSource)/n)*0.3)):0;
+ if(!n){
+  findings.push('Aucune observation ne correspond aux filtres. L’IA ne peut pas conclure sans données terrain synchronisées.');
+  recommend.push('Importer une fiche de patrouille ou connecter une source autorisée, puis relancer l’analyse.');
+ }else{
+  findings.push('Volume analysé : '+n+' enregistrement(s) local(aux), provenant de '+Object.keys(last.reduce(function(a,r){a[r.source||r._store||'source inconnue']=1;return a},{})).length+' source(s) identifiée(s).');
+  findings.push('Qualité indicative des fiches : '+quality+' % (coordonnées 40 %, dates 30 %, provenance 30 %). Ce score mesure la complétude, pas la vérité des observations.');
+  if(noGeo){findings.push('Attention : '+noGeo+' fiche(s) sans coordonnées exploitables.');recommend.push('Compléter latitude/longitude ou placer le point sur la carte avant de comparer les zones.')}
+  if(missingDate){findings.push('Attention : '+missingDate+' fiche(s) sans date reconnue.');recommend.push('Renseigner date et heure pour permettre une analyse chronologique fiable.')}
+  if(missingSource){findings.push('Attention : '+missingSource+' fiche(s) sans source clairement identifiée.');recommend.push('Identifier l’écogarde, l’équipe, le capteur ou le fournisseur de données.')}
+  if(repeat){findings.push('Répétitions possibles : '+repeat+' fiche(s) partagent le même texte descriptif.');recommend.push('Vérifier les doublons avant de compter les incidents comme événements distincts.')}
+  if(alerts){findings.push('Signaux textuels à vérifier : '+alerts+' fiche(s) contiennent des mots-clés d’alerte ou de risque. Ce ne sont pas des alertes confirmées automatiquement.');recommend.push('Faire vérifier les preuves, la date, la localisation et la source par un responsable avant validation.')}
+  if(!alerts&&!noGeo&&!missingDate&&!missingSource&&!repeat)findings.push('Aucun signal de qualité évident n’a été détecté par les règles embarquées. Cela ne prouve pas l’absence de menace.');
+  recommend.push('Comparer les fiches avec les périodes précédentes et les preuves originales avant de tirer une conclusion.');
+ }
+ var textResult='RAPPORT DE L’IA SPÉCIALISÉE\\n'+findings.join('\\n• ');
+ if(recommend.length)textResult+='\\n\\nRECOMMANDATIONS\\n• '+recommend.join('\\n• ');
+ textResult+='\\n\\nMéthode : moteur embarqué de règles et de qualité des données. Aucun modèle distant ni capteur non connecté n’est supposé actif. Validation humaine requise.';
+ summary.textContent=textResult;
+ var fbox=document.getElementById('g360-fa-findings');
+ if(fbox)fbox.textContent='Indicateurs : '+n+' fiches · '+geo+' avec coordonnées · '+missingDate+' sans date · '+missingSource+' sans provenance · '+repeat+' répétitions possibles · '+alerts+' signaux à vérifier.';
+ status.textContent='IA terrain : analyse terminée à '+new Date().toLocaleString('fr-FR')+'. Données disponibles uniquement.';
+ return {module:'field-analysis',source:'IA spécialisée terrain — moteur embarqué',timestamp:new Date().toISOString(),observation:textResult,severity:alerts?'HIGH':'INFO',status:'ANALYSIS_SUMMARY',evidence:last.slice(0,50),quality_score:quality,findings:findings,recommendations:recommend,requires_human_validation:true};
 }
 function publish(type){var e=analyze();e.type=type;try{window.dispatchEvent(new CustomEvent('gabon360:ai-event',{detail:e}));window.dispatchEvent(new CustomEvent('gabon360:page-action',{detail:{page:'field-analysis',action:type}}))}catch(_){}if(type==='avatar'){speak(e.observation);return}try{var d=parse(localStorage.getItem('gabon360_operational_records_v1'))||{};var k=type==='report'?'reports':'events';if(!Array.isArray(d[k]))d[k]=[];d[k].push(e);localStorage.setItem('gabon360_operational_records_v1',JSON.stringify(d));status.textContent=(type==='report'?'Brouillon de rapport enregistré localement.':'Événement préparatoire enregistré localement.')+' '+status.textContent}catch(_){status.textContent='Analyse prête, mais impossible d’enregistrer dans le stockage local.'}}
 document.getElementById('g360-fa-back').onclick=close;document.getElementById('g360-fa-close').onclick=close;document.getElementById('g360-fa-analyze').onclick=analyze;document.getElementById('g360-fa-refresh').onclick=refresh;document.getElementById('g360-fa-alert').onclick=function(){publish('alert')};document.getElementById('g360-fa-report').onclick=function(){publish('report')};document.getElementById('g360-fa-avatar').onclick=function(){publish('avatar')};
