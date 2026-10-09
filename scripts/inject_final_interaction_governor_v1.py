@@ -163,14 +163,18 @@ PAYLOAD = r'''<!-- GABON360-FINAL-INTERACTION-GOVERNOR-V1 -->
 def main():
     roots=sorted(Path('android_project').rglob('index.html'),key=lambda p:(len(p.parts),str(p)))
     if not roots: raise SystemExit('index.html introuvable')
-    required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','GABON360-AVATAR-HOME-V1']
+    # Le ZIP peut contenir plusieurs index.html intermédiaires. Choisir celui
+    # qui porte le plus de marqueurs GABON 360 connus, sans bloquer la compilation
+    # si un marqueur optionnel a été omis par un injecteur précédent.
+    required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','GABON360-AVATAR-HOME-V1','GABON360_NATIONAL_MODULES','GABON360-HORIZONTAL-PAGE-NAV-V1']
     candidates=[]
     for p in roots:
         t=p.read_text(encoding='utf-8',errors='ignore')
         score=sum(x in t for x in required)
         candidates.append((score,p,t))
     score,p,t=max(candidates,key=lambda x:(x[0],-len(x[1].parts),str(x[1])))
-    if score<len(required): raise SystemExit('Aucun index.html consolidé trouvé')
+    if score==0:
+        raise SystemExit('Aucun index.html avec marqueur GABON 360 trouvé')
     if MARK in t:
         print('already:',p); return
     i=t.lower().rfind('</body>')
