@@ -111,7 +111,7 @@ window.GABON360_OPEN_FUNCTION_PAGE=function(id,i){modulePage(id);setTimeout(func
    the operational module may list the same functions in different orders. */
 window.GABON360_OPEN_NAMED_FUNCTION=function(id,label){
  var m=modules[id]; if(!m)return false;
- var norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()};
+ var norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()};
  var target=norm(label);
  var aliases={
   map:{'ouvrir la carte':'carte routiere','carte':'carte routiere','ouvrir la carte sig':'carte routiere','choisir une zone':'selection par clic','clic coordonnees':'selection par clic','ouvrir sur carte':'evenements sur carte'},
