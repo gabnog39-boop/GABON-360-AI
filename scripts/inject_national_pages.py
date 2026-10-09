@@ -11,6 +11,8 @@ MARKER = "<!-- GABON360-NATIONAL-PAGES-V1 -->"
 PAYLOAD = r'''<!-- GABON360-NATIONAL-PAGES-V1 -->
 <style>
 #g360-pages{position:fixed;right:12px;bottom:12px;z-index:99997;display:flex;gap:5px;flex-wrap:wrap;max-width:48vw;justify-content:flex-end;font:12px system-ui,sans-serif}
+/* Le catalogue principal remplace ces raccourcis pour éviter les menus concurrents. */
+#g360-pages{display:none!important}
 #g360-pages button{background:#102337;color:#fff;border:1px solid #31506d;border-radius:8px;padding:7px 9px;cursor:pointer}
 #g360-pages button:hover{background:#183650}
 #g360-pages-modal{position:fixed;inset:0;background:#000b;z-index:100005;display:none;align-items:center;justify-content:center;padding:12px;font:14px system-ui,sans-serif;color:#eef6ff}
