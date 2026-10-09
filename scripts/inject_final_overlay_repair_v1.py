@@ -81,6 +81,53 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
   window.GABON360_OVERLAY_REPAIR_STATUS={version:'1.0',satellitePanelClosedOnStartup:true,closedOverlaysDoNotBlock:true};
 })();
 </script>
+
+<!-- GABON360-PAGE-RETURN-HOME-V1 -->
+<style>
+#g360-page-exit-bar{position:fixed!important;top:env(safe-area-inset-top,0px)!important;left:8px!important;z-index:2147483646!important;display:flex!important;gap:8px!important;pointer-events:auto!important}
+#g360-page-exit-bar button{border:1px solid #7da4c7!important;border-radius:12px!important;background:#071522f2!important;color:#fff!important;padding:10px 13px!important;font:600 13px system-ui,sans-serif!important;min-height:42px!important;box-shadow:0 3px 12px #0007!important;pointer-events:auto!important;touch-action:manipulation!important}
+#g360-page-exit-bar button:active{transform:scale(.97)}
+</style>
+<div id="g360-page-exit-bar" aria-label="Navigation de page">
+<button type="button" id="g360-page-back" aria-label="Retour à la page précédente">← Retour</button>
+<button type="button" id="g360-page-home" aria-label="Retour à l'accueil">⌂ Accueil</button>
+</div>
+<script id="g360-page-return-home-v1">
+(function(){
+ if(window.__G360_PAGE_RETURN_HOME_V1)return;window.__G360_PAGE_RETURN_HOME_V1=true;
+ var stack=[],last='avatar';
+ function callFirst(names,args){for(var i=0;i<names.length;i++){var f=window[names[i]];if(typeof f==='function'){try{f.apply(window,args||[]);return true}catch(e){}}}return false}
+ function goHome(){
+   stack=[];last='avatar';
+   var closed=['g360-pages-modal','g360-universal','g360-cm-modal','g360-avatar-modal','g360-complete-modal'];
+   closed.forEach(function(id){var el=document.getElementById(id);if(el){el.setAttribute('aria-hidden','true');el.style.setProperty('display','none','important')}});
+   if(callFirst(['GABON360_OPEN_AVATAR_HOME','GABON360_OPEN_MODULE_PAGE','GABON360_NAVIGATE'],['avatar']))return;
+   var home=document.querySelector('[data-g360-page="avatar"],#g360-avatar-launch,#g360-avatar-home-button,[data-page="avatar"]');
+   if(home&&home.click)home.click();
+ }
+ function back(){
+   if(stack.length){var prev=stack.pop();last=prev;if(callFirst(['GABON360_OPEN_MODULE_PAGE','GABON360_NAVIGATE'],[prev]))return;}
+   goHome();
+ }
+ var backBtn=document.getElementById('g360-page-back'),homeBtn=document.getElementById('g360-page-home');
+ if(backBtn)backBtn.addEventListener('click',back);
+ if(homeBtn)homeBtn.addEventListener('click',goHome);
+ document.addEventListener('click',function(e){
+   var b=e.target&&e.target.closest?e.target.closest('button,[role="button"],a'):null;if(!b)return;
+   if(b.id==='g360-page-back'||b.id==='g360-page-home')return;
+   var label=(b.innerText||b.getAttribute('aria-label')||b.title||'').trim().toLowerCase();
+   var map=[['map',/carte|map/],['nav',/navigation|gps terrain/],['sat',/satellite/],['drones',/drone/],['cameras',/cam[eé]ra/],['maritime',/maritime|oc[eé]an/],['alerts',/alerte/],['reports',/rapport/],['stats',/statistique/],['weather',/m[eé]t[eé]o/],['security',/cyber|s[eé]curit[eé]/],['memory',/m[eé]moire/],['avatar',/accueil|avatar|centre national/]];
+   for(var i=0;i<map.length;i++){if(map[i][1].test(label)){if(last!==map[i][0])stack.push(last);last=map[i][0];break}}
+ },true);
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'||e.key==='Backspace'){if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName))return;back()}});
+ function hookAndroidBack(){
+   if(window.G360Android&&typeof window.G360Android.setBackHandler==='function'){try{window.G360Android.setBackHandler('g360-page-back');return}catch(e){}}
+ }
+ hookAndroidBack();
+ window.GABON360_PAGE_EXIT_STATUS={backButton:!!backBtn,homeButton:!!homeBtn,version:1};
+})();
+</script>
+
 '''
 
 def main():
