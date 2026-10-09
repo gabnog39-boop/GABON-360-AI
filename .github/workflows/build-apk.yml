@@ -90,6 +90,8 @@ jobs:
         run: python3 scripts/inject_national_pages.py
       - name: Vérifier la complétude de chaque page et de ses fonctions
         run: python3 scripts/inject_page_completeness_v2.py
+      - name: Enregistrer les pages de modules sans afficher un second catalogue
+        run: python3 scripts/inject_universal_module_pages_v1.py
       - name: Ajouter la navigation terrain GPS outdoor complète
         run: python3 scripts/inject_terrain_navigation_garmin_class_v1.py
       - name: Activer les actions fonctionnelles de chaque option
