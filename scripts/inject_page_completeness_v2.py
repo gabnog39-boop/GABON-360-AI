@@ -29,6 +29,7 @@ const M={
  weather:{i:'🌦️',n:'Météo',s:'ACTIF',o:['Situation actuelle','Prévisions','Zone','Température','Pluie','Vent','Humidité','Historique','Contexte opérationnel','Source / qualité']},
  sources:{i:'📡',n:'Sources & connexions',s:'ACTIF',o:['Satellites','Drones','Caméras','Maritime','Météo','SIG','Institutionnel','État','Qualité','Dernière réception','Tester','Synchroniser','Hors-ligne']},
  security:{i:'🛡️',n:'Accès / administration / audit',s:'ACTIF',o:['Utilisateurs','Rôles','Permissions','Lecture','Opération','Validation','Administration','Journal actions','Commandes IA','Configuration','Sécurité','Sessions']},
+ memory:{i:'🧠',n:'Mémoire territoriale',s:'ACTIF',o:['Historique territorial','Rechercher par zone','Rechercher par date','Comparer deux périodes','Évolution forêt / parc','Évolution eaux / littoral','Historique satellite','Historique alertes','Historique missions','Corrélations','Événements récurrents','Preuves / sources','Notifier l’avatar']},
  avatar:{i:'🤖',n:'Avatar / IA centrale',s:'ACTIF',o:['Parler','Écouter','Micro','Voix','Stop voix','Conversation','Ouvrir une page','Expliquer la carte','Lire une alerte','Recevoir les sources','Historique commandes']}
 };
 const modal=document.getElementById('g360-complete-modal'),grid=document.getElementById('g360-complete-grid'),view=document.getElementById('g360-complete-view');
