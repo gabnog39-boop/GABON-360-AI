@@ -106,7 +106,7 @@ def main():
         i = t.lower().rfind("</body>")
         if i < 0:
             continue
-        p.write_text(t[:i] + PAYLOAD + "\\n" + t[i:], encoding="utf-8")
+        p.write_text(t[:i] + PAYLOAD + "\n" + t[i:], encoding="utf-8")
         print("injected:", p)
         return
     raise SystemExit("Aucun index.html exploitable")
