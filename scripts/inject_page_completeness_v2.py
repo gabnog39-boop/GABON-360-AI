@@ -37,8 +37,14 @@ function openPage(id){const m=M[id];if(!m)return;view.innerHTML='<div class="g36
 function action(id,i){
  const m=M[id],x=m&&m.o[i];if(!m||!x)return;
  /* Route each option to the real module handler instead of only changing a label. */
+ if(typeof window.GABON360_OPEN_NAMED_FUNCTION==='function'){
+   modal.style.display='none';modal.setAttribute('aria-hidden','true');
+   window.GABON360_OPEN_NAMED_FUNCTION(id,x);
+   window.dispatchEvent(new CustomEvent('gabon360:page-action',{detail:{page:id,action:x}}));
+   return;
+ }
  if(typeof window.GABON360_OPEN_FUNCTION_PAGE==='function'){
-   modal.style.display='none';
+   modal.style.display='none';modal.setAttribute('aria-hidden','true');
    window.GABON360_OPEN_FUNCTION_PAGE(id,i);
    window.dispatchEvent(new CustomEvent('gabon360:page-action',{detail:{page:id,action:x}}));
    return;
