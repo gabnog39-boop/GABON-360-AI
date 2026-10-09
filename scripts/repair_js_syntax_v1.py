@@ -135,7 +135,7 @@ def main():
         print("JS-SYNTAX-REPAIR: correction ciblée du rendu de la Mémoire territoriale")
 
     # Validate every inline JavaScript block after the targeted repairs.
-    pattern=re.compile(r"(<script(?:\\s[^>]*)?>)(.*?)(</script>)",re.I|re.S)
+    pattern=re.compile(r"(<script(?:\s[^>]*)?>)(.*?)(</script>)",re.I|re.S)
     failures=[]
     for idx,m in enumerate(pattern.finditer(html)):
         ok,err=node_check(m.group(2))
