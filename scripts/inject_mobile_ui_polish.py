@@ -15,9 +15,13 @@ main,#root,#app,.app,.shell,.page,.content,.main-content{max-width:100%;min-widt
 #g360-pages-modal,#g360-cm-modal,#g360-avatar-modal{z-index:100100!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;align-items:flex-start!important;padding:12px 12px 24px!important}
 #g360-pages-card,#g360-avatar-card,.g360-cm-card{width:min(100%,560px)!important;max-width:100%!important;max-height:calc(100dvh - 36px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
 #g360-pages-grid{grid-template-columns:1fr!important}
-#g360-pages{position:fixed!important;left:12px!important;right:12px!important;top:auto!important;bottom:82px!important;width:auto!important;max-width:none!important;max-height:55dvh!important;overflow-y:auto!important;z-index:100020!important;background:rgba(6,21,34,.97)!important;border:1px solid #31506d!important;border-radius:12px!important;padding:7px!important;box-shadow:0 8px 24px #0009!important}
-#g360-pages button{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:44px;margin:3px 0;padding:10px 12px;white-space:normal;text-align:left}
-#g360-pages #g360-pages-open{display:block;width:100%;min-height:44px;margin:0;padding:10px}
+/* Keep the old national shortcut drawer out of the dashboard. The dedicated
+   "Toutes les pages" catalogue is the single visible page selector. */
+#g360-pages{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#g360-pages button{display:none!important}
+#g360-complete-open{position:fixed!important;right:10px!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;left:auto!important;bottom:auto!important;z-index:100030!important;max-width:calc(100vw - 100px)!important;min-height:42px!important;padding:9px 11px!important;white-space:nowrap!important}
+#g360-complete-modal[aria-hidden="true"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#g360-complete-modal[aria-hidden="false"]{display:block!important;visibility:visible!important;pointer-events:auto!important}
 #g360-modules{position:fixed!important;left:12px!important;right:12px!important;top:auto!important;bottom:8px!important;width:auto!important;max-width:none!important;display:flex;gap:7px;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;z-index:100000!important;padding:6px!important;background:rgba(6,21,34,.95)!important;border-radius:12px}
 #g360-modules button{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;min-width:76px;min-height:44px;margin:0;padding:8px 10px;font-size:12px;white-space:nowrap}
 #g360-avatar-launch{position:fixed!important;left:12px!important;bottom:164px!important;top:auto!important;width:56px!important;height:56px!important;max-width:calc(100vw - 24px)!important;z-index:100010!important}
