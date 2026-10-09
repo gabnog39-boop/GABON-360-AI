@@ -6,6 +6,8 @@ MARK = "GABON360-UNIVERSAL-MODULE-PAGES-V1"
 PAYLOAD = r'''<!-- GABON360-UNIVERSAL-MODULE-PAGES-V1 -->
 <style>
 #g360-universal-launch{position:fixed;left:10px;top:70px;z-index:2147483000;background:#0b1a2a;color:#fff;border:1px solid #31506d;border-radius:11px;padding:9px 12px;font-weight:800}
+/* Le catalogue principal est géré par la navigation nationale : ne pas afficher un second lanceur. */
+#g360-universal-launch{display:none!important}
 #g360-universal{position:fixed;inset:0;z-index:2147483500;display:none;background:#020913f5;color:#eef6ff;font:14px system-ui,sans-serif;overflow:auto}
 #g360-universal .g360-upage{min-height:100%;box-sizing:border-box;padding:14px 12px 40px}
 #g360-universal .g360-uhead{position:sticky;top:0;z-index:3;background:#081725ee;border-bottom:1px solid #31506d;padding:10px 0;display:flex;align-items:center;gap:8px}
