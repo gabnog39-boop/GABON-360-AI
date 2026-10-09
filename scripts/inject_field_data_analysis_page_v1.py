@@ -127,7 +127,7 @@ window.addEventListener('gabon360:field-data-updated',refresh);
 '''
 
 def main():
-    candidates = sorted(Path("android_project").rglob("index.html"), key=lambda p: ("assets" in p.parts, len(p.parts)))
+    candidates = sorted(Path("android_project").rglob("index.html"), key=lambda p: (len(p.parts), str(p)))
     if not candidates:
         raise SystemExit("index.html introuvable")
     for p in candidates:
