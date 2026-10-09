@@ -53,6 +53,17 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
   #g360-page-view { padding-bottom: 180px!important; }
   #g360-page-view button, .g360-upage button { max-width:100%; }
   #g360-ai-pending-v2 { bottom: 12px!important; max-height: 24dvh!important; }
+  /* Screenshot-driven layout repair: reserve real space for the header and floating controls. */
+  #g360-page-exit-bar { top: 8px!important; left: 10px!important; right: auto!important; z-index: 2147483646!important; }
+  #g360-ai-relay-status { top: 112px!important; left: 12px!important; right: 12px!important; width: auto!important; max-width: none!important; z-index: 100010!important; }
+  #g360-real-map, .leaflet-container { max-height: 54dvh!important; min-height: 280px!important; }
+  #g360-page-view { padding-top: 104px!important; padding-bottom: 240px!important; overflow-x: hidden!important; }
+  #g360-page-view > *, .g360-upage > * { max-width: 100%!important; box-sizing: border-box!important; }
+  #g360-avatar-launch { left: 12px!important; bottom: 90px!important; width: 50px!important; height: 50px!important; z-index: 100040!important; }
+  #g360-avatar-home-button { right: 12px!important; bottom: 92px!important; width: 48px!important; height: 48px!important; z-index: 100040!important; }
+  #g360-avatar-mic, #g360-avatar-microphone, #g360-mic-button { left: 76px!important; bottom: 92px!important; width: 54px!important; height: 54px!important; z-index: 100041!important; }
+  #g360-satellite-open { right: 12px!important; bottom: 154px!important; z-index: 100039!important; }
+  #g360-page-view button, .g360-upage button { min-height: 40px; touch-action: manipulation!important; }
 }
 </style>
 <script id="g360-final-overlay-repair">
