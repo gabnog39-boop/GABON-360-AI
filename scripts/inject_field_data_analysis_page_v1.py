@@ -23,7 +23,7 @@ PAYLOAD = r'''<!-- GABON360-FIELD-DATA-ANALYSIS-V1 -->
 #g360-field-analysis .g360-fa-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
 @media(max-width:650px){#g360-field-analysis .g360-fa-grid{grid-template-columns:1fr}#g360-field-analysis .g360-fa-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#g360-field-analysis .g360-fa-head b{font-size:14px}}
 </style>
-<div id="g360-field-analysis" aria-hidden="true">
+<div id="g360-field-analysis" data-g360-page="field-analysis" aria-hidden="true">
  <div class="g360-fa-wrap">
   <div class="g360-fa-head"><button id="g360-fa-back">← Centre</button><b>📡 ANALYSE DES DONNÉES TERRAIN</b><button id="g360-fa-close">✕</button></div>
   <div class="g360-fa-card g360-fa-status" id="g360-fa-status">Analyse initialisée. Les résultats dépendront des observations réellement enregistrées ou des sources connectées.</div>
