@@ -39,6 +39,21 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
 #g360-avatar-modal[aria-hidden="true"] {
   display:none!important; visibility:hidden!important; pointer-events:none!important;
 }
+
+/* GABON360 MOBILE LAYOUT HOTFIX: keep the map/dashboard clear of floating controls. */
+@media (max-width: 720px) {
+  #g360-ai-relay-status { top: 58px!important; left: 12px!important; right: 12px!important; max-width:none!important; box-sizing:border-box!important; }
+  #g360-page-exit-bar { top: 8px!important; left: 8px!important; right: 8px!important; gap: 6px!important; }
+  #g360-page-exit-bar button { min-height: 38px!important; padding: 7px 10px!important; font-size: 12px!important; }
+  #g360-satellite-open { right: 12px!important; bottom: 82px!important; z-index: 100020!important; }
+  #g360-avatar-launch { left: 12px!important; bottom: 82px!important; width: 48px!important; height: 48px!important; z-index: 100021!important; }
+  #g360-avatar-home-button { right: 12px!important; bottom: 140px!important; width: 44px!important; height: 44px!important; z-index: 100021!important; }
+  #g360-avatar-mic, #g360-avatar-microphone, #g360-mic-button { bottom: 145px!important; left: 12px!important; width: 58px!important; height: 58px!important; z-index: 100022!important; }
+  #g360-page-view, #g360-universal, .g360-upage { box-sizing:border-box!important; max-width:100vw!important; }
+  #g360-page-view { padding-bottom: 180px!important; }
+  #g360-page-view button, .g360-upage button { max-width:100%; }
+  #g360-ai-pending-v2 { bottom: 12px!important; max-height: 24dvh!important; }
+}
 </style>
 <script id="g360-final-overlay-repair">
 (function(){
