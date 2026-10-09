@@ -7,7 +7,7 @@ REQ_IDS = [
     'g360-real-map','g360-terrain-v2-open','g360-pages-modal',
     'g360-satellite-panel','g360-satellite-open','g360-complete-modal'
 ]
-REQ_PAGES = ['map','nav','sat','drones','cameras','maritime','alerts','reports','stats','weather','sources','security','avatar']
+REQ_PAGES = ['map','nav','sat','drones','cameras','maritime','alerts','reports','stats','weather','sources','security','avatar','field-analysis']
 REQ_SECTIONS = ['dashboard','sources','infra','alerts','events','history','mapmod','logistics','missions','fieldnav','reports','offline','vision','owner','settings']
 
 
@@ -57,6 +57,13 @@ def main():
     for x in REQ_PAGES:
         if not page_is_present(html, x):
             failures.append('Page manuelle absente ou non reconnue: ' + x)
+
+    # The field-analysis screen is injected separately and must remain reachable
+    # from the page catalogue, with its own analysis engine and action handlers.
+    if 'GABON360_OPEN_DATA_ANALYSIS' not in html:
+        failures.append('Ouverture de la page Analyse des données terrain absente')
+    if 'function analyze()' not in html or 'GABON360_FIELD_ANALYSIS' not in html:
+        failures.append('Moteur IA de la page Analyse des données terrain absent')
 
     for x in REQ_SECTIONS:
         if not re.search(r'<section[^>]+id=[\"\']' + re.escape(x) + r'[\"\']', html):
