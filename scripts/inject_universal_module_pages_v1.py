@@ -107,6 +107,17 @@ if(b.dataset.g360Fn){var p=b.dataset.g360Fn.split('|');var id=p[0],i=Number(p[1]
 });
 window.GABON360_OPEN_MODULE_PAGE=modulePage;
 window.GABON360_OPEN_FUNCTION_PAGE=function(id,i){modulePage(id);setTimeout(function(){var b=root.querySelector('[data-g360-fn="'+id+'|'+i+'"]');if(b)b.click()},0)};
+/* Prefer semantic action matching over numeric indices: the visual catalogue and
+   the operational module may list the same functions in different orders. */
+window.GABON360_OPEN_NAMED_FUNCTION=function(id,label){
+ var m=modules[id]; if(!m)return false;
+ var target=String(label||'').trim().toLowerCase();
+ var i=m.actions.findIndex(function(a){return String(a).trim().toLowerCase()===target});
+ modulePage(id);
+ if(i>=0){setTimeout(function(){var b=root.querySelector('[data-g360-fn="'+id+'|'+i+'"]');if(b)b.click()},0);return true}
+ status('Page '+m.name+' ouverte. Cette option est disponible dans la page, mais son libellé exact diffère du catalogue.');
+ return false;
+};
 window.GABON360_MODULE_PAGES=modules;
 })();
 </script>
