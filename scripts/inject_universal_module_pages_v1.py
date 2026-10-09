@@ -42,7 +42,8 @@ weather:{icon:'🌦️',name:'Météo',actions:['Situation actuelle','Prévision
 sources:{icon:'📡',name:'Sources & connexions',actions:['Satellites','Drones','Caméras','Maritime','Météo','SIG','Institutionnel','État','Qualité','Dernière réception','Tester','Synchroniser','Hors-ligne']},
 security:{icon:'🛡️',name:'Accès / administration / audit',actions:['Utilisateurs','Rôles','Permissions','Lecture','Opération','Validation','Administration','Journal actions','Commandes IA','Configuration','Sécurité','Sessions']},
 avatar:{icon:'🤖',name:'Avatar / IA centrale',actions:['Parler','Écouter','Micro','Voix','Stop voix','Conversation','Ouvrir une page','Expliquer la carte','Lire une alerte','Recevoir les sources','Historique commandes']},
-memory:{icon:'🧠',name:'Mémoire territoriale — IA spécialisée',actions:['Historique territorial','Rechercher par zone','Rechercher par date','Comparer deux périodes','Évolution forêt / parc','Évolution eaux / littoral','Historique satellite','Historique alertes','Historique missions','Corrélations','Événements récurrents','Preuves / sources','Notifier l’avatar']}
+memory:{icon:'🧠',name:'Mémoire territoriale — IA spécialisée',actions:['Historique territorial','Rechercher par zone','Rechercher par date','Comparer deux périodes','Évolution forêt / parc','Évolution eaux / littoral','Historique satellite','Historique alertes','Historique missions','Corrélations','Événements récurrents','Preuves / sources','Notifier l’avatar']},
+'field-analysis':{icon:'📡',name:'Analyse des données terrain',actions:['Analyser les observations reçues','Filtrer par zone et période','Vérifier les coordonnées et sources','Repérer les alertes à vérifier','Préparer un rapport','Transmettre le résultat à l’avatar']}
 };
 
 var root=document.getElementById('g360-universal');
@@ -53,6 +54,7 @@ function show(){root.style.display='block';root.setAttribute('aria-hidden','fals
 function hide(){root.style.display='none';root.setAttribute('aria-hidden','true')}
 function modulePage(id){
 var m=modules[id];if(!m)return;
+if(id==='field-analysis'&&typeof window.GABON360_OPEN_DATA_ANALYSIS==='function'){window.GABON360_OPEN_DATA_ANALYSIS();return}
 root.innerHTML='<div class="g360-upage"><div class="g360-uhead"><button class="g360-back">← Centre</button><b>'+m.icon+' '+esc(m.name)+'</b><button class="g360-close">✕</button></div><div class="g360-status">Page du module prête. Sélectionnez une fonction.</div><div class="g360-ugrid">'+m.actions.map(function(a,i){return '<div class="g360-ucard"><b>'+esc(a)+'</b><button data-g360-fn="'+id+'|'+i+'">Ouvrir la fonction</button></div>'}).join('')+'</div></div>';
 show();
 }
