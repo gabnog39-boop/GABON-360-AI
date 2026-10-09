@@ -12,7 +12,7 @@ if(window.__G360_AI_OPTION_ORCHESTRATOR_V1)return;
 window.__G360_AI_OPTION_ORCHESTRATOR_V1=true;
 
 var AI_BY_PAGE={
- map:'sig',nav:'navigation',sat:'satellite',drones:'drones',cameras:'cameras',
+ map:'sig',nav:'navigation',sat:'satellite',drones:'drones',cameras:'cameras','field-analysis':'orchestrator',
  maritime:'maritime',forests:'forests',alerts:'alerts',reports:'reports',
  stats:'stats',weather:'weather',sources:'sources',security:'cyber',
  avatar:'avatar',memory:'memory',crisis:'crisis',logistics:'logistics',
