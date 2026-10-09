@@ -21,7 +21,7 @@ html,body { overscroll-behavior-x: contain; }
   }
   function order(){
     if(Array.isArray(window.GABON360_PAGE_ORDER) && window.GABON360_PAGE_ORDER.length) return window.GABON360_PAGE_ORDER;
-    return ['avatar','map','nav','sat','drones','cameras','maritime','forests','alerts','reports','stats','weather','sources','security','memory'];
+    return ['avatar','map','nav','sat','drones','cameras','maritime','forests','alerts','reports','stats','weather','sources','security','memory','field-analysis'];
   }
   function navigate(delta){
     var nav=window.GABON360_PAGE_NAVIGATION;
