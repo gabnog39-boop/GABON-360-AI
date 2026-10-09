@@ -45,7 +45,38 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
   if(window.__G360_FINAL_OVERLAY_REPAIR_V1)return;
   window.__G360_FINAL_OVERLAY_REPAIR_V1=true;
   function setup(){
-    /* Start with a clean dashboard: no catalogue/modal may cover the map at launch. */
+    /* Close any startup catalogue by known IDs and by visible title/content.
+       Earlier injectors create several differently named page drawers. */
+    function closeOverlay(el){
+      if(!el || el.id==='g360-page-exit-bar' || el.id==='g360-page-back' || el.id==='g360-page-home') return;
+      el.setAttribute('aria-hidden','true');
+      el.classList.remove('open','active','visible','show','is-open','g360-visible');
+      el.classList.add('g360-hidden');
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('pointer-events','none','important');
+    }
+    ['g360-universal','g360-v2','g360-pages-modal','g360-cm-modal','g360-avatar-modal','g360-complete-modal',
+     'g360-module-drawer','g360-all-pages','g360-all-pages-modal','g360-page-list','g360-functions-panel',
+     'g360-functions-modal','g360-pages-panel','g360-module-panel','g360-module-menu','g360-menu-modal'].forEach(function(id){
+      closeOverlay(document.getElementById(id));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('body *'),function(el){
+      if(!el || !el.getBoundingClientRect) return;
+      var r=el.getBoundingClientRect();
+      if(r.width<180 || r.height<90 || r.width>window.innerWidth*1.02 || r.height>window.innerHeight*1.02) return;
+      var txt=(el.innerText||'').trim().toLowerCase();
+      if(!txt || txt.length>1800) return;
+      var title=txt.slice(0,180);
+      if((title.indexOf('toutes les pages')>=0 || title.indexOf('centre des fonctions')>=0) &&
+         (getComputedStyle(el).position==='fixed' || getComputedStyle(el).position==='absolute') &&
+         el!==document.body && el!==document.documentElement){
+        /* Close only the smallest matching container, not its ancestors. */
+        if(!Array.prototype.some.call(el.children,function(ch){var t=(ch.innerText||'').trim().toLowerCase();return t.indexOf('toutes les pages')>=0 || t.indexOf('centre des fonctions')>=0;})){
+          closeOverlay(el);
+        }
+      }
+    });
     ['g360-universal','g360-v2','g360-pages-modal','g360-cm-modal','g360-avatar-modal','g360-complete-modal'].forEach(function(id){
       var modal=document.getElementById(id);
       if(modal){
