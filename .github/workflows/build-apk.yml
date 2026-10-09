@@ -90,8 +90,6 @@ jobs:
         run: python3 scripts/inject_national_pages.py
       - name: Ajouter la navigation terrain GPS outdoor complète
         run: python3 scripts/inject_terrain_navigation_garmin_class_v1.py
-      - name: Vérifier la complétude de chaque page et de ses fonctions
-        run: python3 scripts/inject_page_completeness_v2.py
       - name: Activer les actions fonctionnelles de chaque option
         run: python3 scripts/inject_functional_page_actions_v1.py
       - name: Intégrer l avatar IA centrale
