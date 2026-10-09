@@ -45,6 +45,16 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
   if(window.__G360_FINAL_OVERLAY_REPAIR_V1)return;
   window.__G360_FINAL_OVERLAY_REPAIR_V1=true;
   function setup(){
+    /* Start with a clean dashboard: no catalogue/modal may cover the map at launch. */
+    ['g360-universal','g360-v2','g360-pages-modal','g360-cm-modal','g360-avatar-modal','g360-complete-modal'].forEach(function(id){
+      var modal=document.getElementById(id);
+      if(modal){
+        modal.setAttribute('aria-hidden','true');
+        modal.style.setProperty('display','none','important');
+        modal.style.setProperty('visibility','hidden','important');
+        modal.style.setProperty('pointer-events','none','important');
+      }
+    });
     var panel=document.getElementById('g360-satellite-panel');
     var launcher=document.getElementById('g360-satellite-open');
     if(panel){
