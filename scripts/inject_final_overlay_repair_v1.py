@@ -61,31 +61,39 @@ PAYLOAD = r'''<!-- GABON360-FINAL-OVERLAY-REPAIR-V1 -->
      'g360-functions-modal','g360-pages-panel','g360-module-panel','g360-module-menu','g360-menu-modal'].forEach(function(id){
       closeOverlay(document.getElementById(id));
     });
-    Array.prototype.forEach.call(document.querySelectorAll('body *'),function(el){
-      if(!el || !el.getBoundingClientRect) return;
-      var r=el.getBoundingClientRect();
-      if(r.width<180 || r.height<90 || r.width>window.innerWidth*1.02 || r.height>window.innerHeight*1.02) return;
-      var txt=(el.innerText||'').trim().toLowerCase();
-      if(!txt || txt.length>1800) return;
-      var title=txt.slice(0,180);
-      if((title.indexOf('toutes les pages')>=0 || title.indexOf('centre des fonctions')>=0) &&
-         (getComputedStyle(el).position==='fixed' || getComputedStyle(el).position==='absolute') &&
-         el!==document.body && el!==document.documentElement){
-        /* Close only the smallest matching container, not its ancestors. */
-        if(!Array.prototype.some.call(el.children,function(ch){var t=(ch.innerText||'').trim().toLowerCase();return t.indexOf('toutes les pages')>=0 || t.indexOf('centre des fonctions')>=0;})){
-          closeOverlay(el);
+    /* Root fix: find the actual fixed drawer from its visible heading, then close its drawer ancestor.
+       Do not try to hide the heading itself (the previous algorithm did exactly that). */
+    function hideDrawerForHeading(needle){
+      var nodes=Array.prototype.slice.call(document.querySelectorAll('body *'));
+      var heading=null;
+      for(var i=0;i<nodes.length;i++){
+        var el=nodes[i], txt=(el.innerText||'').trim().toLowerCase();
+        if(!txt || txt.length>100 || txt.indexOf(needle)<0) continue;
+        var r=el.getBoundingClientRect();
+        if(r.width<90 || r.height<10 || r.width>window.innerWidth*1.05 || r.height>window.innerHeight*1.05) continue;
+        if(!heading || txt.length<(heading.innerText||'').trim().length) heading=el;
+      }
+      if(!heading)return false;
+      var cur=heading;
+      while(cur && cur!==document.body && cur!==document.documentElement){
+        var r=cur.getBoundingClientRect(), st=getComputedStyle(cur);
+        var positioned=st.position==='fixed'||st.position==='absolute';
+        var drawerSized=r.width>=Math.min(240,window.innerWidth*.45) && r.height>=100;
+        if(positioned && drawerSized){
+          cur.setAttribute('aria-hidden','true');
+          cur.classList.remove('open','active','visible','show','is-open','g360-visible');
+          cur.classList.add('g360-hidden');
+          cur.style.setProperty('display','none','important');
+          cur.style.setProperty('visibility','hidden','important');
+          cur.style.setProperty('pointer-events','none','important');
+          return true;
         }
+        cur=cur.parentElement;
       }
-    });
-    ['g360-universal','g360-v2','g360-pages-modal','g360-cm-modal','g360-avatar-modal','g360-complete-modal'].forEach(function(id){
-      var modal=document.getElementById(id);
-      if(modal){
-        modal.setAttribute('aria-hidden','true');
-        modal.style.setProperty('display','none','important');
-        modal.style.setProperty('visibility','hidden','important');
-        modal.style.setProperty('pointer-events','none','important');
-      }
-    });
+      return false;
+    }
+    hideDrawerForHeading('toutes les pages');
+    hideDrawerForHeading('centre des fonctions');
     var panel=document.getElementById('g360-satellite-panel');
     var launcher=document.getElementById('g360-satellite-open');
     if(panel){
