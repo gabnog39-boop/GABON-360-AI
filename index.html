@@ -33,7 +33,7 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
 <section id="wait" class="card hide"><h2>Compte en attente</h2><p>Votre compte existe mais n'est pas encore approuvé. Le propriétaire doit l'activer.</p><button id="out1">Se déconnecter</button></section>
 
 <section id="app" class="hide">
- <div class="tabs"><button id="t-al" class="on">Alertes</button><button id="t-mp">Carte</button><button id="t-us" class="hide">Utilisateurs</button><button id="out2">Quitter</button></div>
+ <div class="tabs"><button id="t-al" class="on">Alertes</button><button id="t-mp">Carte</button><button id="t-rp">Rapports</button><button id="t-us" class="hide">Utilisateurs</button><button id="out2">Quitter</button></div>
  <div id="v-al">
   <div class="card" id="newal"><h2>Nouvelle alerte</h2>
    <label>Titre</label><input id="at"><label>Type</label><select id="ay"><option>Changement environnemental</option><option>Incident de terrain</option><option>Incident dans un parc national</option><option>Eaux ou littoral</option><option>Anomalie cartographique</option><option>Autre événement documenté</option></select>
@@ -45,7 +45,13 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
   <div id="map"></div><p class="note" id="mcount"></p><button class="p" id="gps">Ma position GPS</button>
   <div class="card" id="minfo" style="margin-top:8px"><span class="note">Touchez la carte pour choisir un point. Touchez un cercle pour voir une alerte.</span></div>
   <p class="note">Fonds de carte : choisissez avec l'icône en haut à droite de la carte. Satellite haute résolution (Esri), mosaïque Sentinel-2 sans nuages (10 m, EOX) ou plan des routes (OpenStreetMap). Les limites officielles des provinces et des parcs ne sont pas encore intégrées. Rouge : critique, jaune : haute, bleu : normale.</p></div>
- <div id="v-us" class="hide"><div id="ulist"></div></div>
+ <div id="v-rp" class="hide">
+  <div class="card" id="newrp"><h2>Nouveau rapport</h2><label>Titre</label><input id="rt"><label>Alerte liée (facultatif)</label><select id="rl"><option value="">Aucune</option></select>
+   <label>Contenu</label><textarea id="rc" style="min-height:150px"></textarea><div class="err" id="rperr"></div>
+   <button id="rdraft">Enregistrer le brouillon</button><button class="p" id="rsub">Soumettre à validation</button></div>
+  <div id="rlist"></div></div>
+ 
+<div id="v-us" class="hide"><div id="ulist"></div></div>
 </section></main>
 <script>
 const URL_="https://ztucadvgowsdixomoikm.supabase.co",KEY="sb_publishable_J1gbjWaEuekRUZ2Z2VpUrQ_CXS645jS";
@@ -66,7 +72,7 @@ async function start(){try{const u=await api("/auth/v1/user");const p=await api(
  $("auth").classList.add("hide");$("who").textContent=(me.nom||me.email)+" · "+me.role+" · "+me.statut;
  if(me.statut!="actif"){$("wait").classList.remove("hide");return}
  $("app").classList.remove("hide");const adm=["proprietaire","administrateur"].includes(me.role);$("t-us").classList.toggle("hide",!adm);
- $("newal").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));loadAl()}catch(e){out();$("aerr").className="err";$("aerr").textContent=e.message}}
+ $("newal").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newrp").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));loadAl()}catch(e){out();$("aerr").className="err";$("aerr").textContent=e.message}}
 async function loadAl(){const L=$("alist");L.replaceChildren();try{const a=await api("/rest/v1/evenements?select=*&order=recu_le.desc&limit=100");AL=a;drawMap();
  if(!a.length){L.append(el("div","note","Aucune alerte enregistrée."));return}
  const sup=["proprietaire","administrateur","superviseur"].includes(me.role);
@@ -87,7 +93,31 @@ async function loadUs(){const L=$("ulist");L.replaceChildren();try{const u=await
  const b=el("button","p","Enregistrer");const e=el("div","err");
  b.onclick=async()=>{e.textContent="";try{const res=await api("/rest/v1/profiles?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({role:r.value,statut:s.value}),headers:{Prefer:"return=representation"}});e.className="ok";e.textContent=res.length?"Enregistré.":"Modification refusée par les règles de sécurité."}catch(er){e.className="err";e.textContent=er.message}};
  c.append(r,s,b,e);L.append(c)})}catch(e){L.append(el("div","err",e.message))}}
-function tab(w){$("v-al").classList.toggle("hide",w!="al");$("v-mp").classList.toggle("hide",w!="mp");$("v-us").classList.toggle("hide",w!="us");["al","mp","us"].forEach(k=>$("t-"+k).classList.toggle("on",w==k));if(w=="us")loadUs();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
+function tab(w){["al","mp","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});if(w=="us")loadUs();else if(w=="rp")loadRp();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
+let RP=[];
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+async function saveRp(sub){$("rperr").textContent="";const t=$("rt").value.trim();if(!t){$("rperr").textContent="Le titre est obligatoire.";return}
+ try{await api("/rest/v1/rapports",{method:"POST",body:JSON.stringify({titre:t,contenu:$("rc").value.trim(),evenement_id:$("rl").value||null,statut:sub?"a_valider":"brouillon",auteur_nom:me.nom||me.email}),headers:{Prefer:"return=minimal"}});$("rt").value=$("rc").value="";loadRp()}catch(e){$("rperr").textContent=e.message}}
+async function patchRp(id,body,btn){try{const r=await api("/rest/v1/rapports?id=eq."+id,{method:"PATCH",body:JSON.stringify(body),headers:{Prefer:"return=representation"}});if(!r.length){alert("Modification refusée par les règles de sécurité.");return}loadRp()}catch(e){alert(e.message)}}
+function printRp(r){const a=AL.find(x=>x.id==r.evenement_id),w=window.open("","_blank");if(!w){alert("Autorisez les fenêtres pour exporter.");return}
+ w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>'+esc(r.titre)+'</title><style>body{font:15px/1.5 system-ui,sans-serif;margin:24px;color:#111}h1{font-size:22px}.m{color:#555;font-size:13px;margin-bottom:14px}pre{white-space:pre-wrap;font:inherit}</style></head><body><h1>'+esc(r.titre)+'</h1><div class="m">GABON 360 AI · '+(r.statut=="valide"?"Validé":"NON VALIDÉ ("+esc(r.statut)+")")+' · Rédigé par '+esc(r.auteur_nom)+' le '+new Date(r.cree_le).toLocaleString("fr-FR")+(a?' · Alerte liée : '+esc(a.titre):"")+'</div><pre>'+esc(r.contenu)+'</pre></body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300)}
+async function loadRp(){const L=$("rlist");L.replaceChildren();
+ try{if(!AL.length){try{AL=await api("/rest/v1/evenements?select=*&order=recu_le.desc&limit=100")}catch(e){}}
+ const sel=$("rl"),v=sel.value;sel.replaceChildren(new Option("Aucune",""));AL.forEach(a=>sel.append(new Option(a.titre,a.id)));sel.value=v;
+ RP=await api("/rest/v1/rapports?select=*&order=cree_le.desc&limit=100");
+ if(!RP.length){L.append(el("div","note","Aucun rapport enregistré."));return}
+ const sup=["proprietaire","administrateur","superviseur"].includes(me.role);
+ RP.forEach(r=>{const c=el("div","card"),a=AL.find(x=>x.id==r.evenement_id);c.append(el("b","",r.titre));
+  const m=el("div");m.append(el("span","tag",r.statut=="valide"?"validé":r.statut=="a_valider"?"à valider":"brouillon"));c.append(m);
+  c.append(el("div","note","Par "+(r.auteur_nom||"?")+" · "+new Date(r.cree_le).toLocaleString("fr-FR")+(a?" · alerte : "+a.titre:"")));
+  const t=el("div","",r.contenu||"");t.style.whiteSpace="pre-wrap";c.append(t);
+  c.append(el("div","note","Un brouillon n'est pas un document officiel tant qu'un superviseur ne l'a pas validé."));
+  const row=el("div","row");
+  if(r.statut=="brouillon"&&r.auteur==me.id){const b=el("button","","Soumettre à validation");b.onclick=()=>patchRp(r.id,{statut:"a_valider",modifie_le:new Date().toISOString()});row.append(b)}
+  if(sup&&r.statut!="valide"){const b=el("button","p","Valider");b.onclick=()=>patchRp(r.id,{statut:"valide",valide_par:me.id,modifie_le:new Date().toISOString()});row.append(b)}
+  if(sup&&r.statut!="brouillon"){const b=el("button","","Renvoyer en brouillon");b.onclick=()=>patchRp(r.id,{statut:"brouillon",valide_par:null,modifie_le:new Date().toISOString()});row.append(b)}
+  const p=el("button","","Exporter / imprimer (PDF)");p.onclick=()=>printRp(r);row.append(p);c.append(row);L.append(c)})
+ }catch(e){L.append(el("div","err",e.message))}}
 const CW=["proprietaire","administrateur","superviseur","analyste","ecogarde"];
 const CITIES=[["Libreville",0.39,9.45],["Port-Gentil",-0.72,8.78],["Franceville",-1.63,13.58],["Lambaréné",-0.70,10.24],["Oyem",1.60,11.58],["Mouila",-1.87,11.06],["Tchibanga",-2.85,11.03],["Makokou",0.57,12.87],["Koulamoutou",-1.13,12.47]];
 let AL=[],MAP=null,LG=null,SEL=null;
@@ -124,7 +154,7 @@ $("gps").onclick=()=>{if(!navigator.geolocation){$("minfo").replaceChildren(el("
  navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude;if(inGabon(la,lo))MAP.setView([la,lo],15);
   pick(la,lo,"position GPS réelle","Précision ± "+Math.round(p.coords.accuracy)+" m · mesurée à "+new Date(p.timestamp).toLocaleTimeString("fr-FR"))},
   er=>{$("minfo").replaceChildren(el("div","err","Position indisponible : "+er.message+". Autorisez la localisation pour ce site."))},{enableHighAccuracy:true,timeout:20000})};
-$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");
+$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
 $("pw").onkeydown=e=>{if(e.key=="Enter")login()};
 load();if(ses)start();
 </script></body></html>
