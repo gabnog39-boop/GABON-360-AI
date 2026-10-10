@@ -33,7 +33,7 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
 <section id="wait" class="card hide"><h2>Compte en attente</h2><p>Votre compte existe mais n'est pas encore approuvé. Le propriétaire doit l'activer.</p><button id="out1">Se déconnecter</button></section>
 
 <section id="app" class="hide">
- <div class="tabs"><button id="t-al" class="on">Alertes</button><button id="t-mp">Carte</button><button id="t-rp">Rapports</button><button id="t-us" class="hide">Utilisateurs</button><button id="out2">Quitter</button></div>
+ <div class="tabs"><button id="t-al" class="on">Alertes</button><button id="t-mp">Carte</button><button id="t-ms">Missions</button><button id="t-rp">Rapports</button><button id="t-us" class="hide">Utilisateurs</button><button id="out2">Quitter</button></div>
  <div id="v-al">
   <div class="card" id="newal"><h2>Nouvelle alerte</h2>
    <label>Titre</label><input id="at"><label>Type</label><select id="ay"><option>Changement environnemental</option><option>Incident de terrain</option><option>Incident dans un parc national</option><option>Eaux ou littoral</option><option>Anomalie cartographique</option><option>Autre événement documenté</option></select>
@@ -45,7 +45,17 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
   <div id="map"></div><p class="note" id="mcount"></p><button class="p" id="gps">Ma position GPS</button>
   <div class="card" id="minfo" style="margin-top:8px"><span class="note">Touchez la carte pour choisir un point. Touchez un cercle pour voir une alerte.</span></div>
   <p class="note">Fonds de carte : choisissez avec l'icône en haut à droite de la carte. Satellite haute résolution (Esri), mosaïque Sentinel-2 sans nuages (10 m, EOX) ou plan des routes (OpenStreetMap). Les limites officielles des provinces et des parcs ne sont pas encore intégrées. Rouge : critique, jaune : haute, bleu : normale.</p></div>
- <div id="v-rp" class="hide">
+ <div id="v-ms" class="hide">
+  <div class="card" id="newms"><h2>Mission / patrouille</h2>
+   <div id="msform"><label>Titre</label><input id="mt"><label>Zone ou parc</label><input id="mz"><label>Objectif</label><textarea id="mo" style="min-height:70px"></textarea>
+   <div class="err" id="mserr"></div><button class="p" id="mstart">Démarrer la mission (GPS)</button></div>
+   <div id="mslive" class="hide"><b id="msname"></b><div id="msinfo" class="note"></div>
+   <div class="row"><button id="mspause">Suspendre</button><button id="msend" class="p">Terminer</button></div>
+   <label>Note de mission</label><textarea id="msnote" style="min-height:70px"></textarea>
+   <p class="note">Gardez la page ouverte et l'écran allumé : le suivi s'arrête si Chrome passe en arrière-plan. Les positions de précision supérieure à 100 m sont ignorées. La trace est enregistrée toutes les 20 secondes.</p></div></div>
+  <div id="mslist"></div></div>
+ 
+<div id="v-rp" class="hide">
   <div class="card" id="newrp"><h2>Nouveau rapport</h2><label>Titre</label><input id="rt"><label>Alerte liée (facultatif)</label><select id="rl"><option value="">Aucune</option></select>
    <label>Contenu</label><textarea id="rc" style="min-height:150px"></textarea><div class="err" id="rperr"></div>
    <button id="rdraft">Enregistrer le brouillon</button><button class="p" id="rsub">Soumettre à validation</button></div>
@@ -72,7 +82,7 @@ async function start(){try{const u=await api("/auth/v1/user");const p=await api(
  $("auth").classList.add("hide");$("who").textContent=(me.nom||me.email)+" · "+me.role+" · "+me.statut;
  if(me.statut!="actif"){$("wait").classList.remove("hide");return}
  $("app").classList.remove("hide");const adm=["proprietaire","administrateur"].includes(me.role);$("t-us").classList.toggle("hide",!adm);
- $("newal").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newrp").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));loadAl()}catch(e){out();$("aerr").className="err";$("aerr").textContent=e.message}}
+ $("newal").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newrp").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newms").classList.toggle("hide",!CW.includes(me.role));loadAl()}catch(e){out();$("aerr").className="err";$("aerr").textContent=e.message}}
 async function loadAl(){const L=$("alist");L.replaceChildren();try{const a=await api("/rest/v1/evenements?select=*&order=recu_le.desc&limit=100");AL=a;drawMap();
  if(!a.length){L.append(el("div","note","Aucune alerte enregistrée."));return}
  const sup=["proprietaire","administrateur","superviseur"].includes(me.role);
@@ -93,7 +103,29 @@ async function loadUs(){const L=$("ulist");L.replaceChildren();try{const u=await
  const b=el("button","p","Enregistrer");const e=el("div","err");
  b.onclick=async()=>{e.textContent="";try{const res=await api("/rest/v1/profiles?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({role:r.value,statut:s.value}),headers:{Prefer:"return=representation"}});e.className="ok";e.textContent=res.length?"Enregistré.":"Modification refusée par les règles de sécurité."}catch(er){e.className="err";e.textContent=er.message}};
  c.append(r,s,b,e);L.append(c)})}catch(e){L.append(el("div","err",e.message))}}
-function tab(w){["al","mp","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});if(w=="us")loadUs();else if(w=="rp")loadRp();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
+function tab(w){["al","mp","ms","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});if(w=="us")loadUs();else if(w=="rp")loadRp();else if(w=="ms")loadMs();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
+let MS=null,WID=null,TR=[],DIST=0,WL=null,SAVET=null,DIRTY=false,TRL=null;
+function hav(a,b){const R=6371000,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]),h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function msInfo(){const l=TR[TR.length-1];$("msinfo").textContent=(MS.paused?"En pause · ":"")+TR.length+" point(s) · "+(DIST/1000).toFixed(2)+" km"+(l?" · dernière position "+l[0].toFixed(5)+", "+l[1].toFixed(5)+" (± "+Math.round(l[3])+" m) à "+new Date(l[2]).toLocaleTimeString("fr-FR"):" · en attente du premier signal GPS…")}
+function onPos(p){if(!MS||MS.paused)return;const pt=[p.coords.latitude,p.coords.longitude,p.timestamp,p.coords.accuracy||0];if(pt[3]>100)return;const l=TR[TR.length-1];if(l){const d=hav(l,pt);if(d<5)return;DIST+=d}TR.push(pt);DIRTY=true;msInfo()}
+async function startMs(){$("mserr").textContent="";const t=$("mt").value.trim();if(!t){$("mserr").textContent="Le titre est obligatoire.";return}if(!navigator.geolocation){$("mserr").textContent="GPS indisponible sur cet appareil ou ce navigateur.";return}
+ try{const r=await api("/rest/v1/missions",{method:"POST",body:JSON.stringify({titre:t,zone:$("mz").value.trim(),objectif:$("mo").value.trim(),auteur_nom:me.nom||me.email}),headers:{Prefer:"return=representation"}});MS=r[0];MS.paused=false;TR=[];DIST=0;
+ $("msform").classList.add("hide");$("mslive").classList.remove("hide");$("msname").textContent=MS.titre;$("mspause").textContent="Suspendre";msInfo();
+ WID=navigator.geolocation.watchPosition(onPos,er=>{$("msinfo").textContent="GPS indisponible : "+er.message},{enableHighAccuracy:true,maximumAge:0,timeout:30000});
+ SAVET=setInterval(()=>saveTrace(false),20000);try{WL=await navigator.wakeLock.request("screen")}catch(e){}window.onbeforeunload=()=>"Une mission est en cours."}catch(e){$("mserr").textContent=e.message}}
+async function saveTrace(fin){if(!MS||(!DIRTY&&!fin))return;DIRTY=false;const body={trace:TR,distance_m:Math.round(DIST),notes:$("msnote").value};if(fin){body.statut="terminee";body.fin=new Date().toISOString()}
+ try{await api("/rest/v1/missions?id=eq."+MS.id,{method:"PATCH",body:JSON.stringify(body),headers:{Prefer:"return=minimal"}})}catch(e){DIRTY=true;if(fin)throw e}}
+async function endMs(){try{await saveTrace(true)}catch(e){alert("Enregistrement impossible : "+e.message+". Gardez la page ouverte et réessayez.");return}
+ navigator.geolocation.clearWatch(WID);clearInterval(SAVET);if(WL){try{WL.release()}catch(e){}WL=null}window.onbeforeunload=null;MS=null;TR=[];DIST=0;$("msform").classList.remove("hide");$("mslive").classList.add("hide");["mt","mz","mo","msnote"].forEach(i=>$(i).value="");loadMs()}
+function showTrace(m){tab("mp");setTimeout(()=>{if(!TRL)return;TRL.clearLayers();const pts=m.trace.map(p=>[p[0],p[1]]);L.polyline(pts,{color:"#f5c400",weight:4}).addTo(TRL);L.circleMarker(pts[0],{radius:7,color:"#fff",fillColor:"#2fbf4a",fillOpacity:1}).bindTooltip("Départ").addTo(TRL);L.circleMarker(pts[pts.length-1],{radius:7,color:"#fff",fillColor:"#ff5a4d",fillOpacity:1}).bindTooltip("Dernier point").addTo(TRL);MAP.fitBounds(pts,{maxZoom:17,padding:[30,30]})},200)}
+function gpx(m){const x='<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GABON 360 AI" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>'+esc(m.titre)+'</name><trkseg>'+m.trace.map(p=>'<trkpt lat="'+p[0]+'" lon="'+p[1]+'"><time>'+new Date(p[2]).toISOString()+'</time></trkpt>').join("")+'</trkseg></trk></gpx>';
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([x],{type:"application/gpx+xml"}));a.download=(m.titre||"mission").replace(/[^\w-]+/g,"_")+".gpx";document.body.append(a);a.click();a.remove()}
+async function loadMs(){const L2=$("mslist");L2.replaceChildren();try{const a=await api("/rest/v1/missions?select=*&order=debut.desc&limit=20");
+ if(!a.length){L2.append(el("div","note","Aucune mission enregistrée."));return}
+ a.forEach(m=>{const c=el("div","card"),n=(m.trace||[]).length;c.append(el("b","",m.titre));const t=el("div");t.append(el("span","tag",m.statut=="terminee"?"terminée":"en cours"));c.append(t);
+ c.append(el("div","note",(m.zone||"zone non précisée")+" · par "+(m.auteur_nom||"?")+" · "+new Date(m.debut).toLocaleString("fr-FR")+" · "+((m.distance_m||0)/1000).toFixed(2)+" km · "+n+" points"));
+ if(m.objectif)c.append(el("div","",m.objectif));if(m.notes)c.append(el("div","note","Note : "+m.notes));
+ if(n){const r=el("div","row"),b=el("button","","Voir sur la carte");b.onclick=()=>showTrace(m);const g=el("button","","Exporter GPX");g.onclick=()=>gpx(m);r.append(b,g);c.append(r)}L2.append(c)})}catch(e){L2.append(el("div","err",e.message))}}
 let RP=[];
 function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 async function saveRp(sub){$("rperr").textContent="";const t=$("rt").value.trim();if(!t){$("rperr").textContent="Le titre est obligatoire.";return}
@@ -128,7 +160,7 @@ function initMap(){if(MAP)return;
  const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"});
  MAP=L.map("map",{layers:[sat],maxBounds:[[-9,4],[7,19]],minZoom:5}).fitBounds([[-3.98,8.69],[2.33,14.52]]);
  L.control.layers({"Satellite haute résolution":sat,"Sentinel-2 sans nuages":s2,"Plan et routes":osm}).addTo(MAP);
- L.control.scale({imperial:false}).addTo(MAP);LG=L.layerGroup().addTo(MAP);
+ L.control.scale({imperial:false}).addTo(MAP);LG=L.layerGroup().addTo(MAP);TRL=L.layerGroup().addTo(MAP);
  MAP.on("click",e=>pick(e.latlng.lat,e.latlng.lng,"point choisi sur la carte"))}
 function drawMap(){if(!MAP)return;LG.clearLayers();
  CITIES.forEach(c=>L.circleMarker([c[1],c[2]],{radius:5,color:"#000",weight:1,fillColor:"#f5c400",fillOpacity:1}).bindTooltip(c[0],{permanent:true,direction:"right",offset:[6,0]}).addTo(LG));
@@ -154,7 +186,7 @@ $("gps").onclick=()=>{if(!navigator.geolocation){$("minfo").replaceChildren(el("
  navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude;if(inGabon(la,lo))MAP.setView([la,lo],15);
   pick(la,lo,"position GPS réelle","Précision ± "+Math.round(p.coords.accuracy)+" m · mesurée à "+new Date(p.timestamp).toLocaleTimeString("fr-FR"))},
   er=>{$("minfo").replaceChildren(el("div","err","Position indisponible : "+er.message+". Autorisez la localisation pour ce site."))},{enableHighAccuracy:true,timeout:20000})};
-$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
+$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("t-ms").onclick=()=>tab("ms");$("mstart").onclick=startMs;$("msend").onclick=endMs;$("mspause").onclick=()=>{if(!MS)return;MS.paused=!MS.paused;$("mspause").textContent=MS.paused?"Reprendre":"Suspendre";msInfo()};$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
 $("pw").onkeydown=e=>{if(e.key=="Enter")login()};
 load();if(ses)start();
 </script></body></html>
