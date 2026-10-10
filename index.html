@@ -104,14 +104,18 @@ async function loadUs(){const L=$("ulist");L.replaceChildren();try{const u=await
  b.onclick=async()=>{e.textContent="";try{const res=await api("/rest/v1/profiles?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({role:r.value,statut:s.value}),headers:{Prefer:"return=representation"}});e.className="ok";e.textContent=res.length?"Enregistré.":"Modification refusée par les règles de sécurité."}catch(er){e.className="err";e.textContent=er.message}};
  c.append(r,s,b,e);L.append(c)})}catch(e){L.append(el("div","err",e.message))}}
 function tab(w){["al","mp","ms","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});if(w=="us")loadUs();else if(w=="rp")loadRp();else if(w=="ms")loadMs();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
-let MS=null,WID=null,TR=[],DIST=0,WL=null,SAVET=null,DIRTY=false,TRL=null;
+let LF=null,MS=null,WID=null,TR=[],DIST=0,WL=null,SAVET=null,DIRTY=false,TRL=null;
 function hav(a,b){const R=6371000,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]),h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
-function msInfo(){const l=TR[TR.length-1];$("msinfo").textContent=(MS.paused?"En pause · ":"")+TR.length+" point(s) · "+(DIST/1000).toFixed(2)+" km"+(l?" · dernière position "+l[0].toFixed(5)+", "+l[1].toFixed(5)+" (± "+Math.round(l[3])+" m) à "+new Date(l[2]).toLocaleTimeString("fr-FR"):" · en attente du premier signal GPS…")}
-function onPos(p){if(!MS||MS.paused)return;const pt=[p.coords.latitude,p.coords.longitude,p.timestamp,p.coords.accuracy||0];if(pt[3]>100)return;const l=TR[TR.length-1];if(l){const d=hav(l,pt);if(d<5)return;DIST+=d}TR.push(pt);DIRTY=true;msInfo()}
+function msInfo(){let s=(MS.paused?"En pause · ":"")+TR.length+" point(s) enregistré(s) · "+(DIST/1000).toFixed(2)+" km";
+ if(LF)s+="\nSignal GPS : "+LF.la.toFixed(5)+", "+LF.lo.toFixed(5)+" (± "+Math.round(LF.acc)+" m) à "+new Date(LF.t).toLocaleTimeString("fr-FR")+(LF.acc>150?"\n⚠ Signal trop imprécis : point ignoré. Placez-vous à ciel ouvert.":LF.acc>50?"\n⚠ Précision moyenne.":"");
+ else s+="\nEn attente du premier signal GPS… (jusqu'à une minute à ciel ouvert)";
+ const e=$("msinfo");e.textContent=s;e.style.whiteSpace="pre-line"}
+function onPos(p){const c=p.coords;LF={la:c.latitude,lo:c.longitude,acc:c.accuracy||0,t:p.timestamp};if(!MS)return;if(MS.paused||LF.acc>150){msInfo();return}
+ const pt=[LF.la,LF.lo,LF.t,LF.acc],l=TR[TR.length-1];if(l){const d=hav(l,pt);if(d<Math.max(5,LF.acc/2)){msInfo();return}DIST+=d}TR.push(pt);DIRTY=true;msInfo()}
 async function startMs(){$("mserr").textContent="";const t=$("mt").value.trim();if(!t){$("mserr").textContent="Le titre est obligatoire.";return}if(!navigator.geolocation){$("mserr").textContent="GPS indisponible sur cet appareil ou ce navigateur.";return}
- try{const r=await api("/rest/v1/missions",{method:"POST",body:JSON.stringify({titre:t,zone:$("mz").value.trim(),objectif:$("mo").value.trim(),auteur_nom:me.nom||me.email}),headers:{Prefer:"return=representation"}});MS=r[0];MS.paused=false;TR=[];DIST=0;
+ try{const r=await api("/rest/v1/missions",{method:"POST",body:JSON.stringify({titre:t,zone:$("mz").value.trim(),objectif:$("mo").value.trim(),auteur_nom:me.nom||me.email}),headers:{Prefer:"return=representation"}});MS=r[0];MS.paused=false;TR=[];DIST=0;LF=null;
  $("msform").classList.add("hide");$("mslive").classList.remove("hide");$("msname").textContent=MS.titre;$("mspause").textContent="Suspendre";msInfo();
- WID=navigator.geolocation.watchPosition(onPos,er=>{$("msinfo").textContent="GPS indisponible : "+er.message},{enableHighAccuracy:true,maximumAge:0,timeout:30000});
+ WID=navigator.geolocation.watchPosition(onPos,er=>{$("msinfo").textContent=er.code==1?"GPS refusé : autorisez la position exacte pour ce site dans les réglages de Chrome.":er.code==2?"Position indisponible : activez la localisation du téléphone et placez-vous à ciel ouvert.":"Délai dépassé : aucun signal GPS reçu. Placez-vous à ciel ouvert."},{enableHighAccuracy:true,maximumAge:0,timeout:30000});
  SAVET=setInterval(()=>saveTrace(false),20000);try{WL=await navigator.wakeLock.request("screen")}catch(e){}window.onbeforeunload=()=>"Une mission est en cours."}catch(e){$("mserr").textContent=e.message}}
 async function saveTrace(fin){if(!MS||(!DIRTY&&!fin))return;DIRTY=false;const body={trace:TR,distance_m:Math.round(DIST),notes:$("msnote").value};if(fin){body.statut="terminee";body.fin=new Date().toISOString()}
  try{await api("/rest/v1/missions?id=eq."+MS.id,{method:"PATCH",body:JSON.stringify(body),headers:{Prefer:"return=minimal"}})}catch(e){DIRTY=true;if(fin)throw e}}
