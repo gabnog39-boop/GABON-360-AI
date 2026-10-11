@@ -53,7 +53,12 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
    <div class="row"><button id="mspause">Suspendre</button><button id="msend" class="p">Terminer</button></div>
    <label>Note de mission</label><textarea id="msnote" style="min-height:70px"></textarea>
    <p class="note">Gardez la page ouverte et l'écran allumé : le suivi s'arrête si Chrome passe en arrière-plan. Les positions de précision supérieure à 100 m sont ignorées. La trace est enregistrée toutes les 20 secondes.</p></div></div>
-  <div id="mslist"></div></div>
+  <div class="card hide" id="impms"><h2>Importer un parcours GPX</h2>
+  <p class="note">Importez une trace enregistrée par une autre application GPS. Elle devient une mission terminée, visible sur la carte satellite.</p>
+  <input id="impfile" type="file">
+  <div id="impbox" class="hide"><div id="impinfo" class="note" style="white-space:pre-line"></div><label>Titre</label><input id="impt"><label>Zone ou parc</label><input id="impz"><div class="err" id="imperr"></div><button class="p" id="impsave">Enregistrer le parcours importé</button></div></div>
+  
+<div id="mslist"></div></div>
  
 <div id="v-rp" class="hide">
   <div class="card" id="newrp"><h2>Nouveau rapport</h2><label>Titre</label><input id="rt"><label>Alerte liée (facultatif)</label><select id="rl"><option value="">Aucune</option></select>
@@ -82,7 +87,7 @@ async function start(){try{const u=await api("/auth/v1/user");const p=await api(
  $("auth").classList.add("hide");$("who").textContent=(me.nom||me.email)+" · "+me.role+" · "+me.statut;
  if(me.statut!="actif"){$("wait").classList.remove("hide");return}
  $("app").classList.remove("hide");const adm=["proprietaire","administrateur"].includes(me.role);$("t-us").classList.toggle("hide",!adm);
- $("newal").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newrp").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newms").classList.toggle("hide",!CW.includes(me.role));loadAl()}catch(e){out();$("aerr").className="err";$("aerr").textContent=e.message}}
+ $("newal").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newrp").classList.toggle("hide",!["proprietaire","administrateur","superviseur","analyste","ecogarde"].includes(me.role));$("newms").classList.toggle("hide",!CW.includes(me.role));$("impms").classList.toggle("hide",!CW.includes(me.role));loadAl()}catch(e){out();$("aerr").className="err";$("aerr").textContent=e.message}}
 async function loadAl(){const L=$("alist");L.replaceChildren();try{const a=await api("/rest/v1/evenements?select=*&order=recu_le.desc&limit=100");AL=a;drawMap();
  if(!a.length){L.append(el("div","note","Aucune alerte enregistrée."));return}
  const sup=["proprietaire","administrateur","superviseur"].includes(me.role);
@@ -139,6 +144,27 @@ async function loadMs(){const L2=$("mslist");L2.replaceChildren();try{const a=aw
  c.append(el("div","note",(m.zone||"zone non précisée")+" · par "+(m.auteur_nom||"?")+" · "+new Date(m.debut).toLocaleString("fr-FR")+" · "+((m.distance_m||0)/1000).toFixed(2)+" km · "+n+" points"));
  if(m.objectif)c.append(el("div","",m.objectif));if(m.notes)c.append(el("div","note","Note : "+m.notes));
  msActions(c,m,n);L2.append(c)})}catch(e){L2.append(el("div","err",e.message))}}
+let GP=null;
+function impPick(){const f=this.files[0],e=$("imperr");e.textContent="";GP=null;$("impbox").classList.add("hide");if(!f)return;
+ if(f.size>15000000){e.textContent="Fichier trop volumineux (15 Mo maximum).";$("impbox").classList.remove("hide");return}
+ const r=new FileReader();r.onerror=()=>{$("impbox").classList.remove("hide");e.textContent="Lecture du fichier impossible."};
+ r.onload=()=>{try{GP=parseGpx(String(r.result),f.name)}catch(x){$("impbox").classList.remove("hide");$("impinfo").textContent="";e.textContent=x.message;return}
+  const d=(GP.t1-GP.t0)/60000;$("impt").value=GP.name;$("impz").value="";$("impbox").classList.remove("hide");
+  $("impinfo").textContent=GP.pts.length+" points · "+(GP.dist/1000).toFixed(2)+" km"+(d>=1?" · durée "+Math.round(d)+" min":"")+"\nDébut : "+new Date(GP.t0).toLocaleString("fr-FR")+(GP.cut?"\nTracé simplifié : "+GP.cut+" points d'origine.":"")+(inGabon(GP.pts[0][0],GP.pts[0][1])?"":"\n⚠ Ce tracé semble hors du Gabon.")};
+ r.readAsText(f)}
+function parseGpx(txt,fname){const d=new DOMParser().parseFromString(txt,"application/xml");if(d.getElementsByTagName("parsererror").length)throw new Error("Fichier illisible : ce n'est pas un GPX valide.");
+ let nodes=[...d.getElementsByTagName("trkpt")];if(!nodes.length)nodes=[...d.getElementsByTagName("rtept")];if(!nodes.length)throw new Error("Aucun point de tracé trouvé dans ce fichier.");
+ const raw=[];for(const n of nodes){const la=parseFloat(n.getAttribute("lat")),lo=parseFloat(n.getAttribute("lon"));if(isNaN(la)||isNaN(lo)||Math.abs(la)>90||Math.abs(lo)>180)continue;const t=n.getElementsByTagName("time")[0];raw.push([la,lo,t?Date.parse(t.textContent):NaN,0])}
+ if(raw.length<2)throw new Error("Le tracé contient moins de 2 points valides.");
+ let last=(raw.find(p=>!isNaN(p[2]))||[0,0,Date.now()])[2];raw.forEach(p=>{if(isNaN(p[2]))p[2]=last;else last=p[2]});
+ let out=[raw[0]],dist=0;for(let i=1;i<raw.length;i++){const s=hav(out[out.length-1],raw[i]);if(s>=5){dist+=s;out.push(raw[i])}}
+ if(out.length<2)throw new Error("Le tracé ne contient pas de déplacement.");
+ let cut=0;if(out.length>5000){cut=out.length;const k=Math.ceil(out.length/5000),o2=out.filter((p,i)=>i%k==0);if(o2[o2.length-1]!==out[out.length-1])o2.push(out[out.length-1]);out=o2}
+ const trk=d.getElementsByTagName("trk")[0],nm=trk&&trk.getElementsByTagName("name")[0];
+ return{pts:out,dist,cut,t0:out[0][2],t1:out[out.length-1][2],fname,name:(nm&&nm.textContent.trim())||fname.replace(/\.[^.]+$/,"")}}
+async function saveImp(){const e=$("imperr");e.textContent="";if(!GP)return;const t=$("impt").value.trim();if(!t){e.textContent="Le titre est obligatoire.";return}
+ try{await api("/rest/v1/missions",{method:"POST",body:JSON.stringify({titre:t,zone:$("impz").value.trim(),objectif:"",statut:"terminee",debut:new Date(GP.t0).toISOString(),fin:new Date(GP.t1).toISOString(),trace:GP.pts,distance_m:Math.round(GP.dist),notes:"Parcours importé depuis un fichier GPX ("+GP.fname+")",auteur_nom:me.nom||me.email}),headers:{Prefer:"return=minimal"}});
+ GP=null;$("impbox").classList.add("hide");$("impinfo").textContent="";$("impfile").value="";loadMs()}catch(x){e.textContent=x.message}}
 let RP=[];
 function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 async function saveRp(sub){$("rperr").textContent="";const t=$("rt").value.trim();if(!t){$("rperr").textContent="Le titre est obligatoire.";return}
@@ -199,7 +225,7 @@ $("gps").onclick=()=>{if(!navigator.geolocation){$("minfo").replaceChildren(el("
  navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude;if(inGabon(la,lo))MAP.setView([la,lo],15);
   pick(la,lo,"position GPS réelle","Précision ± "+Math.round(p.coords.accuracy)+" m · mesurée à "+new Date(p.timestamp).toLocaleTimeString("fr-FR"))},
   er=>{$("minfo").replaceChildren(el("div","err","Position indisponible : "+er.message+". Autorisez la localisation pour ce site."))},{enableHighAccuracy:true,timeout:20000})};
-$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("t-ms").onclick=()=>tab("ms");$("mstart").onclick=startMs;$("msend").onclick=endMs;$("mspause").onclick=()=>{if(!MS)return;MS.paused=!MS.paused;$("mspause").textContent=MS.paused?"Reprendre":"Suspendre";msInfo()};$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
+$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("t-ms").onclick=()=>tab("ms");$("mstart").onclick=startMs;$("impfile").onchange=impPick;$("impsave").onclick=saveImp;$("msend").onclick=endMs;$("mspause").onclick=()=>{if(!MS)return;MS.paused=!MS.paused;$("mspause").textContent=MS.paused?"Reprendre":"Suspendre";msInfo()};$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
 $("pw").onkeydown=e=>{if(e.key=="Enter")login()};
 load();if(ses)start();
 </script></body></html>
