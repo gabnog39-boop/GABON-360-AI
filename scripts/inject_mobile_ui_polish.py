@@ -2,31 +2,34 @@
 from __future__ import annotations
 from pathlib import Path
 
-MARKER='<!-- GABON360-MOBILE-POLISH-V1 -->'
-PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V1 -->
+MARKER='<!-- GABON360-MOBILE-POLISH-V5 -->'
+PAYLOAD=r'''<!-- GABON360-MOBILE-POLISH-V5 -->
 <style>
-/* Final mobile layout normalization: one scrollable document, no stacked fixed toolbars. */
-html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;overflow-y:auto!important;height:auto!important;min-height:100%!important;position:relative!important}
-body{padding-bottom:150px!important;box-sizing:border-box!important}
-/* Keep the main content in normal flow. */
-main,#root,#app,.app,.shell,.page,.content,.main-content{max-width:100%!important;box-sizing:border-box!important}
-/* National launcher: compact single entry point instead of a pile of buttons over the dashboard. */
-#g360-pages{left:12px!important;right:12px!important;bottom:74px!important;top:auto!important;max-width:none!important;width:auto!important;display:block!important;background:rgba(6,21,34,.96)!important;border:1px solid #31506d!important;border-radius:12px!important;padding:7px!important;box-shadow:0 8px 24px #0009!important}
-#g360-pages button{display:none!important}
-#g360-pages #g360-pages-open{display:block!important;width:100%!important;margin:0!important;padding:10px!important;font-size:14px!important}
-/* Existing modules bar becomes a single compact launcher, avoiding collision with national navigation. */
-#g360-modules{left:12px!important;right:12px!important;bottom:18px!important;top:auto!important;width:auto!important;display:flex!important;gap:5px!important;justify-content:stretch!important;box-sizing:border-box!important}
-#g360-modules button{flex:1 1 0!important;margin:0!important;min-width:0!important;padding:8px 6px!important;font-size:11px!important}
-/* AI command strip is hidden on the dashboard because the central avatar is the command entry point. */
-#g360-ai-command{display:none!important}
-#g360-ai-go{display:none!important}
-/* Avatar launcher stays above the navigation bar without covering content. */
-#g360-avatar-launch{left:12px!important;bottom:126px!important;width:72px!important;height:72px!important;z-index:100010!important}
-/* Modals always have their own scroll and safe mobile padding. */
-#g360-pages-modal,#g360-cm-modal,#g360-avatar-modal{overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;align-items:flex-start!important;padding-top:12px!important;padding-bottom:24px!important;box-sizing:border-box!important}
-#g360-pages-card,#g360-avatar-card,.g360-cm-card{max-height:calc(100vh - 36px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;box-sizing:border-box!important}
+/* V5: single, predictable mobile layout; avoid contradictory fixed-position overrides. */
+*,*::before,*::after{box-sizing:border-box}
+html,body{width:100%;max-width:100%;min-height:100%;margin:0;overflow-x:hidden}
+body{padding-bottom:150px!important}
+img,video,canvas,iframe{max-width:100%}
+button,a,[role=button],input,select,textarea{touch-action:manipulation}
+main,#root,#app,.app,.shell,.page,.content,.main-content{max-width:100%;min-width:0}
+#g360-pages-modal,#g360-cm-modal,#g360-avatar-modal{z-index:100100!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;align-items:flex-start!important;padding:12px 12px 24px!important}
+#g360-pages-card,#g360-avatar-card,.g360-cm-card{width:min(100%,560px)!important;max-width:100%!important;max-height:calc(100dvh - 36px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
 #g360-pages-grid{grid-template-columns:1fr!important}
-@media(min-width:681px){#g360-pages{left:auto!important;right:18px!important;width:auto!important;max-width:420px!important}#g360-modules{left:18px!important;right:auto!important;width:auto!important}}
+/* Keep the old national shortcut drawer out of the dashboard. The dedicated
+   "Toutes les pages" catalogue is the single visible page selector. */
+#g360-pages{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#g360-pages button{display:none!important}
+#g360-complete-open{position:fixed!important;right:10px!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;left:auto!important;bottom:auto!important;z-index:100030!important;max-width:calc(100vw - 100px)!important;min-height:42px!important;padding:9px 11px!important;white-space:nowrap!important}
+#g360-complete-modal[aria-hidden="true"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#g360-complete-modal[aria-hidden="false"]{display:block!important;visibility:visible!important;pointer-events:auto!important}
+#g360-modules{position:fixed!important;left:12px!important;right:12px!important;top:auto!important;bottom:8px!important;width:auto!important;max-width:none!important;display:flex;gap:7px;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;z-index:100000!important;padding:6px!important;background:rgba(6,21,34,.95)!important;border-radius:12px}
+#g360-modules button{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;min-width:76px;min-height:44px;margin:0;padding:8px 10px;font-size:12px;white-space:nowrap}
+#g360-avatar-launch{position:fixed!important;left:12px!important;bottom:164px!important;top:auto!important;width:56px!important;height:56px!important;max-width:calc(100vw - 24px)!important;z-index:100010!important}
+#g360-satellite-open{position:fixed!important;right:12px!important;bottom:164px!important;top:auto!important;left:auto!important;max-width:132px!important;min-height:44px!important;z-index:100010!important}
+#g360-micro-launch,#g360-mic-launch,#g360-voice-launch{position:fixed!important;left:12px!important;bottom:94px!important;top:auto!important;max-width:64px!important;z-index:100010!important}
+#g360-ai-command{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;max-width:100%!important;visibility:visible;pointer-events:auto}
+#g360-ai-go{position:relative!important;bottom:auto!important;visibility:visible;pointer-events:auto}
+@media(max-width:680px){body{padding-bottom:170px!important}#g360-pages{bottom:66px!important;max-height:58dvh!important}#g360-avatar-launch{bottom:154px!important}#g360-satellite-open{bottom:154px!important}}
 </style>
 <script>
 (function(){
@@ -51,15 +54,23 @@ main,#root,#app,.app,.shell,.page,.content,.main-content{max-width:100%!importan
 '''
 
 def main():
-    candidates=sorted(Path('android_project').rglob('index.html'),key=lambda p:('assets' in p.parts,len(p.parts)))
+    import re
+    root=Path('android_project')
+    candidates=sorted(root.rglob('index.html'),key=lambda p:len(p.parts))
+    if not candidates:
+        raise SystemExit('No suitable index.html found')
+    updated=0
     for p in candidates:
-        text=p.read_text(encoding='utf-8')
-        if MARKER in text:
-            print('already:',p); return
+        original=p.read_text(encoding='utf-8')
+        # Remove prior mobile polish blocks, then append the current block last.
+        text=re.sub(r'<!-- GABON360-MOBILE-POLISH-V\d+ -->.*?</script>', '', original, flags=re.S)
         i=text.lower().rfind('</body>')
         if i>=0:
             p.write_text(text[:i]+PAYLOAD+'\n'+text[i:],encoding='utf-8')
-            print('injected:',p); return
-    raise SystemExit('No suitable index.html found')
+            print('replaced and moved final mobile polish to end:',p)
+            updated+=1
+    if updated == 0:
+        raise SystemExit('No index.html with a closing body tag found')
+    print('mobile polish applied to',updated,'HTML file(s)')
 
 if __name__=='__main__': main()

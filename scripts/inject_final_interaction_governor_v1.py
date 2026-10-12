@@ -10,8 +10,12 @@ PAYLOAD = r'''<!-- GABON360-FINAL-INTERACTION-GOVERNOR-V1 -->
   pointer-events:auto!important;
   touch-action:manipulation!important;
 }
-#g360-avatar-launch{z-index:2147483640!important}
-#g360-universal-launch,#g360-v2-launch{z-index:2147483639!important}
+#g360-avatar-launch{z-index:100050!important}
+#g360-universal-launch,#g360-v2-launch{z-index:100040!important}
+/* Active page dialogs must sit above floating launchers, otherwise the avatar/mic steal taps. */
+#g360-pages-modal,#g360-universal,#g360-v2,#g360-avatar-modal{z-index:100100!important}
+#g360-pages-modal[aria-hidden='true'],#g360-universal[aria-hidden='true'],#g360-v2[aria-hidden='true'],#g360-avatar-modal[aria-hidden='true']{pointer-events:none!important;visibility:hidden!important}
+#g360-pages-modal[aria-hidden='false'],#g360-universal[aria-hidden='false'],#g360-v2[aria-hidden='false'],#g360-avatar-modal[aria-hidden='false']{pointer-events:auto!important;visibility:visible!important}
 #g360-avatar-modal,#g360-universal,#g360-v2,#g360-pages-modal{
   touch-action:pan-y!important;
 }
@@ -159,14 +163,18 @@ PAYLOAD = r'''<!-- GABON360-FINAL-INTERACTION-GOVERNOR-V1 -->
 def main():
     roots=sorted(Path('android_project').rglob('index.html'),key=lambda p:(len(p.parts),str(p)))
     if not roots: raise SystemExit('index.html introuvable')
-    required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','GABON360-AVATAR-HOME-V1']
+    # Le ZIP peut contenir plusieurs index.html intermédiaires. Choisir celui
+    # qui porte le plus de marqueurs GABON 360 connus, sans bloquer la compilation
+    # si un marqueur optionnel a été omis par un injecteur précédent.
+    required=['GABON360-UNIVERSAL-MODULE-PAGES-V1','GABON360-AVATAR-HOME-V1','GABON360_NATIONAL_MODULES','GABON360-HORIZONTAL-PAGE-NAV-V1']
     candidates=[]
     for p in roots:
         t=p.read_text(encoding='utf-8',errors='ignore')
         score=sum(x in t for x in required)
         candidates.append((score,p,t))
     score,p,t=max(candidates,key=lambda x:(x[0],-len(x[1].parts),str(x[1])))
-    if score<len(required): raise SystemExit('Aucun index.html consolidé trouvé')
+    if score==0:
+        raise SystemExit('Aucun index.html avec marqueur GABON 360 trouvé')
     if MARK in t:
         print('already:',p); return
     i=t.lower().rfind('</body>')

@@ -6,6 +6,8 @@ MARK = "GABON360-UNIVERSAL-MODULE-PAGES-V1"
 PAYLOAD = r'''<!-- GABON360-UNIVERSAL-MODULE-PAGES-V1 -->
 <style>
 #g360-universal-launch{position:fixed;left:10px;top:70px;z-index:2147483000;background:#0b1a2a;color:#fff;border:1px solid #31506d;border-radius:11px;padding:9px 12px;font-weight:800}
+/* Le catalogue principal est géré par la navigation nationale : ne pas afficher un second lanceur. */
+#g360-universal-launch{display:none!important}
 #g360-universal{position:fixed;inset:0;z-index:2147483500;display:none;background:#020913f5;color:#eef6ff;font:14px system-ui,sans-serif;overflow:auto}
 #g360-universal .g360-upage{min-height:100%;box-sizing:border-box;padding:14px 12px 40px}
 #g360-universal .g360-uhead{position:sticky;top:0;z-index:3;background:#081725ee;border-bottom:1px solid #31506d;padding:10px 0;display:flex;align-items:center;gap:8px}
@@ -40,7 +42,8 @@ weather:{icon:'🌦️',name:'Météo',actions:['Situation actuelle','Prévision
 sources:{icon:'📡',name:'Sources & connexions',actions:['Satellites','Drones','Caméras','Maritime','Météo','SIG','Institutionnel','État','Qualité','Dernière réception','Tester','Synchroniser','Hors-ligne']},
 security:{icon:'🛡️',name:'Accès / administration / audit',actions:['Utilisateurs','Rôles','Permissions','Lecture','Opération','Validation','Administration','Journal actions','Commandes IA','Configuration','Sécurité','Sessions']},
 avatar:{icon:'🤖',name:'Avatar / IA centrale',actions:['Parler','Écouter','Micro','Voix','Stop voix','Conversation','Ouvrir une page','Expliquer la carte','Lire une alerte','Recevoir les sources','Historique commandes']},
-memory:{icon:'🧠',name:'Mémoire territoriale — IA spécialisée',actions:['Historique territorial','Rechercher par zone','Rechercher par date','Comparer deux périodes','Évolution forêt / parc','Évolution eaux / littoral','Historique satellite','Historique alertes','Historique missions','Corrélations','Événements récurrents','Preuves / sources','Notifier l’avatar']}
+memory:{icon:'🧠',name:'Mémoire territoriale — IA spécialisée',actions:['Historique territorial','Rechercher par zone','Rechercher par date','Comparer deux périodes','Évolution forêt / parc','Évolution eaux / littoral','Historique satellite','Historique alertes','Historique missions','Corrélations','Événements récurrents','Preuves / sources','Notifier l’avatar']},
+'field-analysis':{icon:'📡',name:'Analyse des données terrain',actions:['Analyser les observations reçues','Filtrer par zone et période','Vérifier les coordonnées et sources','Repérer les alertes à vérifier','Préparer un rapport','Transmettre le résultat à l’avatar']}
 };
 
 var root=document.getElementById('g360-universal');
@@ -51,6 +54,7 @@ function show(){root.style.display='block';root.setAttribute('aria-hidden','fals
 function hide(){root.style.display='none';root.setAttribute('aria-hidden','true')}
 function modulePage(id){
 var m=modules[id];if(!m)return;
+if(id==='field-analysis'&&typeof window.GABON360_OPEN_DATA_ANALYSIS==='function'){window.GABON360_OPEN_DATA_ANALYSIS();return}
 root.innerHTML='<div class="g360-upage"><div class="g360-uhead"><button class="g360-back">← Centre</button><b>'+m.icon+' '+esc(m.name)+'</b><button class="g360-close">✕</button></div><div class="g360-status">Page du module prête. Sélectionnez une fonction.</div><div class="g360-ugrid">'+m.actions.map(function(a,i){return '<div class="g360-ucard"><b>'+esc(a)+'</b><button data-g360-fn="'+id+'|'+i+'">Ouvrir la fonction</button></div>'}).join('')+'</div></div>';
 show();
 }
@@ -105,6 +109,34 @@ if(b.dataset.g360Fn){var p=b.dataset.g360Fn.split('|');var id=p[0],i=Number(p[1]
 });
 window.GABON360_OPEN_MODULE_PAGE=modulePage;
 window.GABON360_OPEN_FUNCTION_PAGE=function(id,i){modulePage(id);setTimeout(function(){var b=root.querySelector('[data-g360-fn="'+id+'|'+i+'"]');if(b)b.click()},0)};
+/* Prefer semantic action matching over numeric indices: the visual catalogue and
+   the operational module may list the same functions in different orders. */
+window.GABON360_OPEN_NAMED_FUNCTION=function(id,label){
+ var m=modules[id]; if(!m)return false;
+ var norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()};
+ var target=norm(label);
+ var aliases={
+  map:{'ouvrir la carte':'carte routiere','carte':'carte routiere','ouvrir la carte sig':'carte routiere','choisir une zone':'selection par clic','clic coordonnees':'selection par clic','ouvrir sur carte':'evenements sur carte'},
+  nav:{'ma position':'gps gnss','position gps':'gps gnss','clic coordonnees':'waypoint','points de passage':'waypoint','guidage vocal':'guidage vocal'},
+  sat:{'rechercher une observation':'sentinel 2','ouvrir observation':'ouvrir observation','historique satellite':'historique','recherche par date':'recherche date'},
+  drones:{'etat des drones':'etat connexion','missions':'mission','flux video':'flux reel'},
+  cameras:{'cameras autorisees':'sites','etat des connexions':'connexion','historique des evenements':'historique'},
+  maritime:{'ocean':'cote','donnees navires':'donnees navires autorisees'},
+  forests:{'carte des zones':'carte des zones','patrouille':'patrouilles'},
+  alerts:{'nouvelles alertes':'nouvelles alertes','ouvrir sur carte':'ouvrir sur carte'},
+  reports:{'creer un rapport':'nouveau rapport','exporter un rapport':'exporter'},
+  stats:{'actualiser les statistiques':'actualiser'},
+  weather:{'meteo actuelle':'situation actuelle','conditions actuelles':'situation actuelle'},
+  memory:{'rechercher par date':'rechercher par date','rechercher par zone':'rechercher par zone','notifier avatar':'notifier l avatar'},
+  avatar:{'parler a l utilisateur':'parler','ecouter la commande':'ecouter','expliquer la carte':'expliquer la carte'}
+ };
+ var wanted=(aliases[id]&&aliases[id][target])||target;
+ var i=m.actions.findIndex(function(a){return norm(a)===wanted});
+ modulePage(id);
+ if(i>=0){setTimeout(function(){var b=root.querySelector('[data-g360-fn="'+id+'|'+i+'"]');if(b)b.click()},0);return true}
+ status('Page '+m.name+' ouverte. La fonction « '+String(label)+' » nécessite un raccordement spécifique.');
+ return false;
+};
 window.GABON360_MODULE_PAGES=modules;
 })();
 </script>

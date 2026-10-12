@@ -91,15 +91,23 @@ class CentralAIOrchestrator:
     def _route(self, event: AIEvent) -> dict[str, Any]:
         urgent = event.severity in CRITICAL
         important = urgent or event.severity in IMPORTANT
+        # Toute information reçue est transmise à l'avatar et rendue visible
+        # aux humains sans attendre une question ni une autorisation de lecture.
+        # L'autorisation humaine reste requise pour les actions sensibles, pas
+        # pour informer. L'interface doit mettre en file les messages vocaux
+        # pour éviter de parler simultanément lorsque plusieurs événements arrivent.
         return {
             "event": event.as_dict(),
             "relay": {
                 "accepted": True,
                 "central_correlation": True,
-                "avatar_notification": important,
+                "avatar_notification": True,
+                "proactive": True,
                 "human_validation_required": event.requires_human_validation,
+                "human_authorization_required_for_information": False,
+                "human_authorization_required_for_sensitive_action": True,
             },
-            "avatar": self.avatar_message(event) if important else None,
+            "avatar": self.avatar_message(event),
         }
 
     @staticmethod
@@ -128,11 +136,21 @@ class CentralAIOrchestrator:
             f" Heure: {event.timestamp}."
             f"{confidence}{validation}"
         )
+        priority = (
+            "critical" if event.severity in CRITICAL else
+            "high" if event.severity in IMPORTANT else
+            "normal"
+        )
         return {
             "speak": True,
-            "priority": "critical" if event.severity in CRITICAL else "high",
+            "proactive": True,
+            "priority": priority,
             "text": text,
             "event_id": f"{event.ai}:{event.event}:{event.timestamp}",
+            "source": event.source,
+            "status": event.status,
+            "requires_human_validation": event.requires_human_validation,
+            "evidence_count": len(event.evidence),
         }
 
     def health(self) -> dict[str, Any]:

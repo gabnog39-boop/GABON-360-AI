@@ -29,13 +29,45 @@ const M={
  weather:{i:'🌦️',n:'Météo',s:'ACTIF',o:['Situation actuelle','Prévisions','Zone','Température','Pluie','Vent','Humidité','Historique','Contexte opérationnel','Source / qualité']},
  sources:{i:'📡',n:'Sources & connexions',s:'ACTIF',o:['Satellites','Drones','Caméras','Maritime','Météo','SIG','Institutionnel','État','Qualité','Dernière réception','Tester','Synchroniser','Hors-ligne']},
  security:{i:'🛡️',n:'Accès / administration / audit',s:'ACTIF',o:['Utilisateurs','Rôles','Permissions','Lecture','Opération','Validation','Administration','Journal actions','Commandes IA','Configuration','Sécurité','Sessions']},
+ memory:{i:'🧠',n:'Mémoire territoriale',s:'ACTIF',o:['Historique territorial','Rechercher par zone','Rechercher par date','Comparer deux périodes','Évolution forêt / parc','Évolution eaux / littoral','Historique satellite','Historique alertes','Historique missions','Corrélations','Événements récurrents','Preuves / sources','Notifier l’avatar']},
+ 'field-analysis':{i:'📡',n:'Analyse des données terrain',s:'ACTIF',o:['Analyser les observations reçues','Filtrer par zone et période','Vérifier les coordonnées et sources','Repérer les alertes à vérifier','Préparer un rapport','Transmettre le résultat à l’avatar']},
  avatar:{i:'🤖',n:'Avatar / IA centrale',s:'ACTIF',o:['Parler','Écouter','Micro','Voix','Stop voix','Conversation','Ouvrir une page','Expliquer la carte','Lire une alerte','Recevoir les sources','Historique commandes']}
 };
 const modal=document.getElementById('g360-complete-modal'),grid=document.getElementById('g360-complete-grid'),view=document.getElementById('g360-complete-view');
 function render(){grid.innerHTML=Object.entries(M).map(([id,m])=>'<div class="g360-cpage"><b>'+m.i+' '+m.n+'</b><span class="'+(m.s==='ACTIF'?'g360-cok':'g360-cwait')+'">'+m.s+'</span><small><br>'+m.o.length+' fonctions prévues sur cette page</small><div class="g360-cbtns"><button data-page="'+id+'">Ouvrir la page</button><button data-list="'+id+'">Voir toutes les options</button></div></div>').join('')}
 function openPage(id){const m=M[id];if(!m)return;view.innerHTML='<div class="g360-cview"><b>'+m.i+' '+m.n+'</b><p>'+m.o.map((x,i)=>'<button data-action="'+id+'|'+i+'" style="margin:3px">'+x+'</button>').join('')+'</p><div id="g360-cresult" class="g360-cview">Sélectionnez une fonction.</div></div>'}
-function action(id,i){const m=M[id],x=m.o[i];let msg='Commande « '+x+' » reçue sur '+m.n+'.';if(['Drones','Caméras','Surveillance maritime'].some(k=>m.n.includes(k)))msg+=' Connexion réelle/autorisée requise ; aucune donnée fictive ne sera affichée.';else if(x.toLowerCase().includes('clic'))msg+=' Touchez directement la carte pour obtenir les coordonnées.';else if(x.toLowerCase().includes('export'))msg+=' Export local préparé lorsque les données existent.';else msg+=' État et données disponibles seront affichés selon la source connectée.';document.getElementById('g360-cresult').textContent=msg;window.dispatchEvent(new CustomEvent('gabon360:page-action',{detail:{page:id,action:x}}));}
-document.getElementById('g360-complete-open').onclick=function(){modal.style.display='block';render()};document.getElementById('g360-complete-close').onclick=function(){modal.style.display='none'};grid.addEventListener('click',function(e){let b=e.target.closest('[data-page],[data-list]');if(!b)return;openPage(b.dataset.page||b.dataset.list)});view.addEventListener('click',function(e){let b=e.target.closest('[data-action]');if(!b)return;let a=b.dataset.action.split('|');action(a[0],Number(a[1]))});
+function action(id,i){
+ const m=M[id],x=m&&m.o[i];if(!m||!x)return;
+ /* Route each option to the real module handler instead of only changing a label. */
+ if(typeof window.GABON360_OPEN_NAMED_FUNCTION==='function'){
+   modal.style.display='none';modal.setAttribute('aria-hidden','true');
+   window.GABON360_OPEN_NAMED_FUNCTION(id,x);
+   window.dispatchEvent(new CustomEvent('gabon360:page-action',{detail:{page:id,action:x}}));
+   return;
+ }
+ if(typeof window.GABON360_OPEN_FUNCTION_PAGE==='function'){
+   modal.style.display='none';modal.setAttribute('aria-hidden','true');
+   window.GABON360_OPEN_FUNCTION_PAGE(id,i);
+   window.dispatchEvent(new CustomEvent('gabon360:page-action',{detail:{page:id,action:x}}));
+   return;
+ }
+ const result=document.getElementById('g360-cresult');
+ if(result)result.textContent='Option « '+x+' » sélectionnée. Le module correspondant doit être chargé.';
+ window.dispatchEvent(new CustomEvent('gabon360:page-action',{detail:{page:id,action:x}}));
+}
+document.getElementById('g360-complete-open').onclick=function(){modal.style.display='block';modal.setAttribute('aria-hidden','false');render()};
+document.getElementById('g360-complete-close').onclick=function(){modal.style.display='none';modal.setAttribute('aria-hidden','true')};
+grid.addEventListener('click',function(e){
+ let b=e.target.closest('[data-page],[data-list]');if(!b)return;
+ if(b.dataset.page){
+   const id=b.dataset.page;
+   if(typeof window.GABON360_OPEN_MODULE_PAGE==='function'){
+     modal.style.display='none';modal.setAttribute('aria-hidden','true');
+     window.GABON360_OPEN_MODULE_PAGE(id);
+   }else openPage(id);
+ }else openPage(b.dataset.list);
+});
+view.addEventListener('click',function(e){let b=e.target.closest('[data-action]');if(!b)return;let a=b.dataset.action.split('|');action(a[0],Number(a[1]))});
 window.GABON360_PAGE_CATALOG=M;window.GABON360_PAGE_COMPLETENESS_V2={version:'2.0',pages:Object.keys(M),noDecorativeButtons:true};
 })();
 </script>
