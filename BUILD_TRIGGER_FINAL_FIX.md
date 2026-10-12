@@ -1,1 +1,0 @@
-Déclenchement après correction de la syntaxe de scripts/inject_ai_option_runtime_v2.py. Vérifier le build APK complet avant publication.
