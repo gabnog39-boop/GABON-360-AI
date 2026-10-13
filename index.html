@@ -33,7 +33,7 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
 <section id="wait" class="card hide"><h2>Compte en attente</h2><p>Votre compte existe mais n'est pas encore approuvé. Le propriétaire doit l'activer.</p><button id="out1">Se déconnecter</button></section>
 
 <section id="app" class="hide">
- <div class="tabs"><button id="t-al" class="on">Alertes</button><button id="t-mp">Carte</button><button id="t-ms">Missions</button><button id="t-rp">Rapports</button><button id="t-us" class="hide">Utilisateurs</button><button id="out2">Quitter</button></div>
+ <div class="tabs"><button id="t-al" class="on">Alertes</button><button id="t-mp">Carte</button><button id="t-ms">Missions</button><button id="t-pk">Parcs</button><button id="t-gx">Garmin</button><button id="t-rp">Rapports</button><button id="t-us" class="hide">Utilisateurs</button><button id="out2">Quitter</button></div>
  <div id="v-al">
   <div class="card" id="newal"><h2>Nouvelle alerte</h2>
    <label>Titre</label><input id="at"><label>Type</label><select id="ay"><option>Changement environnemental</option><option>Incident de terrain</option><option>Incident dans un parc national</option><option>Eaux ou littoral</option><option>Anomalie cartographique</option><option>Autre événement documenté</option></select>
@@ -42,7 +42,7 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
    <label>Description</label><textarea id="ad"></textarea><div class="err" id="alerr"></div><button class="p" id="asave">Enregistrer l'alerte</button></div>
   <div id="alist"></div></div>
  <div id="v-mp" class="hide">
-  <div id="map"></div><p class="note" id="mcount"></p><button class="p" id="gps">Ma position GPS</button>
+  <select id="mpsel"><option value="">Aller à un parc national…</option></select><div id="map"></div><p class="note" id="mcount"></p><button class="p" id="gps">Ma position GPS</button>
   <div class="card" id="minfo" style="margin-top:8px"><span class="note">Touchez la carte pour choisir un point. Touchez un cercle pour voir une alerte.</span></div>
   <p class="note">Fonds de carte : choisissez avec l'icône en haut à droite de la carte. Satellite haute résolution (Esri), mosaïque Sentinel-2 sans nuages (10 m, EOX) ou plan des routes (OpenStreetMap). Les limites officielles des provinces et des parcs ne sont pas encore intégrées. Rouge : critique, jaune : haute, bleu : normale.</p></div>
  <div id="v-ms" class="hide">
@@ -60,6 +60,38 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
   
 <div id="mslist"></div></div>
  
+<div id="v-pk" class="hide">
+  <div id="pkhome"><h2>Parcs nationaux du Gabon</h2><p class="note">Les 13 parcs nationaux. Leurs limites officielles ne sont pas encore intégrées : aucun contour ni aucune superficie n'est inventé.</p><div id="pklist"></div><div class="card hide" id="lmcard" style="margin-top:12px"><h3 style="margin-top:0">Limites officielles (propriétaire)</h3><p class="note">Importez un fichier GeoJSON des aires protégées du Gabon. Les parcs reconnus par leur nom remplaceront les positions approximatives. Tracé simplifié pour l'affichage : ce n'est pas un document légal.</p><button class="p" id="lmfa">Importer depuis Forest Atlas du Gabon</button><button id="lmosm">Source complémentaire : OpenStreetMap</button><p class="note" style="margin-top:6px">Ou choisissez un fichier GeoJSON :</p><input id="lmfile" type="file"><div class="note" id="lminfo" style="white-space:pre-line"></div><div class="err" id="lmerr"></div><button class="p hide" id="lmsave">Enregistrer les limites</button></div>
+</div>
+  <div id="pkview" class="hide"><button id="pkback">← Tous les parcs</button><h2 id="pkname" style="margin-top:12px"></h2><div class="card" id="pkinfo"></div>
+   <div class="card" id="pkform"><h3 style="margin-top:0">Nouvelle observation</h3>
+    <label>Catégorie</label><select id="opc"><option value="faune">Faune</option><option value="flore">Flore</option><option value="habitat">Habitat</option><option value="pression">Pression environnementale</option><option value="autre">Autre</option></select>
+    <label>Espèce ou titre</label><input id="opt">
+    <label>Fiabilité de l'identification</label><select id="opf"><option value="a_verifier">À vérifier</option><option value="probable">Probable</option></select>
+    <div class="row"><div><label>Latitude</label><input id="opla" inputmode="decimal"></div><div><label>Longitude</label><input id="oplo" inputmode="decimal"></div></div>
+    <button id="opgps">Ma position GPS</button><div class="note" id="opgi"></div>
+    <label>Description</label><textarea id="opd"></textarea>
+    <label style="display:flex;gap:8px;align-items:center"><input id="ops" type="checkbox" style="width:auto;min-height:0"> Localisation sensible (visible seulement par les superviseurs)</label>
+    <div class="err" id="operr"></div><button class="p" id="opsave">Enregistrer l'observation</button></div>
+   <div id="oplist"></div></div></div>
+  
+<div id="v-gx" class="hide"><h2>Échange Garmin / GPX</h2>
+  <p class="note">Les GPS Garmin et l'application Garmin Explore échangent des fichiers GPX : waypoints, traces et routes. Cette page prépare ou lit ces fichiers ; elle ne se connecte pas directement à l'appareil.</p>
+  <div class="card"><h3 style="margin-top:0">Envoyer vers un Garmin</h3>
+   <label>Mode</label><select id="gxm"><option value="dl">Télécharger le fichier</option><option value="share">Partager (Garmin Explore, Bluetooth…)</option></select>
+   <button id="gx1">Limites des 13 parcs (traces)</button><button id="gx2">Alertes avec position (waypoints)</button>
+   <label>Observations de parcs</label><select id="gxp"></select>
+   <label style="display:flex;gap:8px;align-items:center"><input id="gxs" type="checkbox" style="width:auto;min-height:0"> Inclure les localisations sensibles</label>
+   <button id="gx3">Exporter les observations (waypoints)</button><button id="gx4">Missions récentes (traces)</button>
+   <div class="err" id="gxerr"></div>
+   <p class="note">Sur le Garmin : branché en USB, copiez le fichier .gpx dans le dossier <b>Garmin/GPX</b> de l'appareil, ou importez-le avec l'application <b>Garmin Explore</b>, qui le synchronise ensuite par Bluetooth. Les menus varient selon le modèle. Les cartes Garmin (.img) ne sont pas produites par cette application.</p></div>
+  <div class="card" id="gwcard"><h3 style="margin-top:0">Recevoir depuis un Garmin</h3>
+   <p class="note">Exportez vos waypoints en GPX depuis le Garmin (ou Garmin Explore), puis choisissez le fichier. Les traces s'importent dans l'onglet Missions.</p>
+   <input id="gwfile" type="file"><div id="gwbox" class="hide"><div class="note" id="gwinfo"></div>
+    <label>Parc concerné</label><select id="gwp"></select>
+    <label>Catégorie</label><select id="gwc"><option value="faune">Faune</option><option value="flore">Flore</option><option value="habitat">Habitat</option><option value="pression">Pression environnementale</option><option value="autre">Autre</option></select>
+    <div class="err" id="gwerr"></div><button class="p" id="gwsave">Enregistrer comme observations (à vérifier)</button></div></div></div>
+  
 <div id="v-rp" class="hide">
   <div class="card" id="newrp"><h2>Nouveau rapport</h2><label>Titre</label><input id="rt"><label>Alerte liée (facultatif)</label><select id="rl"><option value="">Aucune</option></select>
    <label>Contenu</label><textarea id="rc" style="min-height:150px"></textarea><div class="err" id="rperr"></div>
@@ -108,7 +140,7 @@ async function loadUs(){const L=$("ulist");L.replaceChildren();try{const u=await
  const b=el("button","p","Enregistrer");const e=el("div","err");
  b.onclick=async()=>{e.textContent="";try{const res=await api("/rest/v1/profiles?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({role:r.value,statut:s.value}),headers:{Prefer:"return=representation"}});e.className="ok";e.textContent=res.length?"Enregistré.":"Modification refusée par les règles de sécurité."}catch(er){e.className="err";e.textContent=er.message}};
  c.append(r,s,b,e);L.append(c)})}catch(e){L.append(el("div","err",e.message))}}
-function tab(w){["al","mp","ms","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});if(w=="us")loadUs();else if(w=="rp")loadRp();else if(w=="ms")loadMs();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
+function tab(w){["al","mp","ms","pk","gx","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});if(w=="us")loadUs();else if(w=="rp")loadRp();else if(w=="ms")loadMs();else if(w=="pk"){loadPk()}else if(w=="gx")initGx();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
 let LF=null,MS=null,WID=null,TR=[],DIST=0,WL=null,SAVET=null,DIRTY=false,TRL=null;
 function hav(a,b){const R=6371000,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]),h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 function msInfo(){let s=(MS.paused?"En pause · ":"")+TR.length+" point(s) enregistré(s) · "+(DIST/1000).toFixed(2)+" km";
@@ -165,6 +197,117 @@ function parseGpx(txt,fname){const d=new DOMParser().parseFromString(txt,"applic
 async function saveImp(){const e=$("imperr");e.textContent="";if(!GP)return;const t=$("impt").value.trim();if(!t){e.textContent="Le titre est obligatoire.";return}
  try{await api("/rest/v1/missions",{method:"POST",body:JSON.stringify({titre:t,zone:$("impz").value.trim(),objectif:"",statut:"terminee",debut:new Date(GP.t0).toISOString(),fin:new Date(GP.t1).toISOString(),trace:GP.pts,distance_m:Math.round(GP.dist),notes:"Parcours importé depuis un fichier GPX ("+GP.fname+")",auteur_nom:me.nom||me.email}),headers:{Prefer:"return=minimal"}});
  GP=null;$("impbox").classList.add("hide");$("impinfo").textContent="";$("impfile").value="";loadMs()}catch(x){e.textContent=x.message}}
+const PARCS=["Akanda","Pongara","Mwagna","Ivindo","Mayumba","Minkébé","Monts de Cristal","Plateaux Batéké","Birougou","Loango","Lopé","Moukalaba-Doudou","Waka"];
+const SUPR=["proprietaire","administrateur","superviseur"],CATS={faune:"faune",flore:"flore",habitat:"habitat",pression:"pression environnementale",autre:"autre"},CONF={certaine:"confirmée par un expert",probable:"probable",a_verifier:"à vérifier"};
+let OBS=[],PK=null;
+async function loadPk(){$("lmcard").classList.toggle("hide",!["proprietaire","administrateur"].includes(me.role));const L=$("pklist");L.replaceChildren();
+ try{OBS=await api("/rest/v1/observations?select=*&order=observe_le.desc&limit=500")}catch(e){$("pkhome").classList.remove("hide");$("pkview").classList.add("hide");L.append(el("div","err",/observations/.test(e.message)?"La table des observations n'est pas encore créée dans Supabase.":e.message));return}
+ if(PK){renderPark();return}
+ $("pkview").classList.add("hide");$("pkhome").classList.remove("hide");
+ PARCS.forEach(n=>{const k=OBS.filter(o=>o.parc==n).length,b=el("button","",n+" · "+k+" observation"+(k>1?"s":""));b.onclick=()=>{PK=n;renderPark()};L.append(b)})}
+function renderPark(){parkInfo(PK);$("pkhome").classList.add("hide");$("pkview").classList.remove("hide");$("pkname").textContent="Parc national : "+PK;
+ $("pkform").classList.toggle("hide",!CW.includes(me.role));const f=$("opf");if(SUPR.includes(me.role)&&!f.querySelector('[value="certaine"]')){const o=el("option","","Confirmée par un expert");o.value="certaine";f.append(o)}
+ const L=$("oplist");L.replaceChildren();const a=OBS.filter(o=>o.parc==PK);if(!a.length){L.append(el("div","note","Aucune observation enregistrée pour ce parc."));return}
+ a.forEach(o=>{const c=el("div","card");c.append(el("b","",o.titre));const m=el("div");m.append(el("span","tag",CATS[o.categorie]||o.categorie),el("span","tag "+(o.confiance=="certaine"?"ok":"wait"),CONF[o.confiance]||o.confiance));if(o.sensible)m.append(el("span","tag hi","sensible"));c.append(m);
+  c.append(el("div","note","Par "+(o.auteur_nom||"?")+" · "+new Date(o.observe_le).toLocaleString("fr-FR")+(o.latitude!=null?" · "+o.latitude+", "+o.longitude:"")));if(o.description)c.append(el("div","",o.description));
+  if(o.confiance!="certaine")c.append(el("div","note","Identification non confirmée : à valider par un expert."));
+  const r=el("div","row");if(o.latitude!=null){const b=el("button","","Voir sur la carte");b.onclick=()=>{tab("mp");setTimeout(()=>{MAP.setView([o.latitude,o.longitude],14);pick(o.latitude,o.longitude,"Observation : "+o.titre+" ("+o.parc+")")},250)};r.append(b)}
+  if(SUPR.includes(me.role)&&o.confiance!="certaine"){const b=el("button","p","Marquer confirmée");b.onclick=async()=>{try{await api("/rest/v1/observations?id=eq."+o.id,{method:"PATCH",body:JSON.stringify({confiance:"certaine"}),headers:{Prefer:"return=minimal"}});loadPk()}catch(x){alert(x.message)}};r.append(b)}
+  c.append(r);L.append(c)})}
+async function saveObs(){const e=$("operr");e.textContent="";const t=$("opt").value.trim();if(!t){e.textContent="L'espèce ou le titre est obligatoire.";return}
+ const la=$("opla").value.trim()?parseFloat($("opla").value.replace(",",".")):null,lo=$("oplo").value.trim()?parseFloat($("oplo").value.replace(",",".")):null;
+ if((la!==null&&(isNaN(la)||Math.abs(la)>90))||(lo!==null&&(isNaN(lo)||Math.abs(lo)>180))){e.textContent="Coordonnées invalides.";return}
+ try{await api("/rest/v1/observations",{method:"POST",body:JSON.stringify({parc:PK,categorie:$("opc").value,titre:t,description:$("opd").value.trim(),confiance:$("opf").value,latitude:la,longitude:lo,sensible:$("ops").checked,auteur_nom:me.nom||me.email}),headers:{Prefer:"return=minimal"}});
+ ["opt","opd","opla","oplo"].forEach(i=>$(i).value="");$("ops").checked=false;$("opgi").textContent="";loadPk()}catch(x){e.textContent=x.message}}
+function opGps(){const i=$("opgi");if(!navigator.geolocation){i.textContent="GPS indisponible sur cet appareil.";return}i.textContent="Mesure en cours…";
+ navigator.geolocation.getCurrentPosition(p=>{$("opla").value=p.coords.latitude.toFixed(6);$("oplo").value=p.coords.longitude.toFixed(6);i.textContent="Position GPS réelle, précision ± "+Math.round(p.coords.accuracy)+" m, mesurée à "+new Date(p.timestamp).toLocaleTimeString("fr-FR")},er=>{i.textContent=er.code==1?"GPS refusé : autorisez la position pour ce site.":"Position indisponible : placez-vous à ciel ouvert."},{enableHighAccuracy:true,timeout:20000})}
+const PKA={"Akanda":[0.62,9.50],"Pongara":[0.12,9.50],"Monts de Cristal":[0.55,10.30],"Minkébé":[1.65,12.75],"Ivindo":[0.30,12.55],"Lopé":[-0.30,11.60],"Birougou":[-1.25,12.05],"Plateaux Batéké":[-1.85,14.05],"Loango":[-2.05,9.75],"Moukalaba-Doudou":[-2.55,10.75],"Mayumba":[-3.45,10.75],"Waka":[-1.15,11.25]};
+const PKT={"Akanda":["akanda"],"Pongara":["pongara"],"Mwagna":["mwagna","mwagne"],"Ivindo":["ivindo"],"Mayumba":["mayumba"],"Minkébé":["minkebe"],"Monts de Cristal":["cristal","christal"],"Plateaux Batéké":["bateke"],"Birougou":["birougou"],"Loango":["loango"],"Lopé":["lope"],"Moukalaba-Doudou":["moukalaba","doudou"],"Waka":["waka"]};
+let PKL=null,PKB=null,LM=null,LMS="";
+function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim()}
+function simp(r){if(r.length<=2500)return r;const k=Math.ceil(r.length/2500),o=r.filter((p,i)=>i%k==0),l=r[r.length-1];if(o[o.length-1]!==l)o.push(l);return o}
+function simpG(g){if(g.type=="LineString")return{type:"LineString",coordinates:simp(g.coordinates)};if(g.type=="MultiLineString")return{type:"MultiLineString",coordinates:g.coordinates.map(simp)};if(g.type=="Polygon")return{type:"Polygon",coordinates:g.coordinates.map(simp)};if(g.type=="MultiPolygon")return{type:"MultiPolygon",coordinates:g.coordinates.map(p=>p.map(simp))};return g}
+async function loadLimits(){try{const r=await api("/rest/v1/parcs_limites?select=parc,geojson,source,maj");PKB={};r.forEach(x=>PKB[x.parc]=x)}catch(e){PKB={}}drawParks()}
+const FA="https://gis.forest-atlas.org/server/rest/services/gab/forest_gabon/MapServer/25/query?where=type_desc%3D%27Parc%20National%27&outFields=*&returnGeometry=true&outSR=4326&f=geojson";
+let PKSEL=null;
+function parkHa(n){const b=PKB&&PKB[n];if(!b)return null;let ha=0,ok=false;(b.geojson.features||[]).forEach(f=>{const v=f.properties&&f.properties.sup_adm_ha;if(typeof v=="number"){ha+=v;ok=true}});return ok?ha:null}
+function nPoly(b){let n=0;(b.geojson.features||[]).forEach(f=>{const g=f.geometry;if(!g)return;n+=(g.type=="MultiPolygon"||g.type=="MultiLineString")?g.coordinates.length:1});return n}
+function popupPark(n,t){const d=el("div");d.append(el("b","","Parc national : "+n),el("div","note2",t));const ha=parkHa(n);if(ha!=null)d.append(el("div","note2","Superficie administrative : "+Math.round(ha).toLocaleString("fr-FR")+" ha"));const b=el("button","","Ouvrir la fiche");b.onclick=()=>{PK=n;tab("pk")};d.append(b);return d}
+function drawParks(){if(!PKL)return;PKL.clearLayers();PARCS.forEach(n=>{const b=PKB&&PKB[n],sel=PKSEL==n;
+ if(b){L.geoJSON(b.geojson,{style:{color:sel?"#ffffff":"#2fbf4a",weight:sel?4:2,fillColor:"#2fbf4a",fillOpacity:sel?.35:.2}}).bindTooltip(n,{sticky:true}).bindPopup(()=>popupPark(n,"Source : "+(b.source||"non précisée"))).addTo(PKL)}
+ else if(PKA[n]){L.circle(PKA[n],{radius:10000,color:"#f5c400",weight:2,dashArray:"6 6",fillOpacity:.08}).bindTooltip(n+" (position approximative)",{sticky:true}).bindPopup(()=>popupPark(n,"Position approximative, sans limites : à remplacer par les limites officielles.")).addTo(PKL)}})}
+function zoomPark(n){if(!n)return;PKSEL=n;tab("mp");setTimeout(async()=>{if(!MAP)return;if(!PKB)await loadLimits();const b=PKB&&PKB[n],i=$("minfo");drawParks();
+ if(b){try{MAP.fitBounds(L.geoJSON(b.geojson).getBounds(),{padding:[20,20]})}catch(e){}const ha=parkHa(n);i.replaceChildren(el("b","","Parc national : "+n),el("div","note",(ha!=null?"Superficie administrative : "+Math.round(ha).toLocaleString("fr-FR")+" ha · ":"")+"Source : "+(b.source||"non précisée")))}
+ else if(PKA[n]){MAP.setView(PKA[n],9);i.replaceChildren(el("div","err","Limites officielles non importées pour "+n+" : seule une position approximative est affichée."))}
+ else i.replaceChildren(el("div","err","Aucune donnée géographique pour "+n+"."));$("mpsel").value=n},300)}
+async function parkInfo(n){const d=$("pkinfo");d.replaceChildren(el("div","note","Chargement des données géographiques…"));if(!PKB)await loadLimits();d.replaceChildren();const b=PKB&&PKB[n];
+ if(!b){d.append(el("b","","Données géographiques"),el("div","note","Limites officielles non importées pour ce parc."));return}
+ const ha=parkHa(n),ids=(b.geojson.features||[]).map(f=>f.properties&&f.properties.objectid).filter(x=>x!=null);
+ d.append(el("b","","Données géographiques"),el("div","",ha!=null?"Superficie administrative : "+Math.round(ha).toLocaleString("fr-FR")+" ha":"Superficie : non renseignée dans la source"),
+  el("div","note","Polygones : "+nPoly(b)+(ids.length?" · identifiant(s) source : "+ids.join(", "):"")),
+  el("div","note","Source : "+(b.source||"non précisée")+(b.maj?" · enregistré le "+new Date(b.maj).toLocaleDateString("fr-FR"):"")),
+  el("div","note","Système de coordonnées : WGS84 (EPSG:4326). Tracé simplifié pour l'affichage."));
+ const z=el("button","p","Voir le parc sur la carte");z.onclick=()=>zoomPark(n);d.append(z)}
+async function faImport(){const e=$("lmerr"),i=$("lminfo");e.textContent="";$("lmsave").classList.add("hide");LM=null;i.textContent="Téléchargement depuis Forest Atlas du Gabon… (jusqu'à 1 minute)";
+ let j=null,how="accès direct";
+ try{const r=await fetch(FA);if(!r.ok)throw new Error("HTTP "+r.status);j=await r.json()}
+ catch(x1){try{how="relais Vercel";const r=await fetch("/api/parcs");if(!r.ok)throw new Error("HTTP "+r.status);j=await r.json()}
+  catch(x2){i.textContent="";e.textContent="Téléchargement impossible : le navigateur n'a pas pu joindre Forest Atlas ("+x1.message+") et le relais /api/parcs est absent ou a échoué ("+x2.message+").";return}}
+ if(j.error){i.textContent="";e.textContent="Erreur du service : "+(j.error.message||"inconnue");return}
+ const fs=j.features||[],poly=fs.filter(f=>f.geometry&&/Polygon/.test(f.geometry.type)&&f.geometry.coordinates&&f.geometry.coordinates.length);
+ if(!poly.length){i.textContent="";e.textContent="La réponse ("+fs.length+" entité(s)) ne contient aucun polygone.";return}
+ lmMatch(fs,"Forest Atlas du Gabon (gis.forest-atlas.org, couche 25 « Parc National », "+how+"), importé le "+new Date().toLocaleDateString("fr-FR"),{n:fs.length,p:poly.length})}
+function lmMatch(fs,src,stat){const i=$("lminfo"),e=$("lmerr");LM=null;LMS=src;$("lmsave").classList.add("hide");
+ const m={},used=new Set();fs.forEach((ft,ix)=>{if(!ft.geometry||!/Polygon|LineString/.test(ft.geometry.type))return;const pr=ft.properties||{};
+  const txt=(typeof pr.nom_ap=="string"&&pr.nom_ap?[norm(pr.nom_ap)]:Object.values(pr).filter(v=>typeof v=="string").map(norm)).join(" | ");
+  PARCS.forEach(n=>{if(PKT[n].some(t=>txt.includes(t))){used.add(ix);(m[n]=m[n]||[]).push({type:"Feature",properties:Object.assign({},pr,{nom:n}),geometry:simpG(ft.geometry)})}})});
+ const k=Object.keys(m);if(!k.length){i.textContent="";e.textContent="Aucun des 13 parcs n'a été reconnu (noms introuvables dans les données).";return}
+ const un=fs.map((ft,ix)=>used.has(ix)?null:(ft.properties&&(ft.properties.nom_ap||ft.properties.name))).filter(Boolean);
+ LM=m;i.textContent=(stat?stat.n+" entité(s) reçue(s), dont "+stat.p+" polygone(s).\n":"")+k.length+" parc(s) reconnu(s) sur 13 : "+k.map(n=>n+" ("+m[n].length+")").join(", ")+(k.length<13?"\nNon reconnus : "+PARCS.filter(n=>!m[n]).join(", "):"\nLes 13 parcs sont présents.")+(un.length?"\nEntités non rattachées aux 13 parcs : "+un.slice(0,10).join(", "):"")+"\nSource : "+src+"\nVérifiez cette liste avant d'enregistrer.";$("lmsave").classList.remove("hide")}
+function lmPick(){const f=this.files[0];$("lmerr").textContent="";$("lminfo").textContent="";$("lmsave").classList.add("hide");LM=null;if(!f)return;
+ if(f.size>40000000){$("lmerr").textContent="Fichier trop volumineux (40 Mo maximum).";return}
+ const r=new FileReader();r.onload=()=>{let j;try{j=JSON.parse(String(r.result))}catch(e){$("lmerr").textContent="Fichier illisible : ce n'est pas un GeoJSON valide. Un fichier ZIP ou SHP doit d'abord être converti en GeoJSON.";return}
+  const fs=j.type=="FeatureCollection"?j.features:j.type=="Feature"?[j]:[];if(!fs.length){$("lmerr").textContent="Aucune entité géographique trouvée.";return}
+  lmMatch(fs,"fichier GeoJSON importé le "+new Date().toLocaleDateString("fr-FR"))};r.readAsText(f)}
+async function osmImport(){const e=$("lmerr"),i=$("lminfo");e.textContent="";$("lmsave").classList.add("hide");i.textContent="Téléchargement depuis OpenStreetMap… (jusqu'à 1 minute)";
+ const q='[out:json][timeout:90];area["ISO3166-1"="GA"][admin_level=2]->.a;relation["boundary"~"national_park|protected_area"](area.a);out geom;';
+ try{const r=await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}});
+  if(!r.ok)throw new Error("service OpenStreetMap indisponible ("+r.status+")");const j=await r.json(),fs=[];
+  (j.elements||[]).forEach(rel=>{if(rel.type!="relation"||!rel.members)return;const ls=rel.members.filter(m=>m.type=="way"&&m.role!="inner"&&m.geometry&&m.geometry.length>1).map(m=>m.geometry.map(p=>[p.lon,p.lat]));if(ls.length)fs.push({type:"Feature",properties:rel.tags||{},geometry:{type:"MultiLineString",coordinates:ls}})});
+  if(!fs.length)throw new Error("aucune donnée reçue");lmMatch(fs,"OpenStreetMap, © contributeurs OpenStreetMap (ODbL), "+new Date().toLocaleDateString("fr-FR"))}
+ catch(x){i.textContent="";e.textContent="Import OpenStreetMap impossible : "+x.message}}
+async function lmSave(){if(!LM)return;const e=$("lmerr");e.textContent="";let n=0;
+ try{for(const p of Object.keys(LM)){await api("/rest/v1/parcs_limites?on_conflict=parc",{method:"POST",body:JSON.stringify({parc:p,geojson:{type:"FeatureCollection",features:LM[p]},source:LMS,maj:new Date().toISOString()}),headers:{Prefer:"resolution=merge-duplicates,return=minimal"}});n++}
+ $("lminfo").textContent=n+" parc(s) enregistré(s). Ouvrez la carte pour les voir.";LM=null;$("lmsave").classList.add("hide");$("lmfile").value="";loadLimits()}catch(x){e.textContent=x.message+(n?" ("+n+" enregistré(s) avant l'erreur)":"")}}
+const GPXH='<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="GABON 360 AI" xmlns="http://www.topografix.com/GPX/1/1">';
+let GW=null;
+function gx(s){return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function initGx(){const a=$("gxp"),b=$("gwp");if(!a.options.length){a.append(new Option("Tous les parcs","*"));PARCS.forEach(n=>{a.append(new Option(n,n));b.append(new Option(n,n))})}$("gwcard").classList.toggle("hide",!CW.includes(me.role))}
+async function gxOut(fname,xml){const e=$("gxerr");const dl=new File([xml],fname,{type:"application/gpx+xml"}),sh=new File([xml],fname,{type:"text/plain"});
+ if($("gxm").value=="share"&&navigator.canShare&&navigator.canShare({files:[sh]})){try{await navigator.share({files:[sh],title:fname});e.className="ok";e.textContent="Fichier partagé : "+fname;return}catch(x){if(x&&x.name=="AbortError")return}}
+ const a=document.createElement("a");a.href=URL.createObjectURL(dl);a.download=fname;document.body.append(a);a.click();a.remove();e.className="ok";e.textContent="Fichier téléchargé : "+fname+" (dossier Téléchargements)"}
+function gxErr(m){const e=$("gxerr");e.className="err";e.textContent=m}
+function wpt(la,lo,name,desc,t){return'<wpt lat="'+la+'" lon="'+lo+'"><name>'+gx(name)+'</name><desc>'+gx(desc)+'</desc>'+(t?'<time>'+new Date(t).toISOString()+'</time>':'')+'</wpt>'}
+async function gxParks(){$("gxerr").textContent="";await loadLimits();const ks=PARCS.filter(n=>PKB&&PKB[n]);if(!ks.length){gxErr("Aucune limite de parc enregistrée : importez-les d'abord (onglet Parcs, Limites officielles).");return}
+ let b="";ks.forEach(n=>{const segs=[],add=r=>segs.push(r);PKB[n].geojson.features.forEach(ft=>{const g=ft.geometry;if(!g)return;if(g.type=="Polygon")g.coordinates.forEach(add);else if(g.type=="MultiPolygon")g.coordinates.forEach(p=>p.forEach(add));else if(g.type=="LineString")add(g.coordinates);else if(g.type=="MultiLineString")g.coordinates.forEach(add)});
+  const tot=segs.reduce((s,r)=>s+r.length,0),k=Math.max(1,Math.ceil(tot/3000));
+  b+="<trk><name>"+gx("Parc "+n)+"</name><desc>"+gx("Limite : "+(PKB[n].source||"source non précisée"))+"</desc>"+segs.map(r=>"<trkseg>"+r.filter((p,i)=>i%k==0||i==r.length-1).map(p=>'<trkpt lat="'+p[1]+'" lon="'+p[0]+'"/>').join("")+"</trkseg>").join("")+"</trk>"});
+ await gxOut("parcs-gabon.gpx",GPXH+b+"</gpx>")}
+async function gxAlerts(){$("gxerr").textContent="";try{const a=(await api("/rest/v1/evenements?select=*&order=recu_le.desc&limit=500")).filter(x=>x.latitude!=null&&x.longitude!=null);if(!a.length){gxErr("Aucune alerte avec position.");return}
+ await gxOut("alertes-gabon360.gpx",GPXH+a.map(x=>wpt(x.latitude,x.longitude,x.titre,x.type+" · "+x.priorite+" · "+x.statut+" · "+(x.source||""),x.recu_le)).join("")+"</gpx>")}catch(e){gxErr(e.message)}}
+async function gxObs(){$("gxerr").textContent="";try{const p=$("gxp").value;let a=(await api("/rest/v1/observations?select=*&order=observe_le.desc&limit=500")).filter(o=>o.latitude!=null&&o.longitude!=null&&(p=="*"||o.parc==p)&&($("gxs").checked||!o.sensible));
+ if(!a.length){gxErr("Aucune observation avec position pour ce choix.");return}
+ await gxOut("observations-"+(p=="*"?"parcs":p.replace(/[^\w]+/g,"_"))+".gpx",GPXH+a.map(o=>wpt(o.latitude,o.longitude,o.titre,o.parc+" · "+o.categorie+" · "+(CONF[o.confiance]||o.confiance)+(o.description?" · "+o.description:""),o.observe_le)).join("")+"</gpx>")}catch(e){gxErr(/observations/.test(e.message)?"La table des observations n'est pas créée dans Supabase.":e.message)}}
+async function gxMiss(){$("gxerr").textContent="";try{const a=(await api("/rest/v1/missions?select=*&order=debut.desc&limit=20")).filter(m=>(m.trace||[]).length>1);if(!a.length){gxErr("Aucune mission avec trace.");return}
+ await gxOut("missions-gabon360.gpx",GPXH+a.map(m=>"<trk><name>"+gx(m.titre)+"</name><trkseg>"+m.trace.map(p=>'<trkpt lat="'+p[0]+'" lon="'+p[1]+'"><time>'+new Date(p[2]).toISOString()+"</time></trkpt>").join("")+"</trkseg></trk>").join("")+"</gpx>")}catch(e){gxErr(e.message)}}
+function gwPick(){const f=this.files[0],e=$("gwerr");e.textContent="";GW=null;$("gwbox").classList.add("hide");if(!f)return;
+ const r=new FileReader();r.onload=()=>{const d=new DOMParser().parseFromString(String(r.result),"application/xml");if(d.getElementsByTagName("parsererror").length){e.textContent="Fichier illisible : ce n'est pas un GPX valide.";$("gwbox").classList.remove("hide");return}
+  const w=[...d.getElementsByTagName("wpt")].map(n=>{const g=t=>{const x=n.getElementsByTagName(t)[0];return x?x.textContent.trim():""},tm=Date.parse(g("time"));return{la:parseFloat(n.getAttribute("lat")),lo:parseFloat(n.getAttribute("lon")),name:g("name")||"Point",desc:g("desc")||g("cmt"),t:isNaN(tm)?Date.now():tm}}).filter(x=>!isNaN(x.la)&&!isNaN(x.lo)&&Math.abs(x.la)<=90&&Math.abs(x.lo)<=180);
+  $("gwbox").classList.remove("hide");if(!w.length){$("gwinfo").textContent="";e.textContent="Aucun waypoint trouvé (les traces s'importent dans l'onglet Missions).";return}
+  GW=w.slice(0,500);$("gwinfo").textContent=w.length+" waypoint(s) trouvé(s)"+(w.length>500?" (500 premiers importés)":"")+" · exemples : "+GW.slice(0,3).map(x=>x.name).join(", ")};r.readAsText(f)}
+async function gwSave(){const e=$("gwerr");e.textContent="";if(!GW)return;
+ try{await api("/rest/v1/observations",{method:"POST",body:JSON.stringify(GW.map(x=>({parc:$("gwp").value,categorie:$("gwc").value,titre:x.name,description:x.desc||null,confiance:"a_verifier",latitude:x.la,longitude:x.lo,observe_le:new Date(x.t).toISOString(),auteur_nom:me.nom||me.email}))),headers:{Prefer:"return=minimal"}});
+ $("gwinfo").textContent=GW.length+" observation(s) enregistrée(s) dans le parc "+$("gwp").value+", à vérifier.";GW=null;$("gwfile").value=""}catch(x){e.textContent=/observations/.test(x.message)?"La table des observations n'est pas créée dans Supabase.":x.message}}
 let RP=[];
 function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 async function saveRp(sub){$("rperr").textContent="";const t=$("rt").value.trim();if(!t){$("rperr").textContent="Le titre est obligatoire.";return}
@@ -198,7 +341,7 @@ function initMap(){if(MAP)return;
  const s2=L.tileLayer("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg",{maxZoom:13,attribution:"Sentinel-2 cloudless © EOX, contient des données Copernicus (CC BY-NC-SA 4.0)"});
  const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"});
  MAP=L.map("map",{layers:[sat],maxBounds:[[-9,4],[7,19]],minZoom:5}).fitBounds([[-3.98,8.69],[2.33,14.52]]);
- L.control.layers({"Satellite haute résolution":sat,"Sentinel-2 sans nuages":s2,"Plan et routes":osm}).addTo(MAP);
+ PKL=L.layerGroup().addTo(MAP);L.control.layers({"Satellite haute résolution":sat,"Sentinel-2 sans nuages":s2,"Plan et routes":osm},{"Parcs nationaux":PKL}).addTo(MAP);if(PKB)drawParks();else loadLimits();{const s=$("mpsel");if(s.options.length<2)PARCS.forEach(n=>s.append(new Option(n,n)))}
  L.control.scale({imperial:false}).addTo(MAP);LG=L.layerGroup().addTo(MAP);TRL=L.layerGroup().addTo(MAP);
  MAP.on("click",e=>pick(e.latlng.lat,e.latlng.lng,"point choisi sur la carte"))}
 function drawMap(){if(!MAP)return;LG.clearLayers();
@@ -225,7 +368,7 @@ $("gps").onclick=()=>{if(!navigator.geolocation){$("minfo").replaceChildren(el("
  navigator.geolocation.getCurrentPosition(p=>{const la=p.coords.latitude,lo=p.coords.longitude;if(inGabon(la,lo))MAP.setView([la,lo],15);
   pick(la,lo,"position GPS réelle","Précision ± "+Math.round(p.coords.accuracy)+" m · mesurée à "+new Date(p.timestamp).toLocaleTimeString("fr-FR"))},
   er=>{$("minfo").replaceChildren(el("div","err","Position indisponible : "+er.message+". Autorisez la localisation pour ce site."))},{enableHighAccuracy:true,timeout:20000})};
-$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("t-ms").onclick=()=>tab("ms");$("mstart").onclick=startMs;$("impfile").onchange=impPick;$("impsave").onclick=saveImp;$("msend").onclick=endMs;$("mspause").onclick=()=>{if(!MS)return;MS.paused=!MS.paused;$("mspause").textContent=MS.paused?"Reprendre":"Suspendre";msInfo()};$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
+$("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("t-ms").onclick=()=>tab("ms");$("t-gx").onclick=()=>tab("gx");$("gx1").onclick=gxParks;$("gx2").onclick=gxAlerts;$("gx3").onclick=gxObs;$("gx4").onclick=gxMiss;$("gwfile").onchange=gwPick;$("gwsave").onclick=gwSave;$("t-pk").onclick=()=>{PK=null;tab("pk")};$("lmfile").onchange=lmPick;$("lmosm").onclick=osmImport;$("lmfa").onclick=faImport;$("mpsel").onchange=function(){zoomPark(this.value)};$("lmsave").onclick=lmSave;$("pkback").onclick=()=>{PK=null;loadPk()};$("opsave").onclick=saveObs;$("opgps").onclick=opGps;$("mstart").onclick=startMs;$("impfile").onchange=impPick;$("impsave").onclick=saveImp;$("msend").onclick=endMs;$("mspause").onclick=()=>{if(!MS)return;MS.paused=!MS.paused;$("mspause").textContent=MS.paused?"Reprendre":"Suspendre";msInfo()};$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
 $("pw").onkeydown=e=>{if(e.key=="Enter")login()};
 load();if(ses)start();
 </script></body></html>
