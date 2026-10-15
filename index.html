@@ -9,7 +9,7 @@ main{padding:14px}.card{background:var(--pn);border:1px solid var(--ln);border-r
 h2{margin:0 0 10px;font-size:19px}label{font-size:13px;color:var(--mu)}
 input,select,textarea,button{font:inherit;color:var(--tx);width:100%;min-height:46px;padding:8px 12px;border-radius:12px;border:1px solid var(--ln);background:#091524;margin:4px 0}
 textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{background:var(--gr);border-color:var(--gr);color:#04140a;font-weight:700}
-.row{display:flex;gap:8px}.row>*{flex:1}.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{margin:0}.tabs .on{border-color:var(--ye);color:var(--ye)}
+.row{display:flex;gap:8px}.row>*{flex:1}#avq{width:auto;flex:1 1 auto;min-width:0}#avsend{width:auto;flex:0 0 auto}.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{margin:0}.tabs .on{border-color:var(--ye);color:var(--ye)}
 .note{color:var(--mu);font-size:13px}.err{color:var(--rd);font-size:14px;min-height:20px}.ok{color:var(--gr);font-size:14px}
 .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;border:1px solid var(--ln);margin-right:4px}.hide{display:none}.tabs{flex-wrap:wrap}.tabs button{flex:1;min-width:100px}
 .mapw{position:relative;border:1px solid var(--ln);border-radius:14px;overflow:hidden;background:#06192e;touch-action:none;margin-bottom:8px}.mapw svg{display:block;width:100%;height:auto;max-height:62vh}
@@ -19,7 +19,8 @@ textarea{min-height:80px}button{background:#12233a;cursor:pointer}button.p{backg
 .leaflet-control-layers{font-size:14px;color:#111}.leaflet-popup-content{color:#111;font-size:14px;margin:10px 12px}.note2{font-size:12px;color:#555;margin-top:2px}#minfo .note2{color:var(--mu)}
 .cb{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.cb button,.cb a.btn{border:1px solid #888;background:#eef2f6;color:#111;padding:8px 10px;border-radius:8px;font-size:13px;text-decoration:none;min-height:0;width:auto;margin:0}
 .avatar{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--ln)}.avatar img{display:block;width:100%;max-height:340px;object-fit:cover;object-position:center 22%}
-.avatar.talk{box-shadow:0 0 0 3px var(--gr),0 0 26px var(--gr);animation:pl 1s ease-in-out infinite}@keyframes pl{50%{box-shadow:0 0 0 3px var(--ye),0 0 36px var(--ye)}}@media(prefers-reduced-motion:reduce){.avatar.talk{animation:none}}
+.avatar.talk{box-shadow:0 0 0 3px var(--gr),0 0 26px var(--gr);animation:pl 1s ease-in-out infinite}@keyframes pl{50%{box-shadow:0 0 0 3px var(--ye),0 0 36px var(--ye)}}.stg{position:relative;width:100%;max-width:340px;aspect-ratio:520/624;margin:0 auto;overflow:hidden}.rig,.ly{position:absolute;inset:0}.ly{will-change:transform}.ly img{position:absolute;inset:0;width:100%;height:100%;max-height:none;object-fit:fill;display:block;pointer-events:none;user-select:none}.avatar.al1{box-shadow:0 0 0 3px #fcd116}.avatar.al2{box-shadow:0 0 0 3px #e53935,0 0 22px #e53935}
+@media(prefers-reduced-motion:reduce){.avatar.talk{animation:none}}
 .bub{padding:10px 12px;border-radius:12px;margin:6px 0;max-width:94%}.bub.me{background:#12335a;margin-left:auto}.bub.ia{background:#0f2a1a;border:1px solid #1e5a30}#avchat{max-height:300px;overflow-y:auto}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
@@ -154,7 +155,7 @@ async function loadUs(){const L=$("ulist");L.replaceChildren();try{const u=await
  const b=el("button","p","Enregistrer");const e=el("div","err");
  b.onclick=async()=>{e.textContent="";try{const res=await api("/rest/v1/profiles?id=eq."+x.id,{method:"PATCH",body:JSON.stringify({role:r.value,statut:s.value}),headers:{Prefer:"return=representation"}});e.className="ok";e.textContent=res.length?"Enregistré.":"Modification refusée par les règles de sécurité."}catch(er){e.className="err";e.textContent=er.message}};
  c.append(r,s,b,e);L.append(c)})}catch(e){L.append(el("div","err",e.message))}}
-function tab(w){["ho","al","mp","ms","pk","gx","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});renderAIP(w);if(w=="ho")initHome();else if(w=="us")loadUs();else if(w=="rp")loadRp();else if(w=="ms")loadMs();else if(w=="pk"){loadPk()}else if(w=="gx")initGx();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
+function tab(w){["ho","al","mp","ms","pk","gx","rp","us"].forEach(k=>{$("v-"+k).classList.toggle("hide",w!=k);$("t-"+k).classList.toggle("on",w==k)});renderAIP(w);mountOptAI();if(w=="ho")initHome();else if(w=="us")loadUs();else if(w=="rp")loadRp();else if(w=="ms")loadMs();else if(w=="pk"){loadPk()}else if(w=="gx")initGx();else{loadAl();if(w=="mp"){initMap();setTimeout(()=>{MAP.invalidateSize();drawMap()},60)}}}
 let LF=null,MS=null,WID=null,TR=[],DIST=0,WL=null,SAVET=null,DIRTY=false,TRL=null;
 function hav(a,b){const R=6371000,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]),h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 function msInfo(){let s=(MS.paused?"En pause · ":"")+TR.length+" point(s) enregistré(s) · "+(DIST/1000).toFixed(2)+" km";
@@ -382,9 +383,9 @@ function modName(id){const m=MODS.find(x=>x.id==id);return m?m.nom:id}
 function fmtMod(m){const r=m.last||{etat:"attente",lines:["Données non chargées."]};return m.nom+" ("+(ETAT[r.etat]||r.etat)+") :\n"+r.lines.join("\n")}
 function srcLine(ms){return "Source : "+ms.map(m=>m.nom).join(", ")+" · données enregistrées au "+D.t.toLocaleString("fr-FR")}
 function explainEv(e){return "Événement reçu de « "+modName(e.mod)+" » : "+e.titre+". Priorité "+e.prio+", type "+e.type+", statut : "+e.statut+(e.src?", source : "+e.src:"")+(e.lat!=null?", position "+e.lat.toFixed(4)+", "+e.lon.toFixed(4):"")+". Ce n'est pas un fait confirmé tant qu'une personne habilitée ne l'a pas validé."}
-function avSay(t,u,silent){const b=el("div","bub "+(u?"me":"ia"),t);b.style.whiteSpace="pre-line";$("avchat").append(b);$("avchat").scrollTop=1e6;
- if(!u&&!silent&&AVV&&window.speechSynthesis){speechSynthesis.cancel();const m=new SpeechSynthesisUtterance(t.replace(/\n+/g,". "));m.lang="fr-FR";const vs=speechSynthesis.getVoices().filter(v=>v.lang.startsWith("fr"));m.voice=vs.find(v=>/male|homme|thomas|paul|henri|antoine/i.test(v.name))||vs[0]||null;m.onstart=()=>$("avh").classList.add("talk");m.onend=m.onerror=()=>$("avh").classList.remove("talk");speechSynthesis.speak(m)}}
-async function ask(q){avSay(q,1);const n=norm(q);try{await loadAll()}catch(e){}if(!D){avSay("Je n'ai pas pu charger les données de la plateforme. Réessayez dans un instant.");return}
+function avSay(t,u,silent){const b=el("div","bub "+(u?"me":"ia"),t);b.style.whiteSpace="pre-line";$("avchat").append(b);$("avchat").scrollTop=1e6;if(window.AV)AV.ctx(t,u);
+ if(!u&&!silent&&AVV&&window.speechSynthesis){speechSynthesis.cancel();const m=new SpeechSynthesisUtterance(t.replace(/\n+/g,". "));m.lang="fr-FR";const vs=speechSynthesis.getVoices().filter(v=>v.lang.startsWith("fr"));m.voice=vs.find(v=>/male|homme|thomas|paul|henri|antoine/i.test(v.name))||vs[0]||null;m.onstart=()=>{$("avh").classList.add("talk");AV.speak(true,m.text)};m.onboundary=e=>AV.beat(e&&e.charIndex);m.onend=m.onerror=()=>{$("avh").classList.remove("talk");AV.speak(false)};speechSynthesis.speak(m);clearTimeout(window._avT);window._avT=setTimeout(()=>{$("avh").classList.remove("talk");AV.speak(false)},t.length*85+3000)}}
+async function ask(q){avSay(q,1);if(window.AV)AV.set("think");const n=norm(q);try{await loadAll()}catch(e){}if(!D){avSay("Je n'ai pas pu charger les données de la plateforme. Réessayez dans un instant.");return}
  const nav=/\b(ouvre|ouvrir|va|aller|affiche|montre)\b/.test(n),pi=PEND_RX.findIndex(r=>r.test(n));
  if(pi>=0){avSay(PEND[pi][0]+" : en attente de configuration ("+PEND[pi][1]+"). Je ne peux pas vous donner de données que je n'ai pas reçues.");return}
  const hits=MOD_RX.filter(x=>x[1].test(n)).map(x=>MODS.find(m=>m.id==x[0]));
@@ -396,6 +397,22 @@ async function llmAsk(q){const ctx=MODS.map(m=>m.nom+" : "+m.last.lines.join(" "
  try{const r=await fetch("/api/avatar",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+ses.access_token},body:JSON.stringify({q,ctx})}),j=await r.json();if(!r.ok)throw new Error(j.error||"erreur");avSay(j.text+"\n\n(Réponse rédigée par IA à partir des données de la plateforme ; à vérifier.)")}
  catch(e){avSay("L'IA de rédaction n'est pas disponible ("+e.message+"). Je réponds seulement avec les données enregistrées.")}}
 async function checkLlm(){try{const r=await fetch("/api/avatar");LLM=r.ok&&(await r.json()).ok===true}catch(e){LLM=false}$("avllmw").style.display=LLM?"flex":"none";$("avnote").textContent=LLM?"":"Les réponses reposent sur les données enregistrées. L'IA de rédaction (facultative) n'est pas configurée."}
+function fd(d){try{const t=new Date(d);return isNaN(t)?"date inconnue":t.toLocaleString("fr-FR")}catch(e){return "date inconnue"}}
+const OPTS=[
+["Nouvelle alerte","al","IA de saisie d'alerte","Aide à décrire une alerte : type, priorité, lieu et description. L'alerte est enregistrée puis suivie par l'IA des alertes.",()=>cnt(D&&D.al,"alerte(s) enregistrée(s)")],
+["Mission / patrouille","ms","IA de patrouille","Aide à ouvrir une mission et à enregistrer sa trace GPS.",()=>cnt(D&&D.ms,"mission(s) enregistrée(s)")],
+["Importer un parcours GPX","ms","IA d'import GPX","Lit un fichier GPX et le rattache à une mission.",()=>cnt(D&&D.ms,"mission(s) enregistrée(s)")],
+["Parcs nationaux du Gabon","pk","IA des parcs nationaux","Présente les parcs nationaux et leurs observations.",()=>cnt(D&&D.ob,"observation(s) enregistrée(s)")],
+["Limites officielles","pk","IA des limites officielles","Gère les limites géographiques officielles (réservé au propriétaire).",()=>cnt(D&&D.lim,"limite(s) enregistrée(s)")],
+["Nouvelle observation","pk","IA d'observation terrain","Aide à saisir une observation de faune, flore ou habitat avec sa position.",()=>cnt(D&&D.ob,"observation(s) enregistrée(s)")],
+["Envoyer vers un Garmin","gx","IA d'envoi Garmin","Prépare des waypoints et des traces au format GPX pour un Garmin.",()=>""],
+["Recevoir depuis un Garmin","gx","IA de réception Garmin","Reçoit un fichier GPX d'un Garmin et le contrôle avant enregistrement.",()=>""],
+["Nouveau rapport","rp","IA de rédaction de rapport","Aide à rédiger, faire valider et exporter un rapport.",()=>cnt(D&&D.rp,"rapport(s) enregistré(s)")],
+["Notifications reçues des modules","ho","IA des notifications","Rassemble ce que chaque IA de page signale à l'avatar.",()=>EVT.length+" notification(s) en attente"],
+["Situation par module","ho","IA de situation","Résume l'état de chaque module d'IA.",()=>MODS.length+" module(s) suivi(s)"]];
+function cnt(a,t){return Array.isArray(a)?a.length+" "+t:"données en cours de chargement"}
+function mountOptAI(){document.querySelectorAll("#app h2,#app h3").forEach(h=>{if(h.dataset.ia)return;const o=OPTS.find(x=>h.textContent.trim().startsWith(x[0]));if(!o)return;h.dataset.ia="1";const b=el("button","","🤖 IA");b.style.cssText="margin-left:8px;padding:2px 8px;font-size:12px";b.title=o[2];
+b.onclick=e=>{e.stopPropagation();let d="";try{d=o[4]()}catch(x){}tab("ho");setTimeout(()=>avSay(o[2]+" (reliée à : "+(o[1]=="ho"?"l'avatar central":modName(o[1]))+")\n"+o[3]+(d?"\nÉtat : "+d+".":"")+"\n\nSource : données enregistrées dans la plateforme."),80)};h.append(b)})}
 function renderHome(){const E=$("avev");E.replaceChildren();if(!EVT.length)E.append(el("div","note","Aucun événement en attente : aucun module n'a signalé quelque chose."));
  EVT.slice(0,12).forEach(e=>{const c=el("div","it");c.append(el("b","",e.titre));const m=el("div");m.append(el("span","tag "+(e.prio=="critique"?"hi":e.prio=="haute"?"wait":""),e.prio),el("span","tag",e.type),el("span","tag",modName(e.mod)));c.append(m,el("div","note","Reçu le "+fd(e.recu)+" · statut : "+e.statut+(e.src?" · source : "+e.src:"")+(e.lat!=null?" · "+e.lat.toFixed(4)+", "+e.lon.toFixed(4):"")));
   const r=el("div","row"),o=el("button","","Ouvrir la page");o.onclick=()=>tab(e.page);r.append(o);
@@ -411,7 +428,7 @@ async function renderAIP(w){const m=MODS.find(x=>x.id==w);if(!m)return;const v=$
  b.append(el("b","",m.nom+" "),el("span","tag "+(r.etat=="ok"?"ok":"wait"),ETAT[r.etat]||r.etat),el("div","note",m.role+" · reliée à l'avatar central"));r.lines.slice(0,2).forEach(l=>b.append(el("div","note",l)));
  const x=el("button","","L'avatar m'explique");x.onclick=()=>{tab("ho");setTimeout(()=>avSay(fmtMod(m)+"\n\n"+srcLine([m])),80)};b.append(x)}
 function avSend(){const v=$("avq").value.trim();if(v){$("avq").value="";ask(v)}}
-function avMic(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){$("avnote").textContent="Dictée vocale indisponible sur ce navigateur : utilisez le clavier.";return}const r=new SR();r.lang="fr-FR";r.onresult=e=>ask(e.results[0][0].transcript);r.onerror=()=>avSay("La dictée a échoué. Écrivez votre question.");r.start()}
+function avMic(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){$("avnote").textContent="Dictée vocale indisponible sur ce navigateur : utilisez le clavier.";return}const r=new SR();r.lang="fr-FR";r.onresult=e=>ask(e.results[0][0].transcript);r.onerror=()=>avSay("La dictée a échoué. Écrivez votre question.");r.onstart=()=>AV.set("listen");r.onend=()=>{if(AV.S.st=="listen")AV.S.st="idle"};r.start()}
 let RP=[];
 function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 async function saveRp(sub){$("rperr").textContent="";const t=$("rt").value.trim();if(!t){$("rperr").textContent="Le titre est obligatoire.";return}
@@ -474,5 +491,44 @@ $("gps").onclick=()=>{if(!navigator.geolocation){$("minfo").replaceChildren(el("
   er=>{$("minfo").replaceChildren(el("div","err","Position indisponible : "+er.message+". Autorisez la localisation pour ce site."))},{enableHighAccuracy:true,timeout:20000})};
 $("login").onclick=login;$("out1").onclick=$("out2").onclick=out;$("asave").onclick=saveAl;$("t-ho").onclick=()=>tab("ho");$("avsend").onclick=avSend;$("avq").onkeydown=e=>{if(e.key=="Enter")avSend()};$("avmic").onclick=avMic;$("avspk").onclick=function(){AVV=!AVV;this.textContent="Voix : "+(AVV?"activée":"coupée");if(!AVV&&window.speechSynthesis)speechSynthesis.cancel()};$("t-al").onclick=()=>tab("al");$("t-us").onclick=()=>tab("us");$("t-mp").onclick=()=>tab("mp");$("t-rp").onclick=()=>tab("rp");$("t-ms").onclick=()=>tab("ms");$("t-gx").onclick=()=>tab("gx");$("gx1").onclick=gxParks;$("gx2").onclick=gxAlerts;$("gx3").onclick=gxObs;$("gx4").onclick=gxMiss;$("gwfile").onchange=gwPick;$("gwsave").onclick=gwSave;$("t-pk").onclick=()=>{PK=null;tab("pk")};$("lmfile").onchange=lmPick;$("lmosm").onclick=osmImport;$("lmfa").onclick=faImport;$("lmfr").onclick=frImport;$("mpsel").onchange=function(){zoomPark(this.value)};$("lmsave").onclick=lmSave;$("pkback").onclick=()=>{PK=null;loadPk()};$("opsave").onclick=saveObs;$("opgps").onclick=opGps;$("mstart").onclick=startMs;$("impfile").onchange=impPick;$("impsave").onclick=saveImp;$("msend").onclick=endMs;$("mspause").onclick=()=>{if(!MS)return;MS.paused=!MS.paused;$("mspause").textContent=MS.paused?"Reprendre":"Suspendre";msInfo()};$("rdraft").onclick=()=>saveRp(false);$("rsub").onclick=()=>saveRp(true);
 $("pw").onkeydown=e=>{if(e.key=="Enter")login()};
+
+/* ===== Animation 2D de l'avatar central (image fixe d'origine, sans autre personnage) ===== */
+(function(){const h=$("avh"),im=h&&h.querySelector("img");if(!im)return;const W=520,H=624,pc=(a,b)=>(a/W*100)+"% "+(b/H*100)+"%";
+const st=el("div","stg"),rig=el("div","rig");st.append(rig);
+function lay(par,m,o){const w=el("div","ly");if(m){const g="radial-gradient(ellipse "+(m[2]/W*100)+"% "+(m[3]/H*100)+"% at "+pc(m[0],m[1])+",#000 74%,transparent 100%)";w.style.webkitMaskImage=w.style.maskImage=g}w.style.transformOrigin=o?pc(o[0],o[1]):"50% 50%";const i=new Image();i.src=im.src;i.draggable=false;w.append(i);par.append(w);return w}
+const base=lay(rig),hl=lay(rig,[140,468,115,115],[135,480]),hr=lay(rig,[355,540,105,75],[360,545]),hd=lay(rig,[245,185,115,150],[245,310]);
+let sk="#7a4a35",c1=[110,70,52],c2=[110,70,52];try{const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");x.drawImage(im,0,0,W,H);const d=[...x.getImageData(207,168,10,6).data,...x.getImageData(277,170,10,6).data];let r=0,g=0,b=0,n=d.length/4;for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2]}sk="rgb("+(r/n*.8|0)+","+(g/n*.8|0)+","+(b/n*.8|0)+")";const sm=(x0,y0)=>{const q=x.getImageData(x0,y0,16,5).data;let a=0,b2=0,c=0,m=q.length/4;for(let i=0;i<q.length;i+=4){a+=q[i];b2+=q[i+1];c+=q[i+2]}return[a/m,b2/m,c/m]};c1=sm(204,167);c2=sm(274,168)}catch(e){}
+function box(par,x,y,w,hh,bg,rad){const d=el("div");d.style.cssText="position:absolute;left:"+x/W*100+"%;top:"+y/H*100+"%;width:"+w/W*100+"%;height:"+hh/H*100+"%;background:"+bg+";border-radius:"+rad;par.append(d);return d}
+const jaw=lay(hd,[245,262,62,48]),mo=box(hd,228,219,34,15,"#1d0a0b","50%");mo.style.opacity=0;mo.style.filter="blur(.6px)";
+const lgf=c=>{const f=k=>"rgb("+(c[0]*k|0)+","+(c[1]*k|0)+","+(c[2]*k|0)+")";return"linear-gradient(180deg,"+f(.6)+" 0%,"+f(.8)+" 38%,"+f(.9)+" 52%,"+f(.32)+" 63%,"+f(.85)+" 74%,"+f(.92)+" 100%)"},lm="radial-gradient(ellipse at 50% 50%,#000 55%,transparent 100%)",
+L1=box(hd,188,138,48,26,lgf(c1),"50%"),L2=box(hd,258,140,48,26,lgf(c2),"50%");for(const L of[L1,L2]){L.style.webkitMaskImage=L.style.maskImage=lm;L.style.transformOrigin="50% 0";L.style.filter="blur(.8px)";L.style.transform="scaleY(0)"}
+im.style.display="none";h.append(st);
+const stl=document.createElement("style");stl.textContent=".avst{position:absolute;left:8px;bottom:8px;z-index:3;background:rgba(0,0,0,.55);color:#fff;font:600 11px system-ui;padding:2px 9px;border-radius:10px;pointer-events:none}";document.head.append(stl);const lab=el("div","avst","En attente");h.append(lab);
+const VW={a:1,"à":1,"â":1,"ä":1,o:.85,"ô":.85,"ö":.85,"œ":.8,"é":.65,"è":.7,"ê":.7,"ë":.6,e:.55,i:.5,"î":.5,"ï":.5,y:.5,u:.55,"ù":.55,"û":.55,"ü":.55};
+function plan(t){const out=[],rx=/\S+/g;let m;while((m=rx.exec(t))){const w=m[0],lw=w.toLowerCase(),g=lw.match(/[aeiouyàâäéèêëîïôöùûüœ]+/g)||["e"],ws=g.map(x=>{let b=0;for(const c of x)b=Math.max(b,VW[c]||.5);return b}),p=/[.!?…]$/.test(w)?.4:/[,;:]$/.test(w)?.2:0;out.push({i:m.index,len:w.length,n:ws.length,ws,p})}return out}
+const S={pl:null,wi:0,ws:0,bi:0,rate:.068,pt0:0,st:"idle",tk:0,beat:0,amp:0,bl:0,nb:2.5,bt:0,tl:0,ty:0,sc:1,sq:0,lh:0,rh:0,al:0,ov:null},lp=(a,b,k)=>a+(b-a)*k;
+const AV=window.AV={S,set(x){if(S.tk&&x!="talk")return;S.st=x},speak(on,txt){S.tk=on?1:0;S.st=on?"talk":"idle";if(!on){S.hold=performance.now();S.pl=null}else if(txt){S.pl=plan(txt);S.wi=0;S.bi=0;S.ws=performance.now();S.pt0=S.ws}},
+ beat(ci){S.beat=1;if(S.pl&&typeof ci=="number"){const now=performance.now();let k=0;for(let j=0;j<S.pl.length;j++){if(S.pl[j].i<=ci)k=j}if(S.bi>0&&k>S.wi){const pw=S.pl[S.wi],el_=(now-S.ws)/1e3/Math.max(1,pw.len+1);S.rate=Math.max(.04,Math.min(.12,lp(S.rate,el_,.4)))}S.bi++;S.wi=k;S.ws=now}},
+ ctx(t,u){if(u)return;const c=EVT.some(e=>e.prio=="critique");S.al=/critique|urgent/i.test(t)&&c?2:/alerte/i.test(t)?1:0;h.classList.toggle("al1",S.al==1);h.classList.toggle("al2",S.al==2);if(/^Bonjour/.test(t)){S.wl=performance.now()}if(!S.tk){S.react=performance.now();if(S.st=="think")S.st="idle"}},
+ freeze(o){S.ov=o}};
+let t0=performance.now(),lt=t0;const rm=matchMedia("(prefers-reduced-motion:reduce)").matches?.3:1;
+function fr(now){const dt=Math.min(.05,(now-lt)/1e3);lt=now;const t=(now-t0)/1e3,k=1-Math.exp(-dt*6);let st_=S.st;
+ const rc=S.react&&now-S.react<2200;if(S.st=="idle"&&rc)st_="react";if(S.al&&(S.tk||rc))st_="alert";if(S.wl&&now-S.wl<2500&&!S.tk)st_="welcome";
+ let tl=.4*Math.sin(t*.5),ty=.2*Math.sin(t*.9),sc=1,sq=0,lh=0,rh=0;
+ if(st_=="listen"){tl=1.2;sc=1.008}else if(st_=="think"){tl=-1+.3*Math.sin(t*.7);sq=.18}else if(st_=="welcome"){tl=1.1+.3*Math.sin(t*1.2);ty=-.35*Math.abs(Math.sin(t*1.6));lh=.55}
+ else if(st_=="talk"||st_=="react"||st_=="alert"){const g=.5+.5*Math.sin(t*1.7);tl=.9*Math.sin(t*1.3);ty=-.3*S.beat+.2*Math.sin(t*2.3);lh=.25+.45*g+.5*S.beat;rh=.2+.3*(.5+.5*Math.sin(t*1.1+1))+.3*S.beat;if(st_=="alert"){sc=1.012;tl=0;lh=S.al==2?1.1:.8;rh=S.al==2?.8:.4;sq=.15}}
+ S.beat*=Math.exp(-dt*7);S.tl=lp(S.tl,tl,k);S.ty=lp(S.ty,ty,k);S.sc=lp(S.sc,sc,k);S.sq=lp(S.sq,sq,k);S.lh=lp(S.lh,lh,k);S.rh=lp(S.rh,rh,k);
+ if(now>S.nb*1e3+t0&&!S.bt){S.bt=now}let bl=0;if(S.bt){const p=(now-S.bt)/190;if(p>=1){S.bt=0;S.nb=t+2.2+Math.random()*3.3}else{const u=p<.38?p/.38:1-(p-.38)/.62;bl=u*u*(3-2*u)}}
+ let am=0;if(S.tk){if(S.pl&&S.pl.length){let wi=S.wi,p,over=0;const wd=w=>(w.len+1)*S.rate+w.p*.9;if(!S.bi){const el_=(now-S.pt0)/1e3;let ac=0;wi=S.pl.length-1;for(let j=0;j<S.pl.length;j++){const d=wd(S.pl[j]);if(el_<ac+d){wi=j;p=(el_-ac)/d;break}ac+=d}if(p===undefined){p=2;over=1}}else p=((now-S.ws)/1e3)/wd(S.pl[wi]);const w=S.pl[wi];p=Math.max(0,p);if(over)am=.5*Math.pow(Math.abs(Math.sin(t*11)),.9)*(.65+.35*Math.sin(t*2.7));else if(p<1){const act=1-(w.p*.9/wd(w)),q=p/act;if(q<1){const ph=q*w.n,k=Math.min(w.n-1,ph|0);am=w.ws[k]*Math.pow(Math.sin(Math.PI*(ph-k)),.8)}}}else am=Math.max(0,Math.min(1,.38+.3*Math.sin(t*13)+.22*Math.sin(t*7.3+1)))}
+ if(!isFinite(am))am=0;if(!isFinite(S.amp))S.amp=0;S.amp=lp(S.amp,am,1-Math.exp(-dt*22));
+ const O=S.ov||{},v=(n,d)=>O[n]!==undefined?O[n]:d,m=rm,
+  A=v("amp",S.amp),B=Math.min(.94,Math.max(v("blink",bl),v("sq",S.sq))),TL=v("tilt",S.tl*m),TY=v("ty",S.ty*m),HL=v("hl",S.lh*m),HR=v("hr",S.rh*m),SC=v("sc",S.sc),BR=v("breath",Math.sin(t*1.5));
+ rig.style.transform="scale("+(1+.006*BR*m)+") rotate("+.25*m*Math.sin(t*.6)+"deg)";rig.style.transformOrigin="50% 100%";
+ hd.style.transform="translateY("+TY+"%) rotate("+TL+"deg) scale("+SC+")";
+ jaw.style.transform="translateY("+A*.95+"%)";mo.style.opacity=Math.min(.92,A*6);mo.style.transform="scaleY("+(.15+A*1.1)+")";
+ L1.style.transform=L2.style.transform="scaleY("+B+")";
+ hl.style.transform="translate("+HL*.45+"%,"+-HL*.55+"%) rotate("+-HL*1.3+"deg)";hr.style.transform="translate("+-HR*.35+"%,"+-HR*.45+"%) rotate("+HR*1+"deg)";
+ if(S.st=="idle"&&S.hold&&now-S.hold>0)S.hold=0;{const LB={idle:"En attente",listen:"À l'écoute",think:"Réflexion…",talk:"Je réponds",react:"Je réponds",alert:"Alerte",welcome:"Bienvenue"}[st_]||"";if(lab.textContent!==LB)lab.textContent=LB}requestAnimationFrame(fr)}requestAnimationFrame(fr);
+const q=$("avq");if(q){q.addEventListener("focus",()=>AV.set("listen"));q.addEventListener("blur",()=>{if(S.st=="listen")S.st="idle"})}})();
 load();if(ses)start();
 </script></body></html>
