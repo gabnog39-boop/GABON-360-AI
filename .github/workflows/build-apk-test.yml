@@ -2,6 +2,9 @@ name: Construire APK de secours GABON 360 AI
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - test-avatar-central
 
 permissions:
   contents: read
