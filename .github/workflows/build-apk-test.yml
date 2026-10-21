@@ -1,0 +1,133 @@
+name: Construire APK de secours GABON 360 AI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-webview-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Télécharger la branche de test
+        uses: actions/checkout@v4
+      - name: Installer Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Installer Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: true
+          packages: platform-tools
+      - name: Vérifier la page principale
+        run: test -s index.html
+      - name: Créer un projet Android WebView autonome
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p android_project/app/src/main/assets/site
+          mkdir -p android_project/app/src/main/java/gabon/gabon360
+          mkdir -p android_project/app/src/main/res/values
+          cp index.html android_project/app/src/main/assets/site/index.html
+          for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-avatar-relay.js; do
+            if [ -f "$f" ]; then cp "$f" android_project/app/src/main/assets/site/; fi
+          done
+          if [ -d icons ]; then cp -R icons android_project/app/src/main/assets/site/; fi
+          cat > android_project/settings.gradle <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name = 'GABON360AI'
+          include ':app'
+          EOF
+          cat > android_project/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.5.2' apply false
+          }
+          EOF
+          cat > android_project/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          EOF
+          cat > android_project/app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'gabon.gabon360'
+              compileSdk 35
+              defaultConfig {
+                  applicationId 'gabon.gabon360'
+                  minSdk 23
+                  targetSdk 28
+                  versionCode 1
+                  versionName '0.1-test'
+              }
+          }
+          EOF
+          cat > android_project/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+              <application android:theme="@style/AppTheme" android:label="GABON 360 AI" android:usesCleartextTraffic="true">
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+          cat > android_project/app/src/main/res/values/styles.xml <<'EOF'
+          <resources><style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:colorAccent">#16734A</item><item name="android:windowLightStatusBar">false</item><item name="android:statusBarColor">#123B2B</item><item name="android:navigationBarColor">#123B2B</item></style></resources>
+          EOF
+          cat > android_project/app/src/main/java/gabon/gabon360/MainActivity.java <<'EOF'
+          package gabon.gabon360;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.view.ViewGroup;
+          public class MainActivity extends Activity {
+              private WebView web;
+              @Override public void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  web = new WebView(this);
+                  web.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
+                  WebSettings settings = web.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setDatabaseEnabled(true);
+                  settings.setAllowFileAccess(true);
+                  settings.setMediaPlaybackRequiresUserGesture(false);
+                  web.setWebViewClient(new WebViewClient());
+                  web.setWebChromeClient(new WebChromeClient());
+                  setContentView(web);
+                  web.loadUrl("file:///android_asset/site/index.html");
+              }
+              @Override public void onBackPressed() {
+                  if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
+              }
+          }
+          EOF
+      - name: Compiler APK de test
+        run: |
+          cd android_project
+          gradle assembleDebug --no-daemon --stacktrace
+      - name: Vérifier et publier le fichier APK
+        run: |
+          set -euo pipefail
+          APK="android_project/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          mkdir -p resultat
+          cp "$APK" resultat/GABON_360_AI_TEST.apk
+          sha256sum resultat/GABON_360_AI_TEST.apk
+      - name: Publier APK de test
+        uses: actions/upload-artifact@v4
+        with:
+          name: GABON-360-AI-APK-TEST
+          path: resultat/GABON_360_AI_TEST.apk
+          if-no-files-found: error
