@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   build-webview-apk:
@@ -130,6 +131,29 @@ jobs:
           mkdir -p resultat
           cp "$APK" resultat/GABON_360_AI_TEST.apk
           sha256sum resultat/GABON_360_AI_TEST.apk
+      - name: Libérer l'espace des anciens APK GABON 360 AI
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const names = new Set(['GABON-360-AI-APK', 'GABON-360-AI-APK-TEST']);
+            let page = 1;
+            let deleted = 0;
+            while (true) {
+              const response = await github.rest.actions.listArtifactsForRepo({ owner, repo, per_page: 100, page });
+              const artifacts = response.data.artifacts;
+              if (artifacts.length === 0) break;
+              for (const artifact of artifacts) {
+                if (names.has(artifact.name)) {
+                  core.info(`Suppression de l'ancien artefact ${artifact.name} (ID ${artifact.id}, expiré=${artifact.expired})`);
+                  await github.rest.actions.deleteArtifact({ owner, repo, artifact_id: artifact.id });
+                  deleted++;
+                }
+              }
+              if (artifacts.length < 100) break;
+              page++;
+            }
+            core.info(`Anciens APK supprimés : ${deleted}`);
       - name: Publier APK de test
         uses: actions/upload-artifact@v4
         with:
