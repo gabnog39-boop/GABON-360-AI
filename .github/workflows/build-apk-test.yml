@@ -20,6 +20,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Installer Gradle
+        uses: gradle/actions/setup-gradle@v4
       - name: Installer Android SDK
         uses: android-actions/setup-android@v4
         with:
@@ -134,3 +136,4 @@ jobs:
           name: GABON-360-AI-APK-TEST
           path: resultat/GABON_360_AI_TEST.apk
           if-no-files-found: error
+          retention-days: 1
