@@ -101,8 +101,10 @@
       }
       renderRecords(m[0]);
     });
+    const iaForLegacy={ho:"accueil",al:"alertes",mp:"carte",ms:"missions",pk:"parcs",gx:"garmin",rp:"rapports",us:"users"};
     existing.forEach(([id,label])=>{
       const b=document.getElementById("t-"+id); if(b){b.dataset.g360Tab=id;b.addEventListener("click",()=>showPage(id));}
+      const page=document.getElementById("v-"+id); if(page && iaForLegacy[id]) page.setAttribute("data-ia",iaForLegacy[id]);
     });
     const home=document.getElementById("v-ho");
     if(home && !document.getElementById("g360-all-modules")){
