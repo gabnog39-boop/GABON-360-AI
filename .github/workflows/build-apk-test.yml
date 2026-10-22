@@ -36,6 +36,7 @@ jobs:
           mkdir -p android_project/app/src/main/assets/site
           mkdir -p android_project/app/src/main/java/gabon/gabon360
           mkdir -p android_project/app/src/main/res/values
+          mkdir -p android_project/app/src/main/res/drawable
           cp index.html android_project/app/src/main/assets/site/index.html
           for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-avatar-relay.js; do
             if [ -f "$f" ]; then cp "$f" android_project/app/src/main/assets/site/; fi
@@ -74,7 +75,7 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <application android:theme="@style/AppTheme" android:label="GABON 360 AI" android:usesCleartextTraffic="true">
+              <application android:theme="@style/AppTheme" android:label="GABON 360 AI" android:icon="@drawable/ic_launcher" android:usesCleartextTraffic="true">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
@@ -87,35 +88,53 @@ jobs:
           cat > android_project/app/src/main/res/values/styles.xml <<'EOF'
           <resources><style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:colorAccent">#16734A</item><item name="android:windowLightStatusBar">false</item><item name="android:statusBarColor">#123B2B</item><item name="android:navigationBarColor">#123B2B</item></style></resources>
           EOF
+          cat > android_project/app/src/main/res/drawable/ic_launcher.xml <<'EOF'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+              <path android:fillColor="#009E60" android:pathData="M0,0h108v36h-108z"/>
+              <path android:fillColor="#FCD116" android:pathData="M0,36h108v36h-108z"/>
+              <path android:fillColor="#3A75C4" android:pathData="M0,72h108v36h-108z"/>
+              <path android:fillColor="#123B2B" android:pathData="M15,15h78v78h-78z"/>
+              <path android:fillColor="#009E60" android:pathData="M20,20h68v68h-68z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M54,29l6.5,15.5 16.5,1.3 -12.6,10.7 4,16.1 -14.4,-8.7 -14.4,8.7 4,-16.1 -12.6,-10.7 16.5,-1.3z"/>
+          </vector>
+          EOF
           cat > android_project/app/src/main/java/gabon/gabon360/MainActivity.java <<'EOF'
           package gabon.gabon360;
           import android.app.Activity;
           import android.os.Bundle;
+          import android.speech.tts.TextToSpeech;
+          import android.webkit.JavascriptInterface;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import android.view.ViewGroup;
+          import java.util.Locale;
           public class MainActivity extends Activity {
               private WebView web;
+              private TextToSpeech tts;
+              private volatile boolean ttsReady = false;
+              private final class AndroidTTS {
+                  @JavascriptInterface public void speak(String text) {
+                      runOnUiThread(() -> {
+                          if (ttsReady && tts != null && text != null && !text.trim().isEmpty()) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "gabon360-speech");
+                          else if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('g360:tts-status',{detail:{ready:false}}))", null);
+                      });
+                  }
+                  @JavascriptInterface public boolean isReady() { return ttsReady; }
+              }
               @Override public void onCreate(Bundle state) {
                   super.onCreate(state);
-                  web = new WebView(this);
-                  web.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
-                  WebSettings settings = web.getSettings();
-                  settings.setJavaScriptEnabled(true);
-                  settings.setDomStorageEnabled(true);
-                  settings.setDatabaseEnabled(true);
-                  settings.setAllowFileAccess(true);
-                  settings.setMediaPlaybackRequiresUserGesture(false);
-                  web.setWebViewClient(new WebViewClient());
-                  web.setWebChromeClient(new WebChromeClient());
-                  setContentView(web);
-                  web.loadUrl("file:///android_asset/site/index.html");
+                  tts = new TextToSpeech(this, status -> {
+                      if (status == TextToSpeech.SUCCESS) { int lang = tts.setLanguage(Locale.FRANCE); ttsReady = lang != TextToSpeech.LANG_MISSING_DATA && lang != TextToSpeech.LANG_NOT_SUPPORTED; }
+                  });
+                  web = new WebView(this); web.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
+                  WebSettings settings = web.getSettings(); settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true); settings.setDatabaseEnabled(true); settings.setAllowFileAccess(true); settings.setMediaPlaybackRequiresUserGesture(false);
+                  web.addJavascriptInterface(new AndroidTTS(), "AndroidTTS"); web.setWebViewClient(new WebViewClient()); web.setWebChromeClient(new WebChromeClient());
+                  setContentView(web); web.loadUrl("file:///android_asset/site/index.html");
               }
-              @Override public void onBackPressed() {
-                  if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
-              }
+              @Override public void onDestroy() { if (tts != null) { tts.stop(); tts.shutdown(); } if (web != null) web.destroy(); super.onDestroy(); }
+              @Override public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
           }
           EOF
       - name: Compiler APK de test
