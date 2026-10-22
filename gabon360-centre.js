@@ -103,13 +103,13 @@
     });
     const iaForLegacy={ho:"accueil",al:"alertes",mp:"carte",ms:"missions",pk:"parcs",gx:"garmin",rp:"rapports",us:"users"};
     existing.forEach(([id,label])=>{
-      const b=document.getElementById("t-"+id); if(b){b.dataset.g360Tab=id;b.addEventListener("click",()=>showPage(id));}
+      const b=document.getElementById("t-"+id); if(b){b.classList.remove("hide");b.dataset.g360Tab=id;b.addEventListener("click",()=>showPage(id));}
       const page=document.getElementById("v-"+id); if(page && iaForLegacy[id]) page.setAttribute("data-ia",iaForLegacy[id]);
     });
     const home=document.getElementById("v-ho");
     if(home && !document.getElementById("g360-all-modules")){
       const box=document.createElement("div");box.id="g360-all-modules";box.className="card";
-      box.innerHTML='<h2>Centre de contrôle — tous les modules</h2><p class="note">Accès direct aux pages disponibles.</p><div class="row" style="flex-wrap:wrap">'+existing.filter(x=>x[0]!=="us").concat(modules.map(m=>[m[0],m[1]])).map(([id,label])=>'<button type="button" data-g360-open="'+esc(id)+'">'+esc(label)+'</button>').join("")+'</div>';
+      box.innerHTML='<h2>Centre de contrôle — tous les modules</h2><p class="note">Accès direct aux pages disponibles.</p><div class="row" style="flex-wrap:wrap">'+existing.concat(modules.map(m=>[m[0],m[1]])).map(([id,label])=>'<button type="button" data-g360-open="'+esc(id)+'">'+esc(label)+'</button>').join("")+'</div>';
       home.appendChild(box);box.querySelectorAll("[data-g360-open]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.g360Open)));
     }
     renderSummary();renderStats();
