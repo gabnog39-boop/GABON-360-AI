@@ -28,7 +28,7 @@
     ['garmin','Garmin / GPX','Échanges de fichiers','missions,observations']
   ].map(([id, page, role, data]) => ({ id, page, role, data: data ? data.split(',') : [] }));
 
-  const G = (window.G360_IA = { agents: AGENTS, endpoint: null, current: null });
+  const G = (window.G360_IA = { agents: AGENTS, endpoint: (window.G360_IA_ENDPOINT || (location.protocol !== 'file:' ? '/api/assistant' : null)), current: AGENTS.find(a => a.id === 'accueil') || AGENTS[0] });
 
   // --- Données : l'application fournit window.G360.data(nom) -> tableau (sinon : rien) ---
   const read = (n) => { try { return (window.G360 && window.G360.data && window.G360.data(n)) || null; } catch (e) { return null; } };
@@ -64,14 +64,25 @@
 
   // --- IA serveur optionnelle (Supabase Edge Function). Jamais annoncée sans réponse réelle. ---
   async function remote(a, q) {
-    if (!G.endpoint) return null;
+    if (!G.endpoint || !q) return null;
     try {
-      const r = await fetch(G.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: a.id, page: a.page, question: q, contexte: analyse(a) }) });
-      if (!r.ok) return null;
+      let session = null;
+      try { session = JSON.parse(localStorage.getItem('g360s') || 'null'); } catch (_) {}
+      if (!session || !session.access_token) return null;
+      const r = await fetch(G.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ q: '[' + a.page + '] ' + q, ctx: analyse(a) })
+      });
+      if (!r.ok) {
+        let detail = '';
+        try { const err = await r.json(); detail = err.error || err.message || ''; } catch (_) {}
+        console.warn('IA serveur indisponible (' + r.status + '): ' + detail);
+        return null;
+      }
       const j = await r.json();
-      return j && j.reponse ? j.reponse : null;
-    } catch (e) { return null; }
+      return j && (j.text || j.reponse) ? (j.text || j.reponse) : null;
+    } catch (e) { console.warn('IA serveur non joignable', e); return null; }
   }
 
   // --- AVATAR CENTRAL : seul canal vers l'humain ---
