@@ -68,7 +68,7 @@ jobs:
                   applicationId 'gabon.gabon360'
                   minSdk 23
                   targetSdk 35
-                  versionCode 1
+                  versionCode 2
                   versionName '0.1-test'
               }
           }
@@ -95,6 +95,8 @@ jobs:
           cat > android_project/app/src/main/res/drawable/ic_launcher.xml <<'EOF'
           <bitmap xmlns:android="http://schemas.android.com/apk/res/android" android:src="@drawable/gabon360_icon" android:gravity="fill" />
           EOF
+          test -s android_project/app/src/main/res/drawable-nodpi/gabon360_icon.jpg
+          echo 'Logo officiel vérifié et configuré comme icône de lancement.'
           cat > android_project/app/src/main/java/gabon/gabon360/MainActivity.java <<'EOF'
           package gabon.gabon360;
           import android.app.Activity;
