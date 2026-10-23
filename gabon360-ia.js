@@ -130,6 +130,25 @@
   function scanNewRecords() {
     if (!G.proactive.enabled) return;
     const changed = [];
+    // Surveille aussi les fiches locales créées par les pages du centre.
+    try {
+      if (window.G360_CENTRE && typeof window.G360_CENTRE.loadRecords === 'function') {
+        const rows = window.G360_CENTRE.loadRecords();
+        const sig = rows.map(r => String(r && (r.id || r.createdAt || r.title) || '')).join('|') + '#' + rows.length;
+        const key = '__local_centre_records';
+        if (Object.prototype.hasOwnProperty.call(G.proactive.last, key) && G.proactive.last[key] !== sig) {
+          const oldSig = G.proactive.last[key];
+          const added = rows.filter(r => r && r.id && !oldSig.includes(String(r.id)));
+          added.slice(0, 8).forEach(r => {
+            const id = String(r.module || '');
+            const agent = AGENTS.find(a => a.id === id) || AGENTS.find(a => a.id === 'centre');
+            if (agent) changed.push({agent, table:'fiches locales du centre', diff:1, localTitle:String(r.title || r.moduleName || 'nouvelle fiche'), localValues:(r.values || []).filter(Boolean).join('; ')});
+          });
+          if (!added.length) { const a=AGENTS.find(x=>x.id==='centre'); if(a) changed.push({agent:a,table:'fiches locales du centre',diff:0}); }
+        }
+        G.proactive.last[key] = sig;
+      }
+    } catch (e) { console.warn('Veille des fiches locales indisponible', e); }
     AGENTS.forEach(a => a.data.forEach(table => {
       const rows = read(table);
       if (!Array.isArray(rows)) return;
@@ -146,7 +165,8 @@
     changed.forEach(c => { const p=unique.get(c.agent.id); if (!p || c.diff>p.diff) unique.set(c.agent.id,c); });
     unique.forEach(c => {
       const message = 'Nouvelle information reçue pour ' + c.agent.page + ' : ' +
-        (c.diff ? c.diff + ' nouvel enregistrement(s) détecté(s) dans ' + c.table + '.' : 'les données de ' + c.table + ' ont été mises à jour.') +
+        (c.localTitle ? c.localTitle + (c.localValues ? ' — ' + c.localValues : '') + '.' :
+        (c.diff ? c.diff + ' nouvel enregistrement(s) détecté(s) dans ' + c.table + '.' : 'les données de ' + c.table + ' ont été mises à jour.')) +
         ' Cette information doit être vérifiée.';
       Avatar.deliver(c.agent, message, 'local');
     });
