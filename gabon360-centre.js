@@ -112,6 +112,26 @@
       box.innerHTML='<h2>Centre de contrôle — tous les modules</h2><p class="note">Accès direct aux pages disponibles.</p><div class="row" style="flex-wrap:wrap">'+existing.concat(modules.map(m=>[m[0],m[1]])).map(([id,label])=>'<button type="button" data-g360-open="'+esc(id)+'">'+esc(label)+'</button>').join("")+'</div>';
       home.appendChild(box);box.querySelectorAll("[data-g360-open]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.g360Open)));
     }
+    // Répertoire permanent : toutes les pages restent accessibles même sur petit écran.
+    if(!document.getElementById("g360-directory-toggle")){
+      const toggle=document.createElement("button");
+      toggle.id="g360-directory-toggle"; toggle.type="button";
+      toggle.className="p"; toggle.textContent="☷ Toutes les pages et IA";
+      toggle.style.cssText="width:100%;margin:8px 0;min-height:46px;font-weight:700";
+      tabs.insertAdjacentElement("afterend",toggle);
+      const panel=document.createElement("section");
+      panel.id="g360-directory-panel"; panel.className="card hide";
+      panel.innerHTML='<h2>Répertoire du centre de contrôle</h2><p class="note">Accès direct aux 22 IA et à toutes les pages de l’interface. Les données en direct nécessitent des sources connectées.</p><div id="g360-directory-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px"></div>';
+      toggle.insertAdjacentElement("afterend",panel);
+      const grid=panel.querySelector("#g360-directory-grid");
+      const entries=existing.concat(modules.map(m=>[m[0],m[1]]));
+      entries.forEach(([id,label])=>{
+        const btn=document.createElement("button");btn.type="button";btn.textContent=label;btn.style.cssText="min-height:44px;white-space:normal";
+        btn.addEventListener("click",()=>{panel.classList.add("hide");showPage(id);const page=document.getElementById("g360-page-"+id)||document.getElementById("v-"+id);if(page){const ia=page.querySelector(".g360-ia");if(ia)ia.scrollIntoView({block:"nearest"});}});
+        grid.appendChild(btn);
+      });
+      toggle.addEventListener("click",()=>panel.classList.toggle("hide"));
+    }
     renderSummary();renderStats();
     if(window.G360_IA && typeof window.G360_IA.mount==="function") window.G360_IA.mount();
   }
