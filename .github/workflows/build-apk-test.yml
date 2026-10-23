@@ -38,7 +38,7 @@ jobs:
           mkdir -p android_project/app/src/main/res/values
           mkdir -p android_project/app/src/main/res/drawable
           cp index.html android_project/app/src/main/assets/site/index.html
-          for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-avatar-relay.js gabon360-navigation-offline.js; do
+          for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-avatar-relay.js gabon360-navigation-offline.js gabon360-live-connectors.js; do
             if [ -f "$f" ]; then cp "$f" android_project/app/src/main/assets/site/; fi
           done
           if [ -d icons ]; then cp -R icons android_project/app/src/main/assets/site/; fi
