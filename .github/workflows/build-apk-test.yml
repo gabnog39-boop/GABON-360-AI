@@ -40,9 +40,11 @@ jobs:
           mkdir -p android_project/app/src/main/res/drawable-nodpi
           mkdir -p android_project/app/src/main/res/mipmap-anydpi-v26
           cp index.html android_project/app/src/main/assets/site/index.html
-          for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-avatar-relay.js gabon360-navigation-offline.js gabon360-live-connectors.js; do
-            if [ -f "$f" ]; then cp "$f" android_project/app/src/main/assets/site/; fi
+          for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-navigation-offline.js gabon360-live-connectors.js; do
+            if [ ! -s "$f" ]; then echo "Fichier JavaScript indispensable absent: $f"; exit 1; fi
+            cp "$f" android_project/app/src/main/assets/site/
           done
+          echo "Modules JS présents et copiés dans l’APK."
           if [ -d icons ]; then cp -R icons android_project/app/src/main/assets/site/; fi
           if [ -f icons/gabon360-icon.jpg ]; then cp icons/gabon360-icon.jpg android_project/app/src/main/res/drawable-nodpi/gabon360_icon.jpg; else echo 'Logo officiel absent: compilation interrompue'; exit 1; fi
           test -s android_project/app/src/main/res/drawable-nodpi/gabon360_icon.jpg
@@ -86,8 +88,8 @@ jobs:
                   applicationId 'gabon.gabon360'
                   minSdk 23
                   targetSdk 35
-                  versionCode 4
-                  versionName '0.4-test'
+                  versionCode 5
+                  versionName '0.5-test'
               }
           }
           EOF
