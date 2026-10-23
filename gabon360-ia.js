@@ -77,7 +77,6 @@
       G.current = agent;
       $('g360-via').textContent = 'via IA « ' + agent.page + ' » · ' + (mode === 'serveur' ? 'IA serveur' : 'mode local (données de l\'application)');
       $('g360-txt').textContent = text; box.style.display = 'block';
-      window.dispatchEvent(new CustomEvent('g360:avatar-message', {detail:{source:'ia-core', text, agent:agent.id, mode}}));
     },
     async ask(id, q) {
       const a = AGENTS.find((x) => x.id === id); if (!a) return;
@@ -105,35 +104,4 @@
   };
   document.addEventListener('DOMContentLoaded', G.mount); if (document.readyState !== 'loading') G.mount();
   new MutationObserver(G.mount).observe(document.body, { childList: true, subtree: true });
-
-  // Veille proactive : surveille uniquement les sources de données déjà reliées à l'application.
-  // Aucun événement n'est inventé et les données existantes ne sont pas annoncées au démarrage.
-  G.proactive = { enabled: true, intervalMs: 20000, baselineReady: false, last: Object.create(null) };
-  G.setProactive = function(enabled) { G.proactive.enabled = !!enabled; return G.proactive.enabled; };
-  function scanNewRecords() {
-    if (!G.proactive.enabled) return;
-    const changed = [];
-    AGENTS.forEach(a => a.data.forEach(table => {
-      const rows = read(table);
-      if (!Array.isArray(rows)) return;
-      const signature = rows.map(r => String(r && (r.id || r.uuid || r.created_at || r.date || r.titre || r.title) || '')).join('|') + '#' + rows.length;
-      const key = a.id + ':' + table;
-      if (Object.prototype.hasOwnProperty.call(G.proactive.last, key) && G.proactive.last[key] !== signature) {
-        const oldCount = Number((G.proactive.last[key].match(/#(\\d+)$/) || [])[1] || 0);
-        changed.push({agent:a, table, diff:Math.max(0, rows.length-oldCount)});
-      }
-      G.proactive.last[key] = signature;
-    }));
-    if (!G.proactive.baselineReady) { G.proactive.baselineReady = true; return; }
-    const unique = new Map();
-    changed.forEach(c => { const p=unique.get(c.agent.id); if (!p || c.diff>p.diff) unique.set(c.agent.id,c); });
-    unique.forEach(c => {
-      const message = 'Nouvelle information reçue pour ' + c.agent.page + ' : ' +
-        (c.diff ? c.diff + ' nouvel enregistrement(s) détecté(s) dans ' + c.table + '.' : 'les données de ' + c.table + ' ont été mises à jour.') +
-        ' Cette information doit être vérifiée.';
-      Avatar.deliver(c.agent, message, 'local');
-    });
-  }
-  try { scanNewRecords(); } catch(e) { console.warn('Veille proactive indisponible',e); }
-  window.setInterval(() => { try { scanNewRecords(); } catch(e) { console.warn('Veille proactive indisponible',e); } }, G.proactive.intervalMs);
 })();
