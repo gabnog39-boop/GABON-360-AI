@@ -92,6 +92,36 @@
       else announce(text,id);
     });
   }
+  function renderHealthAudit() {
+    const home=document.getElementById("v-ho");
+    if(!home) return;
+    let box=document.getElementById("g360-operational-audit");
+    if(!box){
+      box=document.createElement("section"); box.id="g360-operational-audit"; box.className="card";
+      box.innerHTML='<h2>Diagnostic opérationnel du centre</h2><p class="note">Ce diagnostic vérifie la présence des composants sur cet appareil. Il ne remplace pas un test terrain ni la validation des flux externes.</p><button type="button" class="p" id="g360-run-audit">Lancer le diagnostic</button><div id="g360-audit-results" aria-live="polite"></div>';
+      home.appendChild(box);
+      box.querySelector("#g360-run-audit").addEventListener("click",runHealthAudit);
+    }
+  }
+  function runHealthAudit() {
+    const out=document.getElementById("g360-audit-results"); if(!out)return;
+    const agents=window.G360_IA&&Array.isArray(window.G360_IA.agents)?window.G360_IA.agents:[];
+    const checks=[];
+    checks.push({name:"Noyau des IA",ok:agents.length===22,detail:agents.length+" IA trouvée(s) dans le noyau."});
+    const missing=agents.filter(a=>!document.querySelector('[data-ia="'+String(a.id).replace(/["\\\\]/g,"")+'"]'));
+    checks.push({name:"Pages associées aux IA",ok:missing.length===0,detail:missing.length?("Page(s) sans élément associé : "+missing.map(a=>a.page+" ("+a.id+")").join(", ")):"Chaque IA possède un élément de page associé."});
+    checks.push({name:"GPS satellite Android",ok:!!(window.AndroidGPS&&typeof window.AndroidGPS.start==="function"&&typeof window.AndroidGPS.stop==="function"),detail:window.AndroidGPS?"Pont GPS natif détecté; démarrer le GPS pour confirmer la réception.":"Pont GPS natif absent dans cette version."});
+    checks.push({name:"Voix de l’avatar",ok:!!(window.AndroidTTS&&typeof window.AndroidTTS.speak==="function")||("speechSynthesis" in window),detail:window.AndroidTTS?"Synthèse vocale Android détectée.":"Voix navigateur : dépend de la disponibilité du navigateur."});
+    checks.push({name:"Microphone",ok:!!(window.SpeechRecognition||window.webkitSpeechRecognition),detail:(window.SpeechRecognition||window.webkitSpeechRecognition)?"Reconnaissance vocale navigateur détectée.":"Reconnaissance vocale navigateur non détectée; écrire reste possible."});
+    checks.push({name:"Moteur conversationnel serveur",ok:!!(window.G360_IA&&window.G360_IA.endpoint),detail:window.G360_IA&&window.G360_IA.endpoint?"Un endpoint est déclaré; sa réponse doit être testée.":"Aucun endpoint IA serveur configuré : réponses locales uniquement."});
+    let storageOk=false;try{localStorage.setItem("__g360_audit","1");localStorage.removeItem("__g360_audit");storageOk=true;}catch(e){}
+    checks.push({name:"Enregistrement local",ok:storageOk,detail:storageOk?"Le stockage local fonctionne sur cet appareil.":"Le stockage local est indisponible."});
+    checks.push({name:"Cartes hors ligne préchargées",ok:false,detail:"Aucun cache de tuiles/cartes hors ligne n’est confirmé par ce diagnostic. Précharger et tester les cartes avant une patrouille."});
+    checks.push({name:"Sources territoriales en direct",ok:false,detail:"Les flux satellite continu, drones, radar aérien, frontières et caméras doivent être configurés et testés séparément."});
+    out.innerHTML=checks.map(c=>'<article style="border-top:1px solid var(--ln);padding:9px 0"><b style="color:'+(c.ok?'#2fbf4a':'#f5c400')+'">'+(c.ok?'● Présent':'! À compléter')+' — '+esc(c.name)+'</b><div class="note">'+esc(c.detail)+'</div></article>').join("");
+    const summary=document.createElement("p");summary.className="note";summary.textContent=checks.filter(c=>c.ok).length+" contrôle(s) présents sur "+checks.length+". Les contrôles « à compléter » ne doivent pas être considérés comme actifs.";out.prepend(summary);
+    announce("Diagnostic du centre terminé. "+checks.filter(c=>!c.ok).length+" contrôle(s) nécessitent une vérification ou une connexion réelle.","centre");
+  }
   function init() {
     const app=$("#app"), tabs=app && app.querySelector(".tabs"); if(!app||!tabs) return;
     modules.forEach(m=>{
@@ -132,7 +162,7 @@
       });
       toggle.addEventListener("click",()=>panel.classList.toggle("hide"));
     }
-    renderSummary();renderStats();
+    renderSummary();renderStats();renderHealthAudit();
     if(window.G360_IA && typeof window.G360_IA.mount==="function") window.G360_IA.mount();
   }
   window.G360_CENTRE={modules,showPage,loadRecords:load,announce};
