@@ -56,6 +56,9 @@
     }
     if (!lines.length) lines.push("• aucune source de données reliée à cette IA pour le moment.");
     if (!local.length && a.data.some(n => !read(n))) lines.push("• les sources externes non connectées ne fournissent pas de données en direct.");
+    let liveContext = "";
+    try { if (window.G360_LIVE && typeof window.G360_LIVE.contextFor === "function") liveContext = window.G360_LIVE.contextFor(a.id) || ""; } catch (_) {}
+    if (liveContext) lines.push(liveContext);
     return a.page + " — état vérifiable des données :\n" + lines.join("\n");
   }
 
