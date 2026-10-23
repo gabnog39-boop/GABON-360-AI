@@ -82,7 +82,7 @@
 .g360-ia{background:#009e60;color:#fff;border:1px solid #fcd116;border-radius:12px;font:600 12px system-ui;padding:3px 8px;margin-left:6px;cursor:pointer}`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   const box = document.createElement('div'); box.id = 'g360-av';
-  box.innerHTML = '<div class="h"><img id="g360-img" alt="Avatar"><div><b>Avatar GABON 360</b><br><small id="g360-via"></small></div><button id="g360-x" style="margin-left:auto">✕</button></div><div class="b" id="g360-txt"></div><input id="g360-q" placeholder="Poser une question à cette IA…"><button id="g360-go">Demander</button><button id="g360-say">🔊 Écouter</button>';
+  box.innerHTML = '<div class="h"><img id="g360-img" alt="Avatar"><div><b>Avatar GABON 360</b><br><small id="g360-via"></small></div><button id="g360-x" style="margin-left:auto">✕</button></div><div class="b" id="g360-txt"></div><input id="g360-q" placeholder="Écrire ou dicter une question…"><button id="g360-go">Envoyer</button><button id="g360-mic">🎙️ Parler</button><button id="g360-say">🔊 Écouter</button><button id="g360-auto" aria-pressed="false">🔔 Activer les annonces vocales</button><small id="g360-voice-status">Les annonces automatiques nécessitent une activation vocale initiale.</small>';
   document.body.appendChild(box);
   const $ = (i) => document.getElementById(i);
   const src = document.querySelector('[data-avatar] img, #avatar img, img.avatar');
@@ -95,6 +95,7 @@
       $('g360-via').textContent = 'via IA « ' + agent.page + ' » · ' + (mode === 'serveur' ? 'IA serveur' : 'mode local (données de l\'application)');
       $('g360-txt').textContent = text; box.style.display = 'block';
       window.dispatchEvent(new CustomEvent('g360:avatar-message', {detail:{source:'ia-core', text, agent:agent.id, mode}}));
+      if (G.voiceAnnouncements && G.voiceUnlocked) Avatar.say();
     },
     async ask(id, q) {
       const a = AGENTS.find((x) => x.id === id); if (!a) return;
@@ -105,8 +106,37 @@
       const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; speechSynthesis.cancel(); speechSynthesis.speak(u); }
   });
   $('g360-x').onclick = () => (box.style.display = 'none');
-  $('g360-go').onclick = () => G.current && Avatar.ask(G.current.id, $('g360-q').value.trim());
-  $('g360-say').onclick = Avatar.say;
+  $('g360-go').onclick = () => {
+    G.voiceUnlocked = true;
+    const q = $('g360-q').value.trim();
+    if (G.current && q) Avatar.ask(G.current.id, q);
+    else if (!G.current) Avatar.deliver(AGENTS.find(a=>a.id==='accueil') || AGENTS[0], 'Bonjour. Je suis l’avatar central GABON 360. Posez votre question par écrit ou activez le microphone.', 'local');
+  };
+  $('g360-say').onclick = () => { G.voiceUnlocked = true; Avatar.say(); };
+  $('g360-auto').onclick = () => {
+    G.voiceUnlocked = true; G.voiceAnnouncements = !G.voiceAnnouncements;
+    $('g360-auto').setAttribute('aria-pressed', String(G.voiceAnnouncements));
+    $('g360-auto').textContent = G.voiceAnnouncements ? '🔔 Annonces vocales activées' : '🔕 Annonces vocales désactivées';
+    $('g360-voice-status').textContent = G.voiceAnnouncements ? 'L’avatar annoncera vocalement les nouvelles informations détectées pendant que l’application est ouverte.' : 'Les annonces automatiques sont désactivées.';
+    if (G.voiceAnnouncements) { const a=G.current || AGENTS.find(x=>x.id==='accueil') || AGENTS[0]; Avatar.deliver(a, 'Les annonces vocales automatiques sont activées. Je transmettrai les nouvelles informations détectées par les sources connectées.', 'local'); }
+    else if ('speechSynthesis' in window) speechSynthesis.cancel();
+  };
+  $('g360-mic').onclick = () => {
+    G.voiceUnlocked = true;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { $('g360-voice-status').textContent = 'La reconnaissance vocale n’est pas disponible dans ce navigateur. Vous pouvez écrire votre question.'; return; }
+    const rec = new SR(); rec.lang = 'fr-FR'; rec.interimResults = false; rec.maxAlternatives = 1;
+    $('g360-voice-status').textContent = 'Je vous écoute…';
+    rec.onresult = event => {
+      const q = event.results && event.results[0] && event.results[0][0] && event.results[0][0].transcript;
+      if (!q) { $('g360-voice-status').textContent = 'Je n’ai pas compris. Réessayez ou écrivez votre question.'; return; }
+      $('g360-q').value = q; $('g360-voice-status').textContent = 'Question entendue : ' + q;
+      const a = G.current || AGENTS.find(x=>x.id==='accueil') || AGENTS[0]; Avatar.ask(a.id, q);
+    };
+    rec.onerror = event => { $('g360-voice-status').textContent = 'Microphone indisponible : ' + event.error + '. Vérifiez les autorisations et la connexion.'; };
+    rec.onend = () => { if ($('g360-voice-status').textContent === 'Je vous écoute…') $('g360-voice-status').textContent = 'Écoute terminée.'; };
+    try { rec.start(); } catch (e) { $('g360-voice-status').textContent = 'Impossible de démarrer le microphone. Réessayez.'; }
+  };
 
   // --- Chaque page / option reçoit son bouton IA relié à l'avatar ---
   // Balisage : <section data-ia="alertes"> ... </section>  ou  <button data-ia="rapports">…</button>
