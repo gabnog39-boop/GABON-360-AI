@@ -102,8 +102,17 @@
       const r = q ? await remote(a, q) : null;
       Avatar.deliver(a, r || (q ? "Je n'ai pas d'IA serveur connectée : voici l'état réel de la page.\n" : '') + analyse(a), r ? 'serveur' : 'local');
     },
-    say() { const t = $('g360-txt').textContent; if (!('speechSynthesis' in window) || !t) return;
-      const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR'; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+    say() {
+      const t = $('g360-txt').textContent;
+      if (!t) return;
+      if (window.AndroidTTS && typeof window.AndroidTTS.isReady === 'function' && window.AndroidTTS.isReady() && typeof window.AndroidTTS.speak === 'function') {
+        window.AndroidTTS.speak(t); return;
+      }
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(t); u.lang = 'fr-FR';
+        window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+      } else $('g360-voice-status').textContent = 'Synthèse vocale indisponible sur cet appareil.';
+    }
   });
   $('g360-x').onclick = () => (box.style.display = 'none');
   $('g360-go').onclick = () => {
@@ -141,6 +150,12 @@
   // --- Chaque page / option reçoit son bouton IA relié à l'avatar ---
   // Balisage : <section data-ia="alertes"> ... </section>  ou  <button data-ia="rapports">…</button>
   G.mount = function () {
+    // Relier explicitement les huit pages historiques aux IA correspondantes.
+    const legacyPages = {accueil:'v-ho',alertes:'v-al',carte:'v-mp',missions:'v-ms',parcs:'v-pk',garmin:'v-gx',rapports:'v-rp',users:'v-us'};
+    Object.entries(legacyPages).forEach(([id, domId]) => {
+      const el = document.getElementById(domId);
+      if (el && !el.hasAttribute('data-ia')) el.setAttribute('data-ia', id);
+    });
     document.querySelectorAll('[data-ia]').forEach((el) => {
       if (el.querySelector(':scope > .g360-ia')) return;
       const id = el.getAttribute('data-ia'), a = AGENTS.find((x) => x.id === id);
@@ -150,6 +165,17 @@
       el.appendChild(b);
     });
   };
+  // Toute annonce émise par un module est relayée vers l'avatar central.
+  // Les événements déjà émis par le noyau sont ignorés pour éviter les boucles.
+  window.addEventListener('g360:avatar-message', (event) => {
+    const d = event && event.detail;
+    if (!d || !d.text || d.source === 'ia-core' || d.relayedToCentral) return;
+    const rawId = String(d.agent || d.module || d.source || '');
+    const aliases = {centre:'centre', 'centre-controle':'centre', territoire:'carte', surveillance:'centre', maritime:'eaux', analyse:'stats', météo:'meteo'};
+    const id = aliases[rawId] || rawId;
+    const agent = AGENTS.find(a => a.id === id) || AGENTS.find(a => a.id === 'centre') || AGENTS[0];
+    Avatar.deliver(agent, String(d.text), 'local');
+  });
   document.addEventListener('DOMContentLoaded', G.mount); if (document.readyState !== 'loading') G.mount();
   new MutationObserver(G.mount).observe(document.body, { childList: true, subtree: true });
 
