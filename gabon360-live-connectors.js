@@ -35,6 +35,36 @@
       '<p id="g360-weather-status">En attente de la connexion météo…</p><div id="g360-weather-data">Aucune donnée reçue.</div><button type="button" id="g360-weather-refresh">Actualiser la météo</button><p class="g360-live-muted">Source : Open-Meteo. Internet requis. Position par défaut : Libreville; si le GPS est actif, la position du téléphone est utilisée.</p>');
     const btn=$("g360-weather-refresh"); if(btn && !btn.dataset.bound){btn.dataset.bound="1";btn.addEventListener("click",()=>fetchWeather(true));}
   }
+  function statusCards() {
+    const agents = window.G360_IA && Array.isArray(window.G360_IA.agents) ? window.G360_IA.agents : [];
+    const pages = Array.from(document.querySelectorAll("#app > section[data-ia], #app > div[data-ia]"));
+    pages.forEach(page => {
+      const id = page.getAttribute("data-ia");
+      const agent = agents.find(a => a.id === id);
+      if (!agent || page.dataset.g360StatusAdded === "1") return;
+      page.dataset.g360StatusAdded = "1";
+      const card = document.createElement("section"); card.className = "g360-live-card"; card.dataset.liveCard = "module-status-" + id;
+      const heading = document.createElement("h3"); heading.textContent = "État de connexion — " + agent.page;
+      const ai = document.createElement("p"); ai.className = "g360-module-ai-status"; ai.textContent = "IA de page : noyau central détecté; réponse à tester.";
+      const ds = document.createElement("p"); ds.className = "g360-module-data-status"; ds.textContent = "Sources externes : état non vérifié.";
+      const btn = document.createElement("button"); btn.type = "button"; btn.textContent = "Consulter cette IA par l’avatar central";
+      btn.addEventListener("click", () => { if (window.G360_IA && window.G360_IA.avatar) window.G360_IA.avatar.ask(id); else ai.textContent = "Noyau IA non chargé : réponse indisponible."; });
+      card.append(heading, ai, ds, btn); page.appendChild(card);
+    });
+    pages.forEach(page => {
+      const card = page.querySelector("[data-live-card^=module-status-]"); if (!card) return;
+      const data = card.querySelector(".g360-module-data-status"); const id = page.getAttribute("data-ia");
+      let msg = "Sources externes : non vérifiées ou non connectées.";
+      if (id === "meteo") msg = live.weather ? "Météo publique connectée; dernière mesure " + live.weather.time + "." : "Météo publique : " + live.weatherStatus + ".";
+      if (id === "satellites") msg = "Visualiseur NASA Worldview accessible; aucune vidéo satellite continue en direct n’est connectée.";
+      if (["navigation","geoloc","garmin"].includes(id)) msg = window.__G360_LAST_GPS__ ? "GPS du téléphone : dernière position reçue; carte hors ligne à vérifier." : "GPS : aucune position reçue dans cette session.";
+      if (id === "drones") msg = "Aucun flux de drone connecté dans cette version.";
+      if (id === "frontieres") msg = "Aucun flux automatique de capteurs ou de postes frontaliers connecté.";
+      if (id === "air") msg = "Aucun radar ou flux ADS-B connecté dans cette version.";
+      if (id === "paiements") msg = "Aucune passerelle de paiement en direct configurée.";
+      if (data) data.textContent = msg;
+    });
+  }
   function satelliteCard() {
     const page=findPage(["g360-page-satellites","satellites"]);
     if (!page) return;
@@ -77,11 +107,11 @@
     // Associer toutes les pages créées dynamiquement à l'IA de leur domaine lorsqu'un agent existe.
     const aliases={satellites:"satellites",drones:"drones",navigation:"navigation",geoloc:"geoloc",cyber:"cyber",memoire:"memoire",alertes:"alertes",rapports:"rapports",stats:"stats",meteo:"meteo",parcs:"parcs",eaux:"eaux",frontieres:"frontieres",air:"air",centre:"centre",admin:"admin",users:"users",paiements:"paiements",missions:"missions",garmin:"garmin",territoire:"carte"};
     Object.entries(aliases).forEach(([page,agent])=>{const el=$("g360-page-"+page);if(el && !el.dataset.ia)el.dataset.ia=agent;});
-    weatherCard(); satelliteCard();
+    weatherCard(); satelliteCard(); statusCards();
     if($("g360-weather-status"))fetchWeather(false);
     if(window.G360_IA && typeof window.G360_IA.mount==="function")window.G360_IA.mount();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-  new MutationObserver(()=>{weatherCard();satelliteCard();if(window.G360_IA&&window.G360_IA.mount)window.G360_IA.mount();}).observe(document.body,{childList:true,subtree:true});
+  new MutationObserver(()=>{weatherCard();satelliteCard();statusCards();if(window.G360_IA&&window.G360_IA.mount)window.G360_IA.mount();}).observe(document.body,{childList:true,subtree:true});
   window.setInterval(()=>{if($("g360-weather-status"))fetchWeather(false);},15*60*1000);
 })();
