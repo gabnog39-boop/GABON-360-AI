@@ -104,6 +104,12 @@ jobs:
           package gabon.gabon360;
           import android.app.Activity;
           import android.os.Bundle;
+          import android.Manifest;
+          import android.content.pm.PackageManager;
+          import android.location.Location;
+          import android.location.LocationListener;
+          import android.location.LocationManager;
+          import android.os.Looper;
           import android.speech.tts.TextToSpeech;
           import android.webkit.JavascriptInterface;
           import android.webkit.WebChromeClient;
@@ -116,6 +122,53 @@ jobs:
               private WebView web;
               private TextToSpeech tts;
               private volatile boolean ttsReady = false;
+              private LocationManager locationManager;
+              private Location lastGps;
+              private final LocationListener gpsListener = new LocationListener() {
+                  @Override public void onLocationChanged(Location location) {
+                      lastGps = location;
+                      if (web != null) {
+                          String js = "window.dispatchEvent(new CustomEvent('g360:gps-fix',{detail:{lat:"+location.getLatitude()+",lon:"+location.getLongitude()+",accuracy:"+location.getAccuracy()+",speed:"+location.getSpeed()+",altitude:"+location.getAltitude()+",time:"+location.getTime()+"}}))";
+                          runOnUiThread(() -> web.evaluateJavascript(js, null));
+                      }
+                  }
+                  @Override public void onProviderEnabled(String provider) { gpsStatus(true, "GPS actif"); }
+                  @Override public void onProviderDisabled(String provider) { gpsStatus(false, "GPS désactivé : active la localisation"); }
+              };
+              private void gpsStatus(boolean ok, String message) {
+                  if (web != null) {
+                      String safe = message.replace("'", "");
+                      runOnUiThread(() -> web.evaluateJavascript("window.dispatchEvent(new CustomEvent('g360:gps-status',{detail:{ok:"+ok+",message:'"+safe+"'}}))", null));
+                  }
+              }
+              private final class AndroidGPS {
+                  @JavascriptInterface public void start() { runOnUiThread(() -> startGps()); }
+                  @JavascriptInterface public void stop() { runOnUiThread(() -> stopGps()); }
+                  @JavascriptInterface public boolean available() { return locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER); }
+                  @JavascriptInterface public String last() { if(lastGps==null) return ""; return lastGps.getLatitude()+","+lastGps.getLongitude()+","+lastGps.getAccuracy()+","+lastGps.getTime(); }
+              }
+              private void startGps() {
+                  locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+                  if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                      requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 3601);
+                      gpsStatus(false, "Autorisation GPS requise"); return;
+                  }
+                  try {
+                      if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) { gpsStatus(false, "Active la localisation GPS du téléphone"); return; }
+                      locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0.5f, gpsListener, Looper.getMainLooper());
+                      Location last = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                      if (last != null) gpsListener.onLocationChanged(last);
+                      gpsStatus(true, "GPS satellite actif - aucune connexion mobile nécessaire");
+                  } catch (SecurityException ex) { gpsStatus(false, "Autorisation GPS refusée"); }
+              }
+              private void stopGps() { if (locationManager != null) locationManager.removeUpdates(gpsListener); gpsStatus(false, "Suivi GPS arrêté"); }
+              @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                  if (requestCode == 3601) {
+                      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) startGps();
+                      else gpsStatus(false, "Autorisation GPS refusée");
+                  }
+              }
               private final class AndroidTTS {
                   @JavascriptInterface public void speak(String text) {
                       runOnUiThread(() -> {
@@ -132,7 +185,7 @@ jobs:
                   });
                   web = new WebView(this); web.setLayoutParams(new ViewGroup.LayoutParams(-1, -1));
                   WebSettings settings = web.getSettings(); settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true); settings.setDatabaseEnabled(true); settings.setAllowFileAccess(true); settings.setMediaPlaybackRequiresUserGesture(false);
-                  web.addJavascriptInterface(new AndroidTTS(), "AndroidTTS"); web.setWebViewClient(new WebViewClient()); web.setWebChromeClient(new WebChromeClient());
+                  web.addJavascriptInterface(new AndroidTTS(), "AndroidTTS"); web.addJavascriptInterface(new AndroidGPS(), "AndroidGPS"); web.setWebViewClient(new WebViewClient()); web.setWebChromeClient(new WebChromeClient());
                   setContentView(web); web.loadUrl("file:///android_asset/site/index.html");
               }
               @Override public void onDestroy() { if (tts != null) { tts.stop(); tts.shutdown(); } if (web != null) web.destroy(); super.onDestroy(); }
