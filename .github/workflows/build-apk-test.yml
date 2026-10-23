@@ -38,7 +38,7 @@ jobs:
           mkdir -p android_project/app/src/main/res/values
           mkdir -p android_project/app/src/main/res/drawable
           cp index.html android_project/app/src/main/assets/site/index.html
-          for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-avatar-relay.js; do
+          for f in gabon360-ia.js gabon360-modules-addon.js gabon360-centre.js gabon360-avatar-relay.js gabon360-navigation-offline.js; do
             if [ -f "$f" ]; then cp "$f" android_project/app/src/main/assets/site/; fi
           done
           if [ -d icons ]; then cp -R icons android_project/app/src/main/assets/site/; fi
@@ -74,6 +74,8 @@ jobs:
           cat > android_project/app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
               <application android:theme="@style/AppTheme" android:label="GABON 360 AI" android:icon="@drawable/ic_launcher" android:usesCleartextTraffic="true">
                   <activity android:name=".MainActivity" android:exported="true">
