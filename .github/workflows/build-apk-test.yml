@@ -86,8 +86,8 @@ jobs:
                   applicationId 'gabon.gabon360'
                   minSdk 23
                   targetSdk 35
-                  versionCode 3
-                  versionName '0.3-test'
+                  versionCode 4
+                  versionName '0.4-test'
               }
           }
           EOF
@@ -97,7 +97,7 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <application android:theme="@style/AppTheme" android:label="GABON 360 AI" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:usesCleartextTraffic="true">
+              <application android:theme="@style/AppTheme" android:label="GABON 360 AI" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher" android:usesCleartextTraffic="true">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
