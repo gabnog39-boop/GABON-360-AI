@@ -35,14 +35,28 @@
 
   // --- Analyse locale d'une IA de page (pas de fausse IA : uniquement des faits comptés) ---
   function analyse(a) {
-    if (!a.data.length) return a.page + " : aucune source de données reliée à cette page pour l'instant. Je ne peux donc rien affirmer ici.";
     const lines = a.data.map((n) => {
       const d = read(n);
-      if (!d) return "• " + n + " : source non reliée.";
+      if (!d) return "• " + n + " : source externe non reliée.";
       const last = d[0] && (d[0].created_at || d[0].date || d[0].debut);
       return "• " + n + " : " + d.length + " enregistrement(s)" + (last ? ", dernier le " + String(last).slice(0, 10) : "") + ".";
     });
-    return a.page + " — état des données :\n" + lines.join("\n");
+    // Lire les fiches réellement enregistrées par les pages du centre sur cet appareil.
+    let local = [];
+    try {
+      if (window.G360_CENTRE && typeof window.G360_CENTRE.loadRecords === "function") {
+        const aliases = {accueil:["centre","alertes","missions","rapports"],carte:["territoire","navigation"],geoloc:["geoloc","navigation"],users:["users"],parcs:["parcs","territoire"],garmin:["garmin","navigation"],alertes:["alertes"],rapports:["rapports"],missions:["missions"],centre:["centre","alertes","missions","rapports"],stats:["stats"]};
+        const ids = aliases[a.id] || [a.id];
+        local = window.G360_CENTRE.loadRecords().filter(r => ids.includes(r.module));
+      }
+    } catch (_) {}
+    if (local.length) {
+      lines.push("• fiches locales de cette page : " + local.length + " enregistrement(s).");
+      local.slice(-3).reverse().forEach(r => lines.push("  - " + String(r.createdAt || "").slice(0,10) + " · " + String(r.title || r.moduleName || "Fiche") + " · " + String((r.values || []).filter(Boolean).join(" ; ")).slice(0,220)));
+    }
+    if (!lines.length) lines.push("• aucune source de données reliée à cette IA pour le moment.");
+    if (!local.length && a.data.some(n => !read(n))) lines.push("• les sources externes non connectées ne fournissent pas de données en direct.");
+    return a.page + " — état vérifiable des données :\n" + lines.join("\n");
   }
 
   // --- IA serveur optionnelle (Supabase Edge Function). Jamais annoncée sans réponse réelle. ---
