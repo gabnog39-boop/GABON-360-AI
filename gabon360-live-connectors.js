@@ -112,6 +112,7 @@
     if(window.G360_IA && typeof window.G360_IA.mount==="function")window.G360_IA.mount();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-  new MutationObserver(()=>{weatherCard();satelliteCard();statusCards();if(window.G360_IA&&window.G360_IA.mount)window.G360_IA.mount();}).observe(document.body,{childList:true,subtree:true});
+  const g360Obs=new MutationObserver(()=>{g360Obs.disconnect();try{weatherCard();satelliteCard();statusCards();if(window.G360_IA&&window.G360_IA.mount)window.G360_IA.mount();}finally{g360Obs.observe(document.body,{childList:true,subtree:true});}});
+  g360Obs.observe(document.body,{childList:true,subtree:true});
   window.setInterval(()=>{if($("g360-weather-status"))fetchWeather(false);},15*60*1000);
 })();
