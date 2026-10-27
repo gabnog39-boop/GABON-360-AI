@@ -56,7 +56,7 @@
     const el = document.getElementById("g360-summary-centre"); if (!el) return;
     const rows = load(); const counts = {};
     rows.forEach(x => counts[x.moduleName] = (counts[x.moduleName] || 0) + 1);
-    el.innerHTML = '<p><b>'+rows.length+'</b> fiche(s) locale(s) enregistrée(s).</p><p class="note">Ce tableau ne représente pas des flux nationaux en direct. Les données ne deviennent partagées qu'après connexion d'un serveur.</p>'+
+    el.innerHTML = '<p><b>'+rows.length+'</b> fiche(s) locale(s) enregistrée(s).</p><p class="note">Ce tableau ne représente pas des flux nationaux en direct. Les données ne deviennent partagées qu\'après connexion d\'un serveur.</p>'+
       (Object.keys(counts).length ? '<ul>'+Object.entries(counts).map(([k,v])=>'<li>'+esc(k)+': '+v+'</li>').join("")+'</ul>' : '<p>Aucune fiche locale pour le moment.</p>');
   }
   function renderStats() {
