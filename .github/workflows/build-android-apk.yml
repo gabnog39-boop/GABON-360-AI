@@ -1,0 +1,62 @@
+name: Build GABON 360 AI Android APK
+
+on:
+  push:
+    branches:
+      - test-avatar-central
+    paths:
+      - 'android/**'
+      - '.github/workflows/build-android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
+        working-directory: android
+
+      - name: Package APK as ZIP
+        run: |
+          mkdir -p package
+          cp android/app/build/outputs/apk/debug/app-debug.apk package/GABON-360-AI.apk
+          cat > package/LIRE-AVANT-INSTALLATION.txt <<'EOF'
+          GABON 360 AI - APK Android de test
+          1. Extraire GABON-360-AI.apk de ce ZIP.
+          2. Sur Android, ouvrir le fichier APK.
+          3. Si demandé, autoriser l'installation depuis cette source.
+          4. Appuyer sur Installer.
+          Cette version ouvre le site web de test GABON 360 AI et nécessite Internet.
+          EOF
+          cd package && zip -j ../GABON-360-AI-Android.zip GABON-360-AI.apk LIRE-AVANT-INSTALLATION.txt
+
+      - name: Save APK and ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: GABON-360-AI-Android-install
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            GABON-360-AI-Android.zip
+          if-no-files-found: error
+          retention-days: 14
