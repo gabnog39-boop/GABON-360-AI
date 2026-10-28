@@ -1,0 +1,20 @@
+{
+  "name": "GABON 360 AI",
+  "short_name": "GABON 360 AI",
+  "description": "Centre de contrôle GABON 360 AI",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050b14",
+  "theme_color": "#050b14",
+  "icons": [
+    {
+      "src": "./gabon360-pwa.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
