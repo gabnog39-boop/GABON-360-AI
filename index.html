@@ -440,7 +440,13 @@ async function saveRp(sub){$("rperr").textContent="";const t=$("rt").value.trim(
  try{await api("/rest/v1/rapports",{method:"POST",body:JSON.stringify({titre:t,contenu:$("rc").value.trim(),evenement_id:$("rl").value||null,statut:sub?"a_valider":"brouillon",auteur_nom:me.nom||me.email}),headers:{Prefer:"return=minimal"}});$("rt").value=$("rc").value="";loadRp()}catch(e){$("rperr").textContent=e.message}}
 async function patchRp(id,body,btn){try{const r=await api("/rest/v1/rapports?id=eq."+id,{method:"PATCH",body:JSON.stringify(body),headers:{Prefer:"return=representation"}});if(!r.length){alert("Modification refusée par les règles de sécurité.");return}loadRp()}catch(e){alert(e.message)}}
 function printRp(r){const a=AL.find(x=>x.id==r.evenement_id),w=window.open("","_blank");if(!w){alert("Autorisez les fenêtres pour exporter.");return}
- w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>'+esc(r.titre)+'</title><style>body{font:15px/1.5 system-ui,sans-serif;margin:24px;color:#111}h1{font-size:22px}.m{color:#555;font-size:13px;margin-bottom:14px}pre{white-space:pre-wrap;font:inherit}</style></head><body><h1>'+esc(r.titre)+'</h1><div class="m">GABON 360 AI · '+(r.statut=="valide"?"Validé":"NON VALIDÉ ("+esc(r.statut)+")")+' · Rédigé par '+esc(r.auteur_nom)+' le '+new Date(r.cree_le).toLocaleString("fr-FR")+(a?' · Alerte liée : '+esc(a.titre):"")+'</div><pre>'+esc(r.contenu)+'</pre></body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300)}
+ w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>'+esc(r.titre)+'</title><style>body{font:15px/1.5 system-ui,sans-serif;margin:24px;color:#111}h1{font-size:22px}.m{color:#555;font-size:13px;margin-bottom:14px}pre{white-space:pre-wrap;font:inherit}</style></head><body><h1>'+esc(r.titre)+'</h1><div class="m">GABON 360 AI · '+(r.statut=="valide"?"Validé":"NON VALIDÉ ("+esc(r.statut)+")")+' · Rédigé par '+esc(r.auteur_nom)+' le '+new Date(r.cree_le).toLocaleString("fr-FR")+(a?' · Alerte liée : '+esc(a.titre):"")+'</div><pre>'+esc(r.contenu)+'</pre><script>
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => console.warn("Service worker GABON 360 AI:", err));
+  });
+}
+</script></body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300)}
 async function loadRp(){const L=$("rlist");L.replaceChildren();
  try{if(!AL.length){try{AL=await api("/rest/v1/evenements?select=*&order=recu_le.desc&limit=100")}catch(e){}}
  const sel=$("rl"),v=sel.value;sel.replaceChildren(new Option("Aucune",""));AL.forEach(a=>sel.append(new Option(a.titre,a.id)));sel.value=v;
