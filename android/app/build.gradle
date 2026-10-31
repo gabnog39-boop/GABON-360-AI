@@ -1,0 +1,16 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ga.gabon360.ai'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'ga.gabon360.ai'
+        minSdk 23
+        targetSdk 28
+        versionCode 1
+        versionName '1.0.0'
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "gabon-360-ai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "GABON 360 AI — page statique + routes /api (Vercel). Aucune dépendance.",
+  "engines": { "node": ">=18" }
+}
