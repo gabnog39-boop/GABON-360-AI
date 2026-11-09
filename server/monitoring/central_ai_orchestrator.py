@@ -9,7 +9,10 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
-from ai.agent_collaboration import build_collaboration_plan
+try:
+    from ai.agent_collaboration import build_collaboration_plan
+except ModuleNotFoundError:  # repository-root test/import context
+    from server.ai.agent_collaboration import build_collaboration_plan
 
 
 class CentralAIOrchestrator:
