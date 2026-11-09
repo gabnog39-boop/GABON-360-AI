@@ -9,6 +9,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
+from ai.agent_collaboration import build_collaboration_plan
+
 
 class CentralAIOrchestrator:
     """Fuse packets from specialized engines into one central AI response."""
@@ -26,12 +28,21 @@ class CentralAIOrchestrator:
         findings = []
         sources = Counter()
         domains = Counter()
+        collaboration_inputs: dict[str, tuple[str, str, list[dict[str, Any]]]] = {}
         for packet in items:
             source = packet.get("source") or packet.get("engine") or "source_inconnue"
             sources[str(source)] += 1
             domain = packet.get("domain") or packet.get("type") or "territoire"
             domains[str(domain)] += 1
-            for finding in packet.get("findings", packet.get("alerts", [])) or []:
+            route_key = str(domain or packet.get("type") or source)
+            current = collaboration_inputs.get(route_key)
+            packet_evidence = packet.get("findings", packet.get("alerts", [])) or []
+            collaboration_inputs[route_key] = (
+                route_key,
+                str(packet.get("priority", packet.get("severity", "INFO"))),
+                list(packet_evidence)[:20] if isinstance(packet_evidence, list) else [],
+            )
+            for finding in packet_evidence:
                 if isinstance(finding, dict):
                     findings.append({**finding, "source": source})
 
@@ -46,8 +57,15 @@ class CentralAIOrchestrator:
         else:
             message = f"J'ai reçu {len(items)} flux spécialisés. Aucun événement confirmé n'est actuellement remonté."
 
+        collaboration_plans = [
+            build_collaboration_plan(page=page, severity=severity, evidence=evidence)
+            for page, severity, evidence in list(collaboration_inputs.values())[:8]
+        ]
+
         return {
             "centre": self.name,
+            "collaboration_plans": collaboration_plans,
+            "collaboration_status": "plans_created_agents_pending_real_engine_responses",
             "assistant": "central",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "message": message,
