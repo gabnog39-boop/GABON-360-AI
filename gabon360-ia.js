@@ -176,11 +176,25 @@
       if (el && !el.hasAttribute('data-ia')) el.setAttribute('data-ia', id);
     });
     document.querySelectorAll('[data-ia]').forEach((el) => {
+      const rawId = el.getAttribute('data-ia');
+      const aliases = {surveillance:'centre', maritime:'eaux', analyse:'stats', meteo:'meteo'};
+      const id = aliases[rawId] || rawId;
+      const a = AGENTS.find((x) => x.id === id);
+      if (!a) { console.warn('IA inconnue :', rawId); return; }
+
+      // Si l'élément est déjà un bouton, ne jamais créer un bouton imbriqué.
+      if (el.tagName === 'BUTTON') {
+        if (el.dataset.g360IaBound === '1') return;
+        el.dataset.g360IaBound = '1';
+        el.addEventListener('click', (e) => { e.stopPropagation(); Avatar.ask(id); });
+        el.title = el.title || 'Consulter l’IA ' + a.page;
+        return;
+      }
       if (el.querySelector(':scope > .g360-ia')) return;
-      const id = el.getAttribute('data-ia'), a = AGENTS.find((x) => x.id === id);
-      if (!a) { console.warn('IA inconnue :', id); return; }
-      const b = document.createElement('button'); b.className = 'g360-ia'; b.textContent = '🤖 IA';
-      b.title = 'IA ' + a.page; b.onclick = (e) => { e.stopPropagation(); Avatar.ask(id); };
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'g360-ia'; b.textContent = '🤖 IA ' + a.page;
+      b.title = 'Consulter l’IA ' + a.page;
+      b.addEventListener('click', (e) => { e.stopPropagation(); Avatar.ask(id); });
       el.appendChild(b);
     });
   };
