@@ -10,6 +10,8 @@ on:
       - "tests/**"
       - "gabon360-ia.js"
       - "api/assistant.js"
+      - "api/collaboration.js"
+      - "tests/collaboration-api.test.js"
       - ".github/workflows/test-agent-collaboration.yml"
   workflow_dispatch:
 
@@ -30,5 +32,9 @@ jobs:
         run: node --check gabon360-ia.js
       - name: Vérifier la syntaxe de l'API centrale
         run: node --check api/assistant.js
+      - name: Vérifier la syntaxe de l'API de collaboration
+        run: node --check api/collaboration.js
+      - name: Tester l'API de collaboration
+        run: node tests/collaboration-api.test.js
       - name: Exécuter les tests de collaboration
         run: python -m unittest discover -s tests -v
