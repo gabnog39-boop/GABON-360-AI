@@ -27,7 +27,7 @@
       (p.altitude != null && Number.isFinite(Number(p.altitude)) ? '<ele>'+Number(p.altitude).toFixed(1)+'</ele>' : '')+
       '<time>'+escXml(new Date(Number.isFinite(Number(p.time)) && Number(p.time)>0 ? Number(p.time) : Date.now()).toISOString())+'</time></trkpt>'
     ).join("");
-    return '<?xml version="1.0" encoding="UTF-8"?>\\n'+
+    return '<?xml version="1.0" encoding="UTF-8"?>'+
       '<gpx version="1.1" creator="GABON 360 AI" xmlns="http://www.topografix.com/GPX/1/1">'+
       waypoints+'<trk><name>Patrouille GABON 360 AI</name><trkseg>'+track+'</trkseg></trk></gpx>';
   }
