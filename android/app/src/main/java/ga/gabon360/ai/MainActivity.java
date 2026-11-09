@@ -100,15 +100,6 @@ public class MainActivity extends Activity {
             try {
                 if (locationManager == null) {
                     locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        textToSpeech = new TextToSpeech(this, status -> {
-            if (status == TextToSpeech.SUCCESS && textToSpeech != null) {
-                int language = textToSpeech.setLanguage(Locale.FRANCE);
-                ttsReady = language != TextToSpeech.LANG_MISSING_DATA
-                    && language != TextToSpeech.LANG_NOT_SUPPORTED;
-            } else {
-                ttsReady = false;
-            }
-        });
                 }
                 if (locationManager == null || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     sendStatus(false, "GPS désactivé. Active la localisation du téléphone.");
@@ -195,6 +186,17 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(5, 11, 20));
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        // Initialiser la synthèse vocale au démarrage, indépendamment du GPS.
+        textToSpeech = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS && textToSpeech != null) {
+                int language = textToSpeech.setLanguage(Locale.FRANCE);
+                ttsReady = language != TextToSpeech.LANG_MISSING_DATA
+                    && language != TextToSpeech.LANG_NOT_SUPPORTED;
+            } else {
+                ttsReady = false;
+            }
+        });
         FrameLayout root = new FrameLayout(this);
         root.setLayoutParams(new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
