@@ -12,7 +12,7 @@
     const root = document.createElement("section");
     root.id = "g360-offline-nav";
     root.style.cssText = "margin:12px;padding:14px;border:1px solid #2d684c;border-radius:14px;background:#0b1b19;color:#e8f5ee";
-    root.innerHTML = '<h2 style="margin:0 0 6px">Navigation forêt — GPS satellite</h2><p style="margin:0 0 10px;font-size:13px">Position GPS sans Wi-Fi ni réseau mobile. Les cartes et itinéraires doivent être téléchargés à l’avance pour être consultables hors ligne.</p><div id="g360-gps-status" role="status">GPS non démarré</div><div id="g360-gps-coords" style="font-size:20px;font-weight:700;margin:10px 0">Latitude : —<br>Longitude : —</div><div id="g360-gps-details" style="font-size:13px">Précision : — · Vitesse : —</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button id="g360-gps-start" type="button">Démarrer le GPS</button><button id="g360-gps-stop" type="button">Arrêter</button><button id="g360-gps-mark" type="button">Enregistrer un point</button><button id="g360-gps-export" type="button">Exporter la trace</button></div><p id="g360-gps-count">0 point enregistré sur cet appareil.</p><div id="g360-gps-list" style="font-size:12px;max-height:140px;overflow:auto"></div>';
+    root.innerHTML = '<h2 style="margin:0 0 6px">Navigation forêt — GPS satellite</h2><p style="margin:0 0 10px;font-size:13px">Position GPS sans Wi-Fi ni réseau mobile. Les cartes et itinéraires doivent être téléchargés à l’avance pour être consultables hors ligne.</p><div id="g360-gps-status" role="status">GPS non démarré</div><div id="g360-gps-coords" style="font-size:20px;font-weight:700;margin:10px 0">Latitude : —<br>Longitude : —</div><div id="g360-gps-details" style="font-size:13px">Précision : — · Vitesse : —</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button id="g360-gps-start" type="button">Démarrer le GPS</button><button id="g360-gps-stop" type="button">Arrêter</button><button id="g360-gps-mark" type="button">Enregistrer un point</button><button id="g360-gps-export" type="button">Exporter GPX</button></div><p id="g360-gps-count">0 point enregistré sur cet appareil.</p><div id="g360-gps-list" style="font-size:12px;max-height:140px;overflow:auto"></div>';
     const first = document.querySelector("header");
     if (first && first.parentNode) first.insertAdjacentElement("afterend", root);
     else document.body.insertBefore(root, document.body.firstChild);
@@ -36,11 +36,25 @@
       status(true, "Point enregistré localement sur le téléphone.");
     });
     root.querySelector("#g360-gps-export").addEventListener("click", () => {
-      const data = JSON.stringify({format:"GABON 360 AI GPS track",points:state.points},null,2);
-      const blob = new Blob([data],{type:"application/json"});
+      if (!state.points.length) { status(false, "Aucun point GPS à exporter."); return; }
+      const escXml = value => String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+      const points = state.points.filter(p => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lon)));
+      const waypoints = points.filter(p => p.markedAt).map(p =>
+        '<wpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'"><time>'+escXml(new Date(p.markedAt).toISOString())+'</time><name>Point terrain</name></wpt>'
+      ).join("");
+      const track = points.map(p =>
+        '<trkpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'">'+
+        (Number.isFinite(Number(p.altitude)) ? '<ele>'+Number(p.altitude).toFixed(1)+'</ele>' : '')+
+        '<time>'+escXml(new Date(Number(p.time)||Date.now()).toISOString())+'</time></trkpt>'
+      ).join("");
+      const gpx = '<?xml version="1.0" encoding="UTF-8"?>\n'+
+        '<gpx version="1.1" creator="GABON 360 AI" xmlns="http://www.topografix.com/GPX/1/1">'+
+        waypoints+'<trk><name>Patrouille GABON 360 AI</name><trkseg>'+track+'</trkseg></trk></gpx>';
+      const blob = new Blob([gpx],{type:"application/gpx+xml"});
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href=url; a.download="gabon360-trace-gps.json"; a.click();
+      const a = document.createElement("a"); a.href=url; a.download="gabon360-patrouille.gpx"; a.click();
       setTimeout(()=>URL.revokeObjectURL(url),1000);
+      status(true, points.length+" point(s) exporté(s) au format GPX.");
     });
     renderPoints();
   }
@@ -56,7 +70,16 @@
   window.addEventListener("g360:gps-status", e => { if(e.detail) status(!!e.detail.ok,e.detail.message||"État GPS inconnu"); });
   window.addEventListener("g360:gps-fix", e => {
     const d=e.detail||{}; if(typeof d.lat!=="number"||typeof d.lon!=="number")return;
-    state.last={lat:d.lat,lon:d.lon,accuracy:d.accuracy||null,speed:d.speed||0,altitude:d.altitude||null,time:d.time||Date.now()};
+    state.last={lat:d.lat,lon:d.lon,accuracy:d.accuracy??null,speed:d.speed??0,altitude:d.altitude??null,time:d.time||Date.now()};
+    if (state.running) {
+      const lastPoint = state.points[state.points.length - 1];
+      const elapsed = lastPoint ? state.last.time - Number(lastPoint.time || 0) : Infinity;
+      if (!lastPoint || elapsed >= 5000) {
+        state.points.push({...state.last});
+        try { localStorage.setItem("g360_offline_gps_points", JSON.stringify(state.points.slice(-10000))); } catch (_) {}
+        renderPoints();
+      }
+    }
     const coords=document.getElementById("g360-gps-coords"), details=document.getElementById("g360-gps-details");
     if(coords)coords.innerHTML="Latitude : "+d.lat.toFixed(6)+"<br>Longitude : "+d.lon.toFixed(6);
     if(details)details.textContent="Précision : "+(d.accuracy==null?"—":Math.round(d.accuracy)+" m")+" · Vitesse : "+(d.speed==null?"—":(d.speed*3.6).toFixed(1)+" km/h")+" · Altitude : "+(d.altitude==null?"—":Math.round(d.altitude)+" m");
