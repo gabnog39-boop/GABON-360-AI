@@ -206,14 +206,82 @@
     const context = results.map(item =>
       '[' + item.page + ' — ' + item.status + ']\n' + item.summary
     ).join('\n\n').slice(0, 2200);
-    return {
+    const team = {
       source: agent.id, agents: results,
       executed: results.length,
       method: 'triage local déterministe avec comptage des preuves réellement accessibles',
       evidence_total: results.reduce((sum, item) => sum + item.evidence_count, 0),
       autonomous_models_connected: false,
+      server_execution: 'not_attempted',
       context
     };
+
+    // Le même paquet de preuves est vérifié côté serveur après authentification.
+    // Seuls des champs opérationnels non personnels sont transmis.
+    try {
+      let session = null;
+      try { session = JSON.parse(localStorage.getItem('g360s') || 'null'); } catch (_) {}
+      if (session && session.access_token && G.endpoint) {
+        const safe = (record, moduleName) => {
+          const allowed = ['id','module','moduleName','createdAt','created_at','date','timestamp',
+            'title','description','values','coordinates','lat','lon','lng','latitude','longitude',
+            'severity','priority','source','type','kind','event_type','status','indicators',
+            'evidence','catalog_record','park','park_id','mission_id','route','track','gpx',
+            'weather','observed_at','collection','bbox','geometry','ndvi','value','count','metric'];
+          const out = {module: moduleName || record.module || record.moduleName || 'territoire'};
+          allowed.forEach(key => {
+            if (record[key] !== undefined) out[key] = record[key];
+          });
+          return out;
+        };
+        const evidence = [];
+        const seen = new Set();
+        AGENTS.forEach(item => item.data.forEach(name => {
+          if (seen.has(name)) return;
+          seen.add(name);
+          const rows = read(name);
+          if (Array.isArray(rows)) rows.slice(-12).forEach(row => {
+            if (row && typeof row === 'object') evidence.push(safe(row, name));
+          });
+        }));
+        try {
+          if (window.G360_CENTRE && typeof window.G360_CENTRE.loadRecords === 'function') {
+            (window.G360_CENTRE.loadRecords() || []).slice(-40).forEach(row => {
+              if (row && typeof row === 'object') evidence.push(safe(row, row.module || row.moduleName));
+            });
+          }
+        } catch (_) {}
+        try {
+          const addon = JSON.parse(localStorage.getItem('g360_addon_records_v1') || '[]');
+          if (Array.isArray(addon)) addon.slice(-20).forEach(row => {
+            if (row && typeof row === 'object') evidence.push(safe(row, row.module || row.moduleName));
+          });
+        } catch (_) {}
+        const response = await fetch('/api/collaboration', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+          body: JSON.stringify({agent: agent.id, question: question || '', evidence: evidence.slice(-80)})
+        });
+        if (response.ok) {
+          const server = await response.json();
+          team.server_execution = server.execution || 'completed';
+          team.server_evidence_received = server.evidence_received || 0;
+          team.server_evidence_matched = server.evidence_matched || 0;
+          team.server_agents = server.agents || [];
+          team.context += '\\n\\nCONSULTATION SERVEUR AUTHENTIFIÉE : ' +
+            team.server_agents.map(item => item.id + ' — ' + item.status +
+              ' (' + item.evidence_count + ' preuve(s))').join('; ') +
+            '.\\nLe moteur serveur effectue un triage déterministe, sans prétendre connecter des modèles autonomes.';
+        } else {
+          team.server_execution = 'unavailable_http_' + response.status;
+        }
+      } else {
+        team.server_execution = 'session_active_required';
+      }
+    } catch (error) {
+      team.server_execution = 'unavailable_network_or_auth';
+    }
+    return team;
   };
 
   // --- AVATAR CENTRAL : seul canal vers l'humain ---
@@ -250,7 +318,7 @@
     async ask(id, q) {
       const a = AGENTS.find((x) => x.id === id); if (!a) return;
       $('g360-txt').textContent = 'Consultation des IA partenaires et lecture des données disponibles…';
-      const team = G.consultTeam(a, q || '');
+      const team = await G.consultTeam(a, q || '');
       const r = q ? await remote(a, q, team.context) : null;
       const localReply = 'Consultation partagée des IA : ' + team.agents.map(x => x.page + ' (' + x.status + ')').join(', ') + '.\n' +
         'Résultats fondés sur les fiches et sources actuellement accessibles. Les moteurs externes non reliés ne sont pas considérés comme actifs.\n\n' +
