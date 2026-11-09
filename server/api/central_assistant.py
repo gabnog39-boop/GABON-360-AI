@@ -13,7 +13,14 @@ def get_central_situation(lookback_hours: int = 168, limit: int = 50) -> dict[st
     packets = []
     for observation in snapshot.get("observations", []):
         if isinstance(observation, dict):
-            packets.append(observation)
+            packets.append({
+                **observation,
+                "source": observation.get("collection") or "copernicus_sentinel_catalog",
+                "kind": "satellite_catalog_observation",
+                "catalog_record": observation,
+                "live": False,
+                "simulation": False,
+            })
     for alert in snapshot.get("alert_candidates", []):
         if isinstance(alert, dict):
             packets.append({
