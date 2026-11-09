@@ -164,11 +164,42 @@
       const peer = AGENTS.find(item => item.id === id);
       if (!peer) return null;
       const summary = analyse(peer);
+      // Count evidence actually readable by this browser session; an empty
+      // data declaration must never be reported as a completed consultation.
+      let evidenceCount = 0;
+      const availableCollections = [];
+      peer.data.forEach(name => {
+        const rows = read(name);
+        if (Array.isArray(rows) && rows.length) {
+          evidenceCount += rows.length;
+          availableCollections.push(name + ':' + rows.length);
+        }
+      });
+      try {
+        if (window.G360_CENTRE && typeof window.G360_CENTRE.loadRecords === 'function') {
+          const aliases = {
+            accueil:['centre','alertes','missions','rapports'], carte:['territoire','navigation'],
+            geoloc:['geoloc','navigation'], users:['users'], parcs:['parcs','territoire'],
+            garmin:['garmin','navigation'], alertes:['alertes'], rapports:['rapports'],
+            missions:['missions'], centre:['centre','alertes','missions','rapports'],
+            stats:['stats'], satellites:['satellites'], drones:['drones'], meteo:['meteo'],
+            eaux:['eaux'], frontieres:['frontieres'], air:['air'], cyber:['cyber'],
+            memoire:['memoire'], admin:['admin'], paiements:['paiements'], navigation:['navigation']
+          };
+          const accepted = aliases[peer.id] || [peer.id];
+          const records = window.G360_CENTRE.loadRecords() || [];
+          const relevant = records.filter(record => accepted.includes(String(record.module || '')));
+          evidenceCount += relevant.length;
+          if (relevant.length) availableCollections.push('fiches-centre:' + relevant.length);
+        }
+      } catch (_) {}
       return {
         id: peer.id, page: peer.page,
-        status: /source externe non reliée|ne fournissent pas de données en direct/.test(summary)
-          ? 'sources à connecter ou données locales disponibles'
-          : 'données locales consultées',
+        status: evidenceCount
+          ? 'triage local exécuté · ' + evidenceCount + ' élément(s) disponible(s)'
+          : 'triage exécuté · aucune preuve pertinente disponible',
+        evidence_count: evidenceCount,
+        available_collections: availableCollections,
         summary: summary.slice(0, 420)
       };
     }).filter(Boolean);
@@ -178,7 +209,8 @@
     return {
       source: agent.id, agents: results,
       executed: results.length,
-      method: 'analyse locale déterministe des fiches partagées',
+      method: 'triage local déterministe avec comptage des preuves réellement accessibles',
+      evidence_total: results.reduce((sum, item) => sum + item.evidence_count, 0),
       autonomous_models_connected: false,
       context
     };
