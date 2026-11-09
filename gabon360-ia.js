@@ -94,10 +94,10 @@
       // Budget équilibré : les 22 domaines restent représentés malgré la limite
       // de contexte de l'API serveur. Une page volumineuse ne masque pas les autres IA.
       const crossContext = AGENTS.map(agent => {
-        const summary = analyse(agent).replace(/\\s+/g, ' ').slice(0, 220);
+        const summary = analyse(agent).replace(/\s+/g, ' ').slice(0, 220);
         return '[' + agent.id + '] ' + summary.slice(0, 145);
-      }).join('\\n');
-      const fullContext = [teamContext || '', crossContext].filter(Boolean).join('\\n');
+      }).join('\n');
+      const fullContext = [teamContext || '', crossContext].filter(Boolean).join('\n');
       const r = await fetch(G.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
@@ -173,8 +173,8 @@
       };
     }).filter(Boolean);
     const context = results.map(item =>
-      '[' + item.page + ' — ' + item.status + ']\\n' + item.summary
-    ).join('\\n\\n').slice(0, 2200);
+      '[' + item.page + ' — ' + item.status + ']\n' + item.summary
+    ).join('\n\n').slice(0, 2200);
     return {
       source: agent.id, agents: results,
       executed: results.length,
@@ -220,8 +220,8 @@
       $('g360-txt').textContent = 'Consultation des IA partenaires et lecture des données disponibles…';
       const team = G.consultTeam(a, q || '');
       const r = q ? await remote(a, q, team.context) : null;
-      const localReply = 'Consultation partagée des IA : ' + team.agents.map(x => x.page + ' (' + x.status + ')').join(', ') + '.\\n' +
-        'Résultats fondés sur les fiches et sources actuellement accessibles. Les moteurs externes non reliés ne sont pas considérés comme actifs.\\n\\n' +
+      const localReply = 'Consultation partagée des IA : ' + team.agents.map(x => x.page + ' (' + x.status + ')').join(', ') + '.\n' +
+        'Résultats fondés sur les fiches et sources actuellement accessibles. Les moteurs externes non reliés ne sont pas considérés comme actifs.\n\n' +
         team.context;
       Avatar.deliver(a, r || localReply, r ? 'serveur' : 'local');
       G.lastConsultation = team;
