@@ -86,7 +86,7 @@
   }
 
   // --- AVATAR CENTRAL : seul canal vers l'humain ---
-  const css = `#g360-av{position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#0b1f14;color:#fff;border-top:3px solid #fcd116;border-radius:16px 16px 0 0;padding:12px;display:none;max-height:75vh;overflow:auto;font:15px system-ui}
+  const css = `#g360-av{position:relative;left:auto;right:auto;bottom:auto;z-index:1;width:100%;background:#0b1f14;color:#fff;border:2px solid #fcd116;border-radius:16px;padding:12px;margin:12px 0;display:block;max-height:none;overflow:visible;font:15px system-ui}
 #g360-av .h{display:flex;gap:10px;align-items:center}#g360-av img{width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #fcd116}
 #g360-av .b{white-space:pre-wrap;margin:10px 0;line-height:1.4}#g360-av input{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:0;margin-top:6px}
 #g360-av button{background:#009e60;color:#fff;border:0;border-radius:8px;padding:8px 12px;margin:4px 4px 0 0}
@@ -94,7 +94,15 @@
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   const box = document.createElement('div'); box.id = 'g360-av';
   box.innerHTML = '<div class="h"><img id="g360-img" alt="Avatar"><div><b>Avatar GABON 360</b><br><small id="g360-via"></small></div><button id="g360-x" style="margin-left:auto">✕</button></div><div class="b" id="g360-txt"></div><input id="g360-q" placeholder="Écrire ou dicter une question…"><button id="g360-go">Envoyer</button><button id="g360-mic">🎙️ Parler</button><button id="g360-say">🔊 Écouter</button><button id="g360-auto" aria-pressed="false">🔔 Activer les annonces vocales</button><small id="g360-voice-status">Les annonces automatiques nécessitent une activation vocale initiale.</small>';
-  document.body.appendChild(box);
+  const home = document.getElementById('v-ho');
+  const originalAvatar = document.getElementById('avh');
+  if (home) {
+    if (originalAvatar) originalAvatar.insertAdjacentElement('afterend', box);
+    else home.appendChild(box);
+    box.style.display = 'block';
+  } else {
+    document.body.appendChild(box);
+  }
   const $ = (i) => document.getElementById(i);
   const src = document.querySelector('#avh img, [data-avatar] img, #avatar img, img.avatar');
   if (src) $('g360-img').src = src.src; // même image que l'avatar central, visage non modifié
@@ -189,6 +197,11 @@
   });
   document.addEventListener('DOMContentLoaded', G.mount); if (document.readyState !== 'loading') G.mount();
   new MutationObserver(G.mount).observe(document.body, { childList: true, subtree: true });
+
+  // Présence permanente sur la page d'accueil : aucun clic préalable requis pour voir l'avatar.
+  Avatar.deliver(AGENTS.find(a => a.id === 'accueil') || AGENTS[0],
+    'Bonjour. Je suis l’avatar central de GABON 360 AI. Les 22 IA de domaine sont regroupées ici. Les informations externes ne sont annoncées comme réelles que lorsqu’une source est effectivement connectée.',
+    'local');
 
   // Veille proactive : surveille uniquement les sources de données déjà reliées à l'application.
   // Aucun événement n'est inventé et les données existantes ne sont pas annoncées au démarrage.
