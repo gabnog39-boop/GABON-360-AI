@@ -20,7 +20,7 @@
     const root = document.createElement("section");
     root.id = "g360-offline-nav";
     root.style.cssText = "margin:12px;padding:14px;border:1px solid #2d684c;border-radius:14px;background:#0b1b19;color:#e8f5ee";
-    root.innerHTML = '<h2 style="margin:0 0 6px">Navigation forêt — GPS satellite</h2><p style="margin:0 0 10px;font-size:13px">Position GPS sans Wi-Fi ni réseau mobile. Les cartes et itinéraires doivent être téléchargés à l’avance pour être consultables hors ligne.</p><div id="g360-gps-status" role="status">GPS non démarré</div><div id="g360-gps-coords" style="font-size:20px;font-weight:700;margin:10px 0">Latitude : —<br>Longitude : —</div><div id="g360-gps-details" style="font-size:13px">Précision : — · Vitesse : —</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button id="g360-gps-start" type="button">Démarrer le GPS</button><button id="g360-gps-stop" type="button">Arrêter</button><button id="g360-gps-mark" type="button">Enregistrer un point</button><button id="g360-gps-export" type="button">Exporter GPX</button></div><p id="g360-gps-count">0 point enregistré sur cet appareil.</p><div id="g360-gps-list" style="font-size:12px;max-height:140px;overflow:auto"></div>';
+    root.innerHTML = '<h2 style="margin:0 0 6px">Navigation forêt — GPS satellite</h2><p style="margin:0 0 10px;font-size:13px">Position GPS sans Wi-Fi ni réseau mobile. Les cartes et itinéraires doivent être téléchargés à l’avance pour être consultables hors ligne.</p><div id="g360-gps-status" role="status">GPS non démarré</div><div id="g360-gps-coords" style="font-size:20px;font-weight:700;margin:10px 0">Latitude : —<br>Longitude : —</div><div id="g360-gps-details" style="font-size:13px">Précision : — · Vitesse : —</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button id="g360-gps-start" type="button">Démarrer le GPS</button><button id="g360-gps-stop" type="button">Arrêter</button><button id="g360-gps-mark" type="button">Enregistrer un point</button><button id="g360-gps-export" type="button">Exporter GPX</button><button id="g360-locus-open" type="button">Ouvrir position dans Locus</button><button id="g360-locus-start" type="button">Démarrer trace Locus</button><button id="g360-locus-pause" type="button">Pause Locus</button><button id="g360-locus-stop" type="button">Arrêter trace Locus</button></div><p id="g360-locus-status" style="font-size:13px">Locus Map : vérification de la connexion Android…</p><p id="g360-gps-count">0 point enregistré sur cet appareil.</p><div id="g360-gps-list" style="font-size:12px;max-height:140px;overflow:auto"></div>';
     const first = document.querySelector("header");
     if (first && first.parentNode) first.insertAdjacentElement("afterend", root);
     else document.body.insertBefore(root, document.body.firstChild);
@@ -40,6 +40,28 @@
       state.running = false;
       if (window.AndroidGPS && typeof AndroidGPS.stop === "function") AndroidGPS.stop();
       status(false, "Suivi arrêté");
+    });
+    const locusStatus = root.querySelector("#g360-locus-status");
+    const locus = window.AndroidLocus;
+    if (locusStatus) locusStatus.textContent = locus && locus.isInstalled()
+      ? "Locus Map détecté sur ce téléphone."
+      : "Locus Map non détecté. Installe Locus Map 4 pour utiliser le lien direct.";
+    root.querySelector("#g360-locus-open").addEventListener("click", () => {
+      if (!state.last) { status(false, "Démarre le GPS et attends une position avant d’ouvrir Locus."); return; }
+      if (!window.AndroidLocus) { status(false, "Pont Locus Android absent. Installe la nouvelle version de GABON 360 AI."); return; }
+      AndroidLocus.openAt(state.last.lat, state.last.lon, "GABON 360 AI — position terrain");
+    });
+    root.querySelector("#g360-locus-start").addEventListener("click", () => {
+      if (!window.AndroidLocus || !AndroidLocus.isInstalled()) { status(false, "Locus Map n’est pas installé ou le pont Android est absent."); return; }
+      AndroidLocus.startRecording();
+    });
+    root.querySelector("#g360-locus-pause").addEventListener("click", () => {
+      if (!window.AndroidLocus || !AndroidLocus.isInstalled()) { status(false, "Locus Map n’est pas installé."); return; }
+      AndroidLocus.pauseRecording();
+    });
+    root.querySelector("#g360-locus-stop").addEventListener("click", () => {
+      if (!window.AndroidLocus || !AndroidLocus.isInstalled()) { status(false, "Locus Map n’est pas installé."); return; }
+      AndroidLocus.stopRecording();
     });
     root.querySelector("#g360-gps-mark").addEventListener("click", () => {
       if (!state.last) { status(false, "Attends d’obtenir une position GPS avant d’enregistrer."); return; }
