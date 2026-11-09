@@ -85,7 +85,7 @@
   }
 
   // --- IA serveur optionnelle (Supabase Edge Function). Jamais annoncée sans réponse réelle. ---
-  async function remote(a, q) {
+  async function remote(a, q, teamContext) {
     if (!G.endpoint || !q) return null;
     try {
       let session = null;
@@ -95,14 +95,15 @@
       // de contexte de l'API serveur. Une page volumineuse ne masque pas les autres IA.
       const crossContext = AGENTS.map(agent => {
         const summary = analyse(agent).replace(/\\s+/g, ' ').slice(0, 220);
-        return '[' + agent.id + '] ' + summary;
+        return '[' + agent.id + '] ' + summary.slice(0, 145);
       }).join('\\n');
+      const fullContext = [teamContext || '', crossContext].filter(Boolean).join('\\n');
       const r = await fetch(G.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({
           q: '[Avatar central · coordination des 22 IA · demande initialement adressée à ' + a.page + '] ' + q,
-          ctx: crossContext
+          ctx: fullContext.slice(0, 5900)
         })
       });
       if (!r.ok) {
@@ -115,6 +116,73 @@
       return j && (j.text || j.reponse) ? (j.text || j.reponse) : null;
     } catch (e) { console.warn('IA serveur non joignable', e); return null; }
   }
+
+  // --- Consultation effective des IA partenaires sur les données locales partagées ---
+  const COLLAB_ROUTES = {
+    accueil:['centre','alertes','stats','rapports'],
+    carte:['geoloc','satellites','parcs','frontieres'],
+    satellites:['carte','parcs','eaux','memoire','alertes'],
+    drones:['carte','geoloc','missions','alertes'],
+    navigation:['geoloc','missions','garmin','parcs'],
+    geoloc:['carte','navigation','missions','alertes'],
+    cyber:['users','admin','centre','alertes'],
+    memoire:['parcs','alertes','missions','rapports','stats'],
+    alertes:['centre','memoire','carte','rapports','missions'],
+    rapports:['memoire','missions','stats','centre'],
+    stats:['alertes','missions','rapports','centre'],
+    meteo:['navigation','missions','parcs','eaux','alertes'],
+    parcs:['satellites','drones','carte','missions','memoire'],
+    eaux:['satellites','meteo','carte','alertes'],
+    frontieres:['carte','geoloc','drones','air','alertes'],
+    air:['drones','carte','frontieres','alertes'],
+    centre:['accueil','alertes','memoire','stats','rapports'],
+    admin:['cyber','users','paiements','centre'],
+    users:['cyber','admin','centre'],
+    paiements:['admin','users','cyber'],
+    missions:['navigation','geoloc','parcs','meteo','garmin','rapports'],
+    garmin:['missions','navigation','geoloc','memoire']
+  };
+  const TOPIC_ROUTES = [
+    [/satell|sentinel|ndvi|image/i,['satellites','carte','parcs','eaux','memoire']],
+    [/forêt|foret|déforest|deforest|parc|biodivers/i,['parcs','satellites','carte','memoire','alertes']],
+    [/eau|rivière|riviere|fleuve|océan|ocean|côte|cote|inond/i,['eaux','meteo','satellites','carte','alertes']],
+    [/gps|position|coordonn|waypoint|gpx|garmin|itinéraire|itineraire/i,['geoloc','navigation','garmin','missions','carte']],
+    [/drone|caméra|camera|vidéo|video|aérien|aerien/i,['drones','air','carte','frontieres','alertes']],
+    [/frontière|frontiere|limite|transfrontal/i,['frontieres','carte','geoloc','drones','air']],
+    [/météo|meteo|pluie|vent|température|temperature|climat/i,['meteo','missions','parcs','eaux','alertes']],
+    [/cyber|sécurité|securite|connexion|compte|accès|acces|mot de passe/i,['cyber','users','admin','centre']],
+    [/paiement|abonnement|facture/i,['paiements','admin','users']],
+    [/mission|patrouille|équipe|equipe|rapport/i,['missions','navigation','garmin','rapports','memoire']]
+  ];
+  G.consultTeam = function(agent, question) {
+    const ids = [agent.id, ...(COLLAB_ROUTES[agent.id] || COLLAB_ROUTES.accueil)];
+    TOPIC_ROUTES.forEach(([pattern, related]) => {
+      if (pattern.test(question || '')) related.forEach(id => { if (!ids.includes(id)) ids.push(id); });
+    });
+    const selected = ids.slice(0, 7);
+    const results = selected.map(id => {
+      const peer = AGENTS.find(item => item.id === id);
+      if (!peer) return null;
+      const summary = analyse(peer);
+      return {
+        id: peer.id, page: peer.page,
+        status: /source externe non reliée|ne fournissent pas de données en direct/.test(summary)
+          ? 'sources à connecter ou données locales disponibles'
+          : 'données locales consultées',
+        summary: summary.slice(0, 420)
+      };
+    }).filter(Boolean);
+    const context = results.map(item =>
+      '[' + item.page + ' — ' + item.status + ']\\n' + item.summary
+    ).join('\\n\\n').slice(0, 2200);
+    return {
+      source: agent.id, agents: results,
+      executed: results.length,
+      method: 'analyse locale déterministe des fiches partagées',
+      autonomous_models_connected: false,
+      context
+    };
+  };
 
   // --- AVATAR CENTRAL : seul canal vers l'humain ---
   const css = `#g360-av{position:relative;left:auto;right:auto;bottom:auto;z-index:1;width:100%;background:#0b1f14;color:#fff;border:2px solid #fcd116;border-radius:16px;padding:12px;margin:12px 0;display:block;max-height:none;overflow:visible;font:15px system-ui}
@@ -149,8 +217,14 @@
     },
     async ask(id, q) {
       const a = AGENTS.find((x) => x.id === id); if (!a) return;
-      const r = q ? await remote(a, q) : null;
-      Avatar.deliver(a, r || (q ? "Je n'ai pas d'IA serveur connectée : voici l'état réel de la page.\n" : '') + analyse(a), r ? 'serveur' : 'local');
+      $('g360-txt').textContent = 'Consultation des IA partenaires et lecture des données disponibles…';
+      const team = G.consultTeam(a, q || '');
+      const r = q ? await remote(a, q, team.context) : null;
+      const localReply = 'Consultation partagée des IA : ' + team.agents.map(x => x.page + ' (' + x.status + ')').join(', ') + '.\\n' +
+        'Résultats fondés sur les fiches et sources actuellement accessibles. Les moteurs externes non reliés ne sont pas considérés comme actifs.\\n\\n' +
+        team.context;
+      Avatar.deliver(a, r || localReply, r ? 'serveur' : 'local');
+      G.lastConsultation = team;
     },
     say() {
       const t = $('g360-txt').textContent;
