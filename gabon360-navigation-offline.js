@@ -5,7 +5,15 @@
   "use strict";
   if (window.__G360_OFFLINE_NAV__) return;
   window.__G360_OFFLINE_NAV__ = true;
-  const state = { running:false, points:[] };
+  const MAX_POINTS = 10000;
+  const state = { running:false, points:[], last:null };
+  const validPoint = p => p && Number.isFinite(Number(p.lat)) && Number(p.lat) >= -90 && Number(p.lat) <= 90 &&
+    Number.isFinite(Number(p.lon)) && Number(p.lon) >= -180 && Number(p.lon) <= 180;
+  function savePoints() {
+    state.points = state.points.slice(-MAX_POINTS);
+    try { localStorage.setItem("g360_offline_gps_points", JSON.stringify(state.points)); }
+    catch (_) { status(false, "Stockage local indisponible ou saturé."); }
+  }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   function build() {
     if (document.getElementById("g360-offline-nav")) return;
@@ -16,8 +24,13 @@
     const first = document.querySelector("header");
     if (first && first.parentNode) first.insertAdjacentElement("afterend", root);
     else document.body.insertBefore(root, document.body.firstChild);
-    const saved = localStorage.getItem("g360_offline_gps_points");
-    if (saved) { try { state.points = JSON.parse(saved); } catch (_) {} }
+    try {
+      const saved = localStorage.getItem("g360_offline_gps_points");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) state.points = parsed.filter(validPoint).slice(-MAX_POINTS);
+      }
+    } catch (_) { status(false, "Impossible de relire les points GPS enregistrés."); }
     root.querySelector("#g360-gps-start").addEventListener("click", () => {
       state.running = true;
       if (window.AndroidGPS && typeof AndroidGPS.start === "function") AndroidGPS.start();
@@ -31,21 +44,21 @@
     root.querySelector("#g360-gps-mark").addEventListener("click", () => {
       if (!state.last) { status(false, "Attends d’obtenir une position GPS avant d’enregistrer."); return; }
       state.points.push({...state.last, markedAt:new Date().toISOString()});
-      try { localStorage.setItem("g360_offline_gps_points", JSON.stringify(state.points)); } catch (_) {}
+      savePoints();
       renderPoints();
       status(true, "Point enregistré localement sur le téléphone.");
     });
     root.querySelector("#g360-gps-export").addEventListener("click", () => {
       if (!state.points.length) { status(false, "Aucun point GPS à exporter."); return; }
       const escXml = value => String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
-      const points = state.points.filter(p => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lon)));
-      const waypoints = points.filter(p => p.markedAt).map(p =>
+      const points = state.points.filter(validPoint);
+      const waypoints = points.filter(p => p.markedAt && Number.isFinite(Date.parse(p.markedAt))).map(p =>
         '<wpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'"><time>'+escXml(new Date(p.markedAt).toISOString())+'</time><name>Point terrain</name></wpt>'
       ).join("");
       const track = points.map(p =>
         '<trkpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'">'+
         (p.altitude != null && Number.isFinite(Number(p.altitude)) ? '<ele>'+Number(p.altitude).toFixed(1)+'</ele>' : '')+
-        '<time>'+escXml(new Date(Number(p.time)||Date.now()).toISOString())+'</time></trkpt>'
+        '<time>'+escXml(new Date(Number.isFinite(Number(p.time)) && Number(p.time)>0 ? Number(p.time) : Date.now()).toISOString())+'</time></trkpt>'
       ).join("");
       const gpx = '<?xml version="1.0" encoding="UTF-8"?>\n'+
         '<gpx version="1.1" creator="GABON 360 AI" xmlns="http://www.topografix.com/GPX/1/1">'+
@@ -76,7 +89,7 @@
       const elapsed = lastPoint ? state.last.time - Number(lastPoint.time || 0) : Infinity;
       if (!lastPoint || elapsed >= 5000) {
         state.points.push({...state.last});
-        try { localStorage.setItem("g360_offline_gps_points", JSON.stringify(state.points.slice(-10000))); } catch (_) {}
+        savePoints();
         renderPoints();
       }
     }
