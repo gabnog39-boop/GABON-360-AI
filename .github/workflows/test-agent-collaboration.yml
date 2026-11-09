@@ -9,6 +9,7 @@ on:
       - "server/monitoring/central_ai_orchestrator.py"
       - "tests/**"
       - "gabon360-ia.js"
+      - "api/assistant.js"
       - ".github/workflows/test-agent-collaboration.yml"
   workflow_dispatch:
 
@@ -27,5 +28,7 @@ jobs:
           python-version: "3.12"
       - name: Vérifier la syntaxe du noyau JavaScript
         run: node --check gabon360-ia.js
+      - name: Vérifier la syntaxe de l'API centrale
+        run: node --check api/assistant.js
       - name: Exécuter les tests de collaboration
         run: python -m unittest discover -s tests -v
