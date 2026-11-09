@@ -22,6 +22,23 @@ class CollaborationPlanTests(unittest.TestCase):
         self.assertEqual(plan["evidence_items_received"], 1)
         self.assertTrue(plan["human_validation_required"])
 
+
+    def test_live_central_fusion_includes_satellite_consultation_plan(self):
+        try:
+            from server.monitoring.central_ai_orchestrator import CentralAIOrchestrator
+        except ModuleNotFoundError:
+            from monitoring.central_ai_orchestrator import CentralAIOrchestrator
+        result = CentralAIOrchestrator().ingest([{
+            "source": "copernicus_sentinel_2_l2a",
+            "kind": "satellite_catalog_observation",
+            "live": False,
+            "findings": [],
+        }])
+        self.assertEqual(result["collaboration_status"],
+                         "plans_created_agents_pending_real_engine_responses")
+        self.assertEqual(result["collaboration_plans"][0]["source_agent"], "satellites")
+        self.assertFalse(result["live_satellite_video"])
+
     def test_unknown_page_falls_back_to_central(self):
         plan = build_collaboration_plan("unknown-service")
         self.assertEqual(plan["source_agent"], "centre")
