@@ -3,6 +3,9 @@ package ga.gabon360.ai;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
 import android.content.ClipData;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -41,6 +44,8 @@ public class MainActivity extends Activity {
     private LocationManager locationManager;
     private LocationListener locationListener;
     private boolean gpsRunning = false;
+    private BroadcastReceiver gpsReceiver;
+    private boolean gpsReceiverRegistered = false;
     private TextToSpeech textToSpeech;
     private volatile boolean ttsReady = false;
 
@@ -89,10 +94,7 @@ public class MainActivity extends Activity {
 
     private void stopGps() {
         gpsRunning = false;
-        if (locationManager != null && locationListener != null) {
-            try { locationManager.removeUpdates(locationListener); }
-            catch (SecurityException ignored) { }
-        }
+        stopService(new Intent(this, GpsTrackingService.class));
         sendStatus(true, "Suivi GPS arrêté");
     }
 
@@ -104,42 +106,42 @@ public class MainActivity extends Activity {
                 return;
             }
             try {
-                if (locationManager == null) {
-                    locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-                }
-                if (locationManager == null || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                LocationManager manager = (LocationManager) getSystemService(LOCATION_SERVICE);
+                if (manager == null || !manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     sendStatus(false, "GPS désactivé. Active la localisation du téléphone.");
                     return;
                 }
-                if (locationListener == null) {
-                    locationListener = new LocationListener() {
-                        @Override public void onLocationChanged(Location location) {
-                            sendLocation(location);
-                            sendStatus(true, "Position GPS réelle reçue");
-                        }
-                        @Override public void onProviderEnabled(String provider) {
-                            sendStatus(true, "GPS activé");
-                        }
-                        @Override public void onProviderDisabled(String provider) {
-                            sendStatus(false, "GPS désactivé");
-                        }
-                        @Override public void onStatusChanged(String provider, int status, Bundle extras) { }
-                    };
-                }
-                locationManager.removeUpdates(locationListener);
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 1000L, 2.0f, locationListener
-                );
+                Intent service = new Intent(this, GpsTrackingService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(service);
+                else startService(service);
                 gpsRunning = true;
-                Location last = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (last != null) sendLocation(last);
-                sendStatus(true, "Recherche de la position GPS satellite…");
+                sendStatus(true, "Suivi GPS de patrouille actif. Il continue avec l’écran éteint.");
             } catch (SecurityException error) {
                 sendStatus(false, "Permission GPS refusée par Android.");
             } catch (Exception error) {
-                sendStatus(false, "Impossible de démarrer le GPS : " + error.getMessage());
+                sendStatus(false, "Impossible de démarrer le service GPS : " + error.getMessage());
             }
         });
+    }
+
+    private void registerGpsReceiver() {
+        gpsReceiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context context, Intent intent) {
+                if (intent == null || !GpsTrackingService.ACTION_LOCATION.equals(intent.getAction())) return;
+                Location location = (Location) intent.getParcelableExtra("location");
+                if (location != null) {
+                    sendLocation(location);
+                    sendStatus(true, "Position GPS réelle reçue par le service de patrouille.");
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter(GpsTrackingService.ACTION_LOCATION);
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(gpsReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(gpsReceiver, filter);
+        }
+        gpsReceiverRegistered = true;
     }
 
     private void requestLocationPermission() {
@@ -371,6 +373,8 @@ public class MainActivity extends Activity {
         root.addView(webView);
         setContentView(root);
 
+        registerGpsReceiver();
+
         String[] permissions = new String[] {
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -415,9 +419,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        // Le suivi est volontairement arrêté en arrière-plan dans cette première version.
-        // Un service de premier plan dédié sera nécessaire pour le suivi écran éteint.
-        stopGps();
+        // Le service GPS de premier plan continue la patrouille écran éteint.
     }
 
     @Override
@@ -428,7 +430,11 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        stopGps();
+        if (gpsReceiverRegistered && gpsReceiver != null) {
+            try { unregisterReceiver(gpsReceiver); }
+            catch (IllegalArgumentException ignored) { }
+            gpsReceiverRegistered = false;
+        }
         if (webView != null) {
             webView.removeJavascriptInterface("AndroidGPS");
             webView.removeJavascriptInterface("AndroidTTS");
