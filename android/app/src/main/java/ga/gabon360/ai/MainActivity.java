@@ -3,6 +3,7 @@ package ga.gabon360.ai;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ClipData;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -22,6 +23,10 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 
 import java.util.Locale;
 
@@ -215,6 +220,37 @@ public class MainActivity extends Activity {
             if (autoSave) intent.putExtra("INTENT_EXTRA_TRACK_REC_AUTO_SAVE", true);
             sendBroadcast(intent);
             sendStatus(true, "Commande envoyée à Locus Map : " + action.substring(action.lastIndexOf('.') + 1));
+        }
+
+        @JavascriptInterface
+        public void importGpx(String gpxContent) {
+            if (gpxContent == null || gpxContent.length() < 40
+                || gpxContent.length() > 2_000_000
+                || !gpxContent.contains("<gpx") || !gpxContent.contains("</gpx>")) {
+                sendStatus(false, "Fichier GPX invalide ou trop volumineux.");
+                return;
+            }
+            runOnUiThread(() -> {
+                File exportFile = new File(getCacheDir(), "gabon360-patrouille.gpx");
+                try (FileOutputStream output = new FileOutputStream(exportFile, false)) {
+                    output.write(gpxContent.getBytes(StandardCharsets.UTF_8));
+                    output.flush();
+                    Uri contentUri = FileProvider.getUriForFile(
+                        MainActivity.this,
+                        getPackageName() + ".fileprovider",
+                        exportFile
+                    );
+                    Intent share = new Intent(Intent.ACTION_SEND);
+                    share.setType("application/gpx+xml");
+                    share.putExtra(Intent.EXTRA_STREAM, contentUri);
+                    share.setClipData(ClipData.newUri(getContentResolver(), "Patrouille GABON 360 AI", contentUri));
+                    share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(share, "Transmettre la patrouille GPX à Locus Map"));
+                    sendStatus(true, "GPX préparé. Choisis Locus Map dans la fenêtre de partage pour l’importer.");
+                } catch (Exception error) {
+                    sendStatus(false, "Échec de préparation du GPX : " + error.getMessage());
+                }
+            });
         }
 
         @JavascriptInterface
