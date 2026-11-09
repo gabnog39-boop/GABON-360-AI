@@ -2,6 +2,7 @@
 import unittest
 
 from server.ai.agent_collaboration import AGENTS, build_collaboration_plan
+from server.ai.agent_runtime import CAPABILITIES, execute_agent_consultation
 
 
 class CollaborationPlanTests(unittest.TestCase):
@@ -35,9 +36,30 @@ class CollaborationPlanTests(unittest.TestCase):
             "findings": [],
         }])
         self.assertEqual(result["collaboration_status"],
-                         "plans_created_agents_pending_real_engine_responses")
+                         "shared_evidence_triage_executed_no_autonomous_models")
         self.assertEqual(result["collaboration_plans"][0]["source_agent"], "satellites")
+        self.assertEqual(result["collaboration_execution"][0]["executed_count"],
+                         result["collaboration_execution"][0]["planned_count"])
+        self.assertFalse(result["collaboration_execution"][0]["autonomous_ai_models_connected"])
         self.assertFalse(result["live_satellite_video"])
+
+    def test_all_22_agents_have_a_runnable_evidence_triage(self):
+        self.assertEqual(set(CAPABILITIES), set(AGENTS))
+        for agent_id in AGENTS:
+            result = execute_agent_consultation(agent_id, [])
+            self.assertEqual(result["agent"], agent_id)
+            self.assertEqual(result["status"], "no_relevant_evidence")
+            self.assertTrue(result["requires_human_validation"])
+
+    def test_satellite_agent_receives_catalog_evidence(self):
+        result = execute_agent_consultation("satellites", [{
+            "source": "copernicus_sentinel_2_l2a",
+            "kind": "satellite_catalog_observation",
+            "catalog_record": {"id": "test-product"},
+            "live": False,
+        }])
+        self.assertEqual(result["status"], "evidence_received_for_review")
+        self.assertEqual(result["evidence_count"], 1)
 
     def test_unknown_page_falls_back_to_central(self):
         plan = build_collaboration_plan("unknown-service")
