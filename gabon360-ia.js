@@ -154,7 +154,7 @@
     [/paiement|abonnement|facture/i,['paiements','admin','users']],
     [/mission|patrouille|équipe|equipe|rapport/i,['missions','navigation','garmin','rapports','memoire']]
   ];
-  G.consultTeam = function(agent, question) {
+  G.consultTeam = async function(agent, question) {
     const ids = [agent.id, ...(COLLAB_ROUTES[agent.id] || COLLAB_ROUTES.accueil)];
     TOPIC_ROUTES.forEach(([pattern, related]) => {
       if (pattern.test(question || '')) related.forEach(id => { if (!ids.includes(id)) ids.push(id); });
