@@ -73,6 +73,7 @@ module.exports = async (req,res) => {
     const profiles=await p.json();
     if(!profiles[0]||profiles[0].statut!=="actif") return res.status(403).json({error:"Compte non actif"});
     const body=typeof req.body==="string"?JSON.parse(req.body):(req.body||{});
+    if (JSON.stringify(body).length > 100000) return res.status(413).json({error:"Paquet de preuves trop volumineux"});
     const source=String(body.agent||"accueil");
     if(!Object.prototype.hasOwnProperty.call(CAPABILITIES,source)) return res.status(400).json({error:"Agent inconnu"});
     const question=String(body.question||"").slice(0,500);
