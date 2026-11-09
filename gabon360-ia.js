@@ -96,7 +96,7 @@
   box.innerHTML = '<div class="h"><img id="g360-img" alt="Avatar"><div><b>Avatar GABON 360</b><br><small id="g360-via"></small></div><button id="g360-x" style="margin-left:auto">✕</button></div><div class="b" id="g360-txt"></div><input id="g360-q" placeholder="Écrire ou dicter une question…"><button id="g360-go">Envoyer</button><button id="g360-mic">🎙️ Parler</button><button id="g360-say">🔊 Écouter</button><button id="g360-auto" aria-pressed="false">🔔 Activer les annonces vocales</button><small id="g360-voice-status">Les annonces automatiques nécessitent une activation vocale initiale.</small>';
   document.body.appendChild(box);
   const $ = (i) => document.getElementById(i);
-  const src = document.querySelector('[data-avatar] img, #avatar img, img.avatar');
+  const src = document.querySelector('#avh img, [data-avatar] img, #avatar img, img.avatar');
   if (src) $('g360-img').src = src.src; // même image que l'avatar central, visage non modifié
 
   const Avatar = (G.avatar = {
