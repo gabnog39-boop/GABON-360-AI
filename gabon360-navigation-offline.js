@@ -44,7 +44,7 @@
       ).join("");
       const track = points.map(p =>
         '<trkpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'">'+
-        (Number.isFinite(Number(p.altitude)) ? '<ele>'+Number(p.altitude).toFixed(1)+'</ele>' : '')+
+        (p.altitude != null && Number.isFinite(Number(p.altitude)) ? '<ele>'+Number(p.altitude).toFixed(1)+'</ele>' : '')+
         '<time>'+escXml(new Date(Number(p.time)||Date.now()).toISOString())+'</time></trkpt>'
       ).join("");
       const gpx = '<?xml version="1.0" encoding="UTF-8"?>\n'+
