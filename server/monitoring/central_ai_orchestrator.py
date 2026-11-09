@@ -32,10 +32,9 @@ class CentralAIOrchestrator:
         for packet in items:
             source = packet.get("source") or packet.get("engine") or "source_inconnue"
             sources[str(source)] += 1
-            domain = packet.get("domain") or packet.get("type") or "territoire"
+            domain = packet.get("domain") or packet.get("kind") or packet.get("type") or source
             domains[str(domain)] += 1
-            route_key = str(domain or packet.get("type") or source)
-            current = collaboration_inputs.get(route_key)
+            route_key = str(domain)
             packet_evidence = packet.get("findings", packet.get("alerts", [])) or []
             collaboration_inputs[route_key] = (
                 route_key,
