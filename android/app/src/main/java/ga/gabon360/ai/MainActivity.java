@@ -2,6 +2,7 @@ package ga.gabon360.ai;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -168,6 +169,70 @@ public class MainActivity extends Activity {
         }
     }
 
+    private String findLocusPackage() {
+        String[] packages = {"menion.android.locus", "menion.android.locus.pro"};
+        for (String packageName : packages) {
+            try {
+                getPackageManager().getPackageInfo(packageName, 0);
+                return packageName;
+            } catch (PackageManager.NameNotFoundException ignored) { }
+        }
+        return null;
+    }
+
+    private final class AndroidLocusBridge {
+        @JavascriptInterface
+        public boolean isInstalled() { return findLocusPackage() != null; }
+
+        @JavascriptInterface
+        public void openAt(double latitude, double longitude, String label) {
+            if (!Double.isFinite(latitude) || !Double.isFinite(longitude)
+                || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return;
+            String safeLabel = label == null ? "GABON 360 AI" : label;
+            Uri uri = Uri.parse("geo:" + latitude + "," + longitude + "?q="
+                + latitude + "," + longitude + "(" + Uri.encode(safeLabel) + ")");
+            runOnUiThread(() -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                    String locus = findLocusPackage();
+                    if (locus != null) intent.setPackage(locus);
+                    else intent = Intent.createChooser(intent, "Ouvrir la position avec une application cartographique");
+                    startActivity(intent);
+                } catch (Exception error) {
+                    sendStatus(false, "Impossible d’ouvrir Locus ou une application cartographique : " + error.getMessage());
+                }
+            });
+        }
+
+        private void sendLocusCommand(String action, boolean autoSave) {
+            String locus = findLocusPackage();
+            if (locus == null) {
+                sendStatus(false, "Locus Map n’est pas installé sur ce téléphone.");
+                return;
+            }
+            Intent intent = new Intent(action);
+            intent.setPackage(locus);
+            if (autoSave) intent.putExtra("INTENT_EXTRA_TRACK_REC_AUTO_SAVE", true);
+            sendBroadcast(intent);
+            sendStatus(true, "Commande envoyée à Locus Map : " + action.substring(action.lastIndexOf('.') + 1));
+        }
+
+        @JavascriptInterface
+        public void startRecording() {
+            sendLocusCommand("locus.api.android.ACTION_TRACK_RECORD_START", false);
+        }
+
+        @JavascriptInterface
+        public void pauseRecording() {
+            sendLocusCommand("locus.api.android.ACTION_TRACK_RECORD_PAUSE", false);
+        }
+
+        @JavascriptInterface
+        public void stopRecording() {
+            sendLocusCommand("locus.api.android.ACTION_TRACK_RECORD_STOP", true);
+        }
+    }
+
     private final class AndroidGpsBridge {
         @JavascriptInterface
         public void start() { startGps(); }
@@ -220,9 +285,11 @@ public class MainActivity extends Activity {
                 if (isTrustedUrl(url)) {
                     view.addJavascriptInterface(new AndroidGpsBridge(), "AndroidGPS");
                     view.addJavascriptInterface(new AndroidTtsBridge(), "AndroidTTS");
+                    view.addJavascriptInterface(new AndroidLocusBridge(), "AndroidLocus");
                 } else {
                     view.removeJavascriptInterface("AndroidGPS");
                     view.removeJavascriptInterface("AndroidTTS");
+                    view.removeJavascriptInterface("AndroidLocus");
                     stopGps();
                 }
                 super.onPageStarted(view, url, favicon);
@@ -329,6 +396,7 @@ public class MainActivity extends Activity {
         if (webView != null) {
             webView.removeJavascriptInterface("AndroidGPS");
             webView.removeJavascriptInterface("AndroidTTS");
+            webView.removeJavascriptInterface("AndroidLocus");
             webView.destroy();
             webView = null;
         }
