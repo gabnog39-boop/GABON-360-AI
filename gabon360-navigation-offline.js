@@ -15,12 +15,28 @@
     catch (_) { status(false, "Stockage local indisponible ou saturé."); }
   }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  function makeGpx() {
+    const points = state.points.filter(validPoint);
+    if (!points.length) return null;
+    const escXml = value => String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+    const waypoints = points.filter(p => p.markedAt && Number.isFinite(Date.parse(p.markedAt))).map(p =>
+      '<wpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'"><time>'+escXml(new Date(p.markedAt).toISOString())+'</time><name>Point terrain</name></wpt>'
+    ).join("");
+    const track = points.map(p =>
+      '<trkpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'">'+
+      (p.altitude != null && Number.isFinite(Number(p.altitude)) ? '<ele>'+Number(p.altitude).toFixed(1)+'</ele>' : '')+
+      '<time>'+escXml(new Date(Number.isFinite(Number(p.time)) && Number(p.time)>0 ? Number(p.time) : Date.now()).toISOString())+'</time></trkpt>'
+    ).join("");
+    return '<?xml version="1.0" encoding="UTF-8"?>\\n'+
+      '<gpx version="1.1" creator="GABON 360 AI" xmlns="http://www.topografix.com/GPX/1/1">'+
+      waypoints+'<trk><name>Patrouille GABON 360 AI</name><trkseg>'+track+'</trkseg></trk></gpx>';
+  }
   function build() {
     if (document.getElementById("g360-offline-nav")) return;
     const root = document.createElement("section");
     root.id = "g360-offline-nav";
     root.style.cssText = "margin:12px;padding:14px;border:1px solid #2d684c;border-radius:14px;background:#0b1b19;color:#e8f5ee";
-    root.innerHTML = '<h2 style="margin:0 0 6px">Navigation forêt — GPS satellite</h2><p style="margin:0 0 10px;font-size:13px">Position GPS sans Wi-Fi ni réseau mobile. Les cartes et itinéraires doivent être téléchargés à l’avance pour être consultables hors ligne.</p><div id="g360-gps-status" role="status">GPS non démarré</div><div id="g360-gps-coords" style="font-size:20px;font-weight:700;margin:10px 0">Latitude : —<br>Longitude : —</div><div id="g360-gps-details" style="font-size:13px">Précision : — · Vitesse : —</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button id="g360-gps-start" type="button">Démarrer le GPS</button><button id="g360-gps-stop" type="button">Arrêter</button><button id="g360-gps-mark" type="button">Enregistrer un point</button><button id="g360-gps-export" type="button">Exporter GPX</button><button id="g360-locus-open" type="button">Ouvrir position dans Locus</button><button id="g360-locus-start" type="button">Démarrer trace Locus</button><button id="g360-locus-pause" type="button">Pause Locus</button><button id="g360-locus-stop" type="button">Arrêter trace Locus</button></div><p id="g360-locus-status" style="font-size:13px">Locus Map : vérification de la connexion Android…</p><p id="g360-gps-count">0 point enregistré sur cet appareil.</p><div id="g360-gps-list" style="font-size:12px;max-height:140px;overflow:auto"></div>';
+    root.innerHTML = '<h2 style="margin:0 0 6px">Navigation forêt — GPS satellite</h2><p style="margin:0 0 10px;font-size:13px">Position GPS sans Wi-Fi ni réseau mobile. Les cartes et itinéraires doivent être téléchargés à l’avance pour être consultables hors ligne.</p><div id="g360-gps-status" role="status">GPS non démarré</div><div id="g360-gps-coords" style="font-size:20px;font-weight:700;margin:10px 0">Latitude : —<br>Longitude : —</div><div id="g360-gps-details" style="font-size:13px">Précision : — · Vitesse : —</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button id="g360-gps-start" type="button">Démarrer le GPS</button><button id="g360-gps-stop" type="button">Arrêter</button><button id="g360-gps-mark" type="button">Enregistrer un point</button><button id="g360-gps-export" type="button">Exporter GPX</button><button id="g360-locus-import" type="button">Transmettre GPX à Locus</button><button id="g360-locus-open" type="button">Ouvrir position dans Locus</button><button id="g360-locus-start" type="button">Démarrer trace Locus</button><button id="g360-locus-pause" type="button">Pause Locus</button><button id="g360-locus-stop" type="button">Arrêter trace Locus</button></div><p id="g360-locus-status" style="font-size:13px">Locus Map : vérification de la connexion Android…</p><p id="g360-gps-count">0 point enregistré sur cet appareil.</p><div id="g360-gps-list" style="font-size:12px;max-height:140px;overflow:auto"></div>';
     const first = document.querySelector("header");
     if (first && first.parentNode) first.insertAdjacentElement("afterend", root);
     else document.body.insertBefore(root, document.body.firstChild);
@@ -71,25 +87,22 @@
       status(true, "Point enregistré localement sur le téléphone.");
     });
     root.querySelector("#g360-gps-export").addEventListener("click", () => {
-      if (!state.points.length) { status(false, "Aucun point GPS à exporter."); return; }
-      const escXml = value => String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
-      const points = state.points.filter(validPoint);
-      const waypoints = points.filter(p => p.markedAt && Number.isFinite(Date.parse(p.markedAt))).map(p =>
-        '<wpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'"><time>'+escXml(new Date(p.markedAt).toISOString())+'</time><name>Point terrain</name></wpt>'
-      ).join("");
-      const track = points.map(p =>
-        '<trkpt lat="'+Number(p.lat).toFixed(7)+'" lon="'+Number(p.lon).toFixed(7)+'">'+
-        (p.altitude != null && Number.isFinite(Number(p.altitude)) ? '<ele>'+Number(p.altitude).toFixed(1)+'</ele>' : '')+
-        '<time>'+escXml(new Date(Number.isFinite(Number(p.time)) && Number(p.time)>0 ? Number(p.time) : Date.now()).toISOString())+'</time></trkpt>'
-      ).join("");
-      const gpx = '<?xml version="1.0" encoding="UTF-8"?>\n'+
-        '<gpx version="1.1" creator="GABON 360 AI" xmlns="http://www.topografix.com/GPX/1/1">'+
-        waypoints+'<trk><name>Patrouille GABON 360 AI</name><trkseg>'+track+'</trkseg></trk></gpx>';
+      const gpx = makeGpx();
+      if (!gpx) { status(false, "Aucun point GPS valide à exporter."); return; }
       const blob = new Blob([gpx],{type:"application/gpx+xml"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href=url; a.download="gabon360-patrouille.gpx"; a.click();
       setTimeout(()=>URL.revokeObjectURL(url),1000);
-      status(true, points.length+" point(s) exporté(s) au format GPX.");
+      status(true, state.points.length+" point(s) exporté(s) au format GPX.");
+    });
+    root.querySelector("#g360-locus-import").addEventListener("click", () => {
+      const gpx = makeGpx();
+      if (!gpx) { status(false, "Aucun point GPS valide à transmettre à Locus."); return; }
+      if (!window.AndroidLocus || typeof AndroidLocus.importGpx !== "function") {
+        status(false, "Le partage GPX Android nécessite la nouvelle version de l’application.");
+        return;
+      }
+      AndroidLocus.importGpx(gpx);
     });
     renderPoints();
   }
