@@ -68,6 +68,11 @@ PAGE_ALIASES = {
     "administration": "admin", "risques": "centre", "infrastructures": "carte",
     "cameras": "drones", "crise": "alertes", "logistique": "missions",
     "fusion": "centre", "sources": "centre", "avatar": "accueil",
+    "forest": "parcs", "forests": "parcs", "forest-observation": "parcs",
+    "water": "eaux", "marine": "eaux", "weather": "meteo",
+    "satellite_catalog_observation": "satellites",
+    "copernicus_sentinel_2_l2a": "satellites",
+    "security": "cyber", "mission": "missions", "gpx": "garmin",
 }
 
 SEVERITY_PRIORITY = {"CRITICAL": 4, "ALERT": 4, "CRITIQUE": 4,
