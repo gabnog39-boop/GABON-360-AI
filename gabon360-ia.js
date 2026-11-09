@@ -54,6 +54,28 @@
       lines.push("• fiches locales de cette page : " + local.length + " enregistrement(s).");
       local.slice(-3).reverse().forEach(r => lines.push("  - " + String(r.createdAt || "").slice(0,10) + " · " + String(r.title || r.moduleName || "Fiche") + " · " + String((r.values || []).filter(Boolean).join(" ; ")).slice(0,220)));
     }
+
+    // CONTEXTE PARTAGÉ : chaque IA consulte aussi les fiches des autres domaines,
+    // afin que l'avatar puisse coordonner une question transversale.
+    let shared = [];
+    try {
+      if (window.G360_CENTRE && typeof window.G360_CENTRE.loadRecords === "function") {
+        shared = shared.concat(window.G360_CENTRE.loadRecords() || []);
+      }
+    } catch (_) {}
+    try {
+      const addon = JSON.parse(localStorage.getItem("g360_addon_records_v1") || "[]");
+      if (Array.isArray(addon)) shared = shared.concat(addon);
+    } catch (_) {}
+    const counts = Object.create(null);
+    shared.forEach(r => { const k = String(r.moduleName || r.module || "autre"); counts[k] = (counts[k] || 0) + 1; });
+    const sharedTotal = Object.values(counts).reduce((n, v) => n + v, 0);
+    lines.push("• contexte partagé entre les 22 IA : " + sharedTotal + " fiche(s) locale(s) disponibles dans " + Object.keys(counts).length + " domaine(s).");
+    Object.entries(counts).slice(0, 12).forEach(([name, count]) => lines.push("  - " + name + " : " + count + " fiche(s)."));
+    shared.slice(-8).reverse().forEach(r => {
+      const vals = Array.isArray(r.values) ? r.values.filter(Boolean).join(" ; ") : String(r.description || "");
+      lines.push("  - [" + String(r.moduleName || r.module || "autre") + "] " + String(r.createdAt || r.created_at || "").slice(0,10) + " · " + String(r.title || "Fiche") + " · " + vals.slice(0,180));
+    });
     if (!lines.length) lines.push("• aucune source de données reliée à cette IA pour le moment.");
     if (!local.length && a.data.some(n => !read(n))) lines.push("• les sources externes non connectées ne fournissent pas de données en direct.");
     let liveContext = "";
