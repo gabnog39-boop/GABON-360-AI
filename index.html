@@ -446,7 +446,7 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
     navigator.serviceWorker.register("./sw.js").catch(err => console.warn("Service worker GABON 360 AI:", err));
   });
 }
-</script></body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300)}
+<\/script></body></html>');w.document.close();w.focus();setTimeout(()=>w.print(),300)}
 async function loadRp(){const L=$("rlist");L.replaceChildren();
  try{if(!AL.length){try{AL=await api("/rest/v1/evenements?select=*&order=recu_le.desc&limit=100")}catch(e){}}
  const sel=$("rl"),v=sel.value;sel.replaceChildren(new Option("Aucune",""));AL.forEach(a=>sel.append(new Option(a.titre,a.id)));sel.value=v;
