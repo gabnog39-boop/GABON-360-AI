@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <queries>\n        <package android:name="menion.android.locus" />\n        <package android:name="menion.android.locus.pro" />\n    </queries>\n    <uses-permission android:name="android.permission.INTERNET" />
+    <queries>
+        <package android:name="menion.android.locus" />
+        <package android:name="menion.android.locus.pro" />
+    </queries>
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -22,5 +26,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="ga.gabon360.ai.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/g360_file_paths" />
+        </provider>
     </application>
 </manifest>
