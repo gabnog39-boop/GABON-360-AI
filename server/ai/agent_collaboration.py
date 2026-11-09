@@ -73,6 +73,13 @@ PAGE_ALIASES = {
     "satellite_catalog_observation": "satellites",
     "copernicus_sentinel_2_l2a": "satellites",
     "security": "cyber", "mission": "missions", "gpx": "garmin",
+    "alert": "alertes", "alertes": "alertes", "flood-risk": "eaux",
+    "forest-change": "parcs", "biodiversity-observation": "parcs",
+    "water-observation": "eaux", "marine-observation": "eaux",
+    "weather-alert": "meteo", "weather-forecast": "meteo",
+    "drone-observation": "drones", "camera-observation": "drones",
+    "position": "geoloc", "waypoint": "garmin", "track": "garmin",
+    "border": "frontieres", "airspace": "air",
 }
 
 SEVERITY_PRIORITY = {"CRITICAL": 4, "ALERT": 4, "CRITIQUE": 4,
