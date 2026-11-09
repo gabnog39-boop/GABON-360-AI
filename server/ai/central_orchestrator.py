@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .option_registry import get_option
+from .agent_collaboration import build_collaboration_plan
 
 
 CRITICAL = {"CRITICAL", "ALERT", "CRITIQUE"}
@@ -91,11 +92,19 @@ class CentralAIOrchestrator:
     def _route(self, event: AIEvent) -> dict[str, Any]:
         urgent = event.severity in CRITICAL
         important = urgent or event.severity in IMPORTANT
+        collaboration = build_collaboration_plan(
+            page=event.page,
+            severity=event.severity,
+            evidence=event.evidence,
+        )
         return {
             "event": event.as_dict(),
+            "collaboration": collaboration,
             "relay": {
                 "accepted": True,
                 "central_correlation": True,
+                "collaboration_plan_created": True,
+                "specialized_agents_executed": False,
                 "avatar_notification": important,
                 "human_validation_required": event.requires_human_validation,
             },
