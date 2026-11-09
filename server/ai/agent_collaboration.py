@@ -60,6 +60,16 @@ ROUTES: dict[str, tuple[str, ...]] = {
     "garmin": ("missions", "navigation", "geoloc", "memoire"),
 }
 
+# Backend service/page identifiers mapped to the 22 user-facing application agents.
+PAGE_ALIASES = {
+    "satellite": "satellites", "forets": "parcs", "maritime": "eaux",
+    "statistiques": "stats", "cybersecurite": "cyber", "surveillance": "centre",
+    "orchestrateur": "centre", "proprietaire": "admin", "abonnements": "paiements",
+    "administration": "admin", "risques": "centre", "infrastructures": "carte",
+    "cameras": "drones", "crise": "alertes", "logistique": "missions",
+    "fusion": "centre", "sources": "centre", "avatar": "accueil",
+}
+
 SEVERITY_PRIORITY = {"CRITICAL": 4, "ALERT": 4, "CRITIQUE": 4,
                      "HIGH": 3, "WARNING": 3, "IMPORTANT": 3,
                      "MEDIUM": 2, "INFO": 1, "LOW": 0}
@@ -69,7 +79,7 @@ def build_collaboration_plan(page: str, severity: str = "INFO",
                              evidence: list[dict[str, Any]] | None = None,
                              max_agents: int = 6) -> dict[str, Any]:
     """Return a deterministic, bounded consultation plan for one event."""
-    source = page if page in AGENTS else "centre"
+    source = page if page in AGENTS else PAGE_ALIASES.get(page, "centre")
     limit = max(1, min(int(max_agents), 8))
     selected = list(ROUTES[source][:limit])
     evidence_count = len(evidence or [])
@@ -83,6 +93,7 @@ def build_collaboration_plan(page: str, severity: str = "INFO",
                 else:
                     selected.append(required)
     return {
+        "source_page": page,
         "source_agent": source,
         "source_label": AGENTS[source],
         "consultation_status": "requested" if selected else "not_required",
