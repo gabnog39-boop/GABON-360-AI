@@ -11,8 +11,10 @@ from typing import Any, Iterable
 
 try:
     from ai.agent_collaboration import build_collaboration_plan
+    from ai.agent_runtime import execute_collaboration
 except ModuleNotFoundError:  # repository-root test/import context
     from server.ai.agent_collaboration import build_collaboration_plan
+    from server.ai.agent_runtime import execute_collaboration
 
 
 class CentralAIOrchestrator:
@@ -39,10 +41,13 @@ class CentralAIOrchestrator:
             domains[str(domain)] += 1
             route_key = str(domain)
             packet_evidence = packet.get("findings", packet.get("alerts", [])) or []
+            evidence_rows = [packet]
+            if isinstance(packet_evidence, list):
+                evidence_rows.extend(item for item in packet_evidence[:20] if isinstance(item, dict))
             collaboration_inputs[route_key] = (
                 route_key,
                 str(packet.get("priority", packet.get("severity", "INFO"))),
-                list(packet_evidence)[:20] if isinstance(packet_evidence, list) else [],
+                evidence_rows[:20],
             )
             for finding in packet_evidence:
                 if isinstance(finding, dict):
@@ -63,11 +68,18 @@ class CentralAIOrchestrator:
             build_collaboration_plan(page=page, severity=severity, evidence=evidence)
             for page, severity, evidence in list(collaboration_inputs.values())[:8]
         ]
+        collaboration_execution = [
+            execute_collaboration(plan, evidence)
+            for plan, (_, _, evidence) in zip(
+                collaboration_plans, list(collaboration_inputs.values())[:8]
+            )
+        ]
 
         return {
             "centre": self.name,
             "collaboration_plans": collaboration_plans,
-            "collaboration_status": "plans_created_agents_pending_real_engine_responses",
+            "collaboration_execution": collaboration_execution,
+            "collaboration_status": "shared_evidence_triage_executed_no_autonomous_models",
             "assistant": "central",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "message": message,
