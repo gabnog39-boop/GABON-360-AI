@@ -20,6 +20,9 @@ import android.widget.FrameLayout;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
+import android.speech.tts.TextToSpeech;
+
+import java.util.Locale;
 
 import org.json.JSONObject;
 
@@ -32,6 +35,8 @@ public class MainActivity extends Activity {
     private LocationManager locationManager;
     private LocationListener locationListener;
     private boolean gpsRunning = false;
+    private TextToSpeech textToSpeech;
+    private volatile boolean ttsReady = false;
 
     private boolean hasLocationPermission() {
         return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -95,6 +100,15 @@ public class MainActivity extends Activity {
             try {
                 if (locationManager == null) {
                     locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        textToSpeech = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS && textToSpeech != null) {
+                int language = textToSpeech.setLanguage(Locale.FRANCE);
+                ttsReady = language != TextToSpeech.LANG_MISSING_DATA
+                    && language != TextToSpeech.LANG_NOT_SUPPORTED;
+            } else {
+                ttsReady = false;
+            }
+        });
                 }
                 if (locationManager == null || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     sendStatus(false, "GPS désactivé. Active la localisation du téléphone.");
@@ -140,6 +154,29 @@ public class MainActivity extends Activity {
         }
     }
 
+    private final class AndroidTtsBridge {
+        @JavascriptInterface
+        public boolean isReady() { return ttsReady && textToSpeech != null; }
+
+        @JavascriptInterface
+        public void speak(String message) {
+            if (message == null || message.trim().isEmpty()) return;
+            final String text = message.length() > 4000 ? message.substring(0, 4000) : message;
+            runOnUiThread(() -> {
+                if (ttsReady && textToSpeech != null) {
+                    textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "g360-avatar");
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void stopSpeak() {
+            runOnUiThread(() -> {
+                if (textToSpeech != null) textToSpeech.stop();
+            });
+        }
+    }
+
     private final class AndroidGpsBridge {
         @JavascriptInterface
         public void start() { startGps(); }
@@ -180,8 +217,10 @@ public class MainActivity extends Activity {
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 if (isTrustedUrl(url)) {
                     view.addJavascriptInterface(new AndroidGpsBridge(), "AndroidGPS");
+                    view.addJavascriptInterface(new AndroidTtsBridge(), "AndroidTTS");
                 } else {
                     view.removeJavascriptInterface("AndroidGPS");
+                    view.removeJavascriptInterface("AndroidTTS");
                     stopGps();
                 }
                 super.onPageStarted(view, url, favicon);
@@ -287,8 +326,15 @@ public class MainActivity extends Activity {
         stopGps();
         if (webView != null) {
             webView.removeJavascriptInterface("AndroidGPS");
+            webView.removeJavascriptInterface("AndroidTTS");
             webView.destroy();
             webView = null;
+        }
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+            textToSpeech = null;
+            ttsReady = false;
         }
         super.onDestroy();
     }
