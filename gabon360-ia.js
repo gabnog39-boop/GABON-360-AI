@@ -91,14 +91,18 @@
       let session = null;
       try { session = JSON.parse(localStorage.getItem('g360s') || 'null'); } catch (_) {}
       if (!session || !session.access_token) return null;
+      // Budget équilibré : les 22 domaines restent représentés malgré la limite
+      // de contexte de l'API serveur. Une page volumineuse ne masque pas les autres IA.
+      const crossContext = AGENTS.map(agent => {
+        const summary = analyse(agent).replace(/\\s+/g, ' ').slice(0, 220);
+        return '[' + agent.id + '] ' + summary;
+      }).join('\\n');
       const r = await fetch(G.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({
           q: '[Avatar central · coordination des 22 IA · demande initialement adressée à ' + a.page + '] ' + q,
-          // Le moteur serveur reçoit un état transversal, pas seulement la page interrogée.
-          // Chaque domaine garde son identité et signale explicitement les sources absentes.
-          ctx: AGENTS.map(agent => analyse(agent)).join("\\n\\n").slice(0, 5800)
+          ctx: crossContext
         })
       });
       if (!r.ok) {
