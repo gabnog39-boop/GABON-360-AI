@@ -67,7 +67,7 @@ jobs:
           echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
 
       - name: Compiler APK signé avec la clé existante
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY == 'true' }}
         working-directory: android
         run: gradle --no-daemon --stacktrace assembleRelease
 
