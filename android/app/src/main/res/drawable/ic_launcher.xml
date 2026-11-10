@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-    android:src="@drawable/gabon360_icon"
+    android:src="@drawable/gabon360_icon_foreground"
     android:gravity="center" />
