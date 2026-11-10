@@ -51,27 +51,53 @@ jobs:
           test -s android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           test -s android/app/src/main/res/drawable-nodpi/gabon360_icon_foreground.png
 
-      - name: Build debug APK
-        run: gradle --no-daemon --stacktrace assembleDebug
+      - name: Prepare private Android signing key
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          KEYSTORE="$RUNNER_TEMP/gabon360-upload.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+          test -s "$KEYSTORE"
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK with the existing key
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         working-directory: android
+        run: gradle --no-daemon --stacktrace assembleRelease
+
+      - name: Build debug APK (temporary test only)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 == '' }}
+        working-directory: android
+        run: gradle --no-daemon --stacktrace assembleDebug
 
       - name: Verify APK and package installation bundle
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          if [ -n "${ANDROID_KEYSTORE_PATH:-}" ]; then
+            APK="android/app/build/outputs/apk/release/app-release.apk"
+            LABEL="APK signé avec la clé privée fournie par le propriétaire"
+            BUILD_KIND="release-signé"
+          else
+            APK="android/app/build/outputs/apk/debug/app-debug.apk"
+            LABEL="APK DEBUG TEMPORAIRE : ne pas installer par-dessus l'application existante"
+            BUILD_KIND="debug-temporaire"
+          fi
           test -s "$APK"
           mkdir -p package
           cp "$APK" package/GABON-360-AI.apk
           sha256sum package/GABON-360-AI.apk
-          cat > package/LIRE-AVANT-INSTALLATION.txt <<'EOF'
-          GABON 360 AI — Android 2.0.143 — Android 6.0 minimum, cible Android 15.
-          Extraire GABON-360-AI.apk de ce ZIP puis ouvrir le fichier sur Android.
-          Autoriser l'installation depuis cette source si Android le demande.
-          ATTENTION : APK de test signé en debug. Si une version de même application
-          est déjà installée avec une autre signature, Android exigera sa désinstallation
-          avant l'installation. Les données locales de l'ancienne application seront perdues.
-          Cette version nécessite Internet pour accéder au serveur web.
-          EOF
+          printf '%s\n' "GABON 360 AI — Android 2.0.143 — $BUILD_KIND" "$LABEL" "Extraire GABON-360-AI.apk puis l'ouvrir sur Android." "Si la signature n'est pas celle de l'application installée, Android refusera la mise à jour." > package/LIRE-AVANT-INSTALLATION.txt
           cd package && zip -j ../GABON-360-AI-Android.zip GABON-360-AI.apk LIRE-AVANT-INSTALLATION.txt
 
       - name: Save APK and ZIP
@@ -79,7 +105,7 @@ jobs:
         with:
           name: GABON-360-AI-Android-install
           path: |
-            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/**/*.apk
             GABON-360-AI-Android.zip
           if-no-files-found: error
           retention-days: 14
