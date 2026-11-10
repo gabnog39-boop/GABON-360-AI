@@ -12,6 +12,8 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      HAS_ANDROID_SIGNING_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - name: Récupérer le projet existant
         uses: actions/checkout@v4
@@ -45,7 +47,7 @@ jobs:
           test -s android/app/src/main/res/drawable-nodpi/gabon360_icon_foreground.png
 
       - name: Préparer la clé privée existante
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY == 'true' }}
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -70,7 +72,7 @@ jobs:
         run: gradle --no-daemon --stacktrace assembleRelease
 
       - name: Compiler APK debug temporaire si la clé n'est pas configurée
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 == '' }}
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY != 'true' }}
         working-directory: android
         run: gradle --no-daemon --stacktrace assembleDebug
 
