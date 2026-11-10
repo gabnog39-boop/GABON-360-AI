@@ -48,8 +48,8 @@ foreground_dir.mkdir(parents=True, exist_ok=True)
 fit_square(artwork, 432, 54).save(foreground_dir / "gabon360_icon_foreground.png", format="PNG", optimize=True)
 (RES / "values").mkdir(parents=True, exist_ok=True)
 (RES / "values" / "gabon360_icon_colors.xml").write_text(
-    '<?xml version="1.0" encoding="utf-8"?>\\n'
-    '<resources><color name="gabon360_icon_background">#FFFFFF</color></resources>\\n',
+    '<?xml version="1.0" encoding="utf-8"?>\n'
+    '<resources><color name="gabon360_icon_background">#FFFFFF</color></resources>\n',
     encoding="utf-8",
 )
 adaptive_dir = RES / "mipmap-anydpi-v26"
