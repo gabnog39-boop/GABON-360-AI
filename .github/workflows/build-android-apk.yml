@@ -6,6 +6,8 @@ on:
       - test-avatar-central
     paths:
       - 'android/**'
+      - 'icons/gabon360-icon.jpg'
+      - 'scripts/generate_android_launcher_icons.py'
       - '.github/workflows/build-android-apk.yml'
   workflow_dispatch:
 
@@ -35,29 +37,40 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
-      - name: Generate official Android launcher icons
+      - name: Install image generator dependency
+        run: python3 -m pip install --disable-pip-version-check Pillow
+
+      - name: Generate and verify official launcher icons
         run: |
           set -euo pipefail
           python3 scripts/generate_android_launcher_icons.py
-          test -s android/app/src/main/res/mipmap-mdpi/ic_launcher.xml
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            test -s "android/app/src/main/res/mipmap-$density/ic_launcher.png"
+            test -s "android/app/src/main/res/mipmap-$density/ic_launcher_round.png"
+          done
           test -s android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon.jpg
+          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon_foreground.png
 
       - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon --stacktrace assembleDebug
         working-directory: android
 
-      - name: Package APK as ZIP
+      - name: Verify APK and package installation bundle
         run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
           mkdir -p package
-          cp android/app/build/outputs/apk/debug/app-debug.apk package/GABON-360-AI.apk
+          cp "$APK" package/GABON-360-AI.apk
+          sha256sum package/GABON-360-AI.apk
           cat > package/LIRE-AVANT-INSTALLATION.txt <<'EOF'
-          GABON 360 AI - APK Android de test 2.0.0 (Android 6.0 minimum, cible Android 15)
-          1. Extraire GABON-360-AI.apk de ce ZIP.
-          2. Sur Android, ouvrir le fichier APK.
-          3. Si demandé, autoriser l'installation depuis cette source.
-          4. Appuyer sur Installer.
-          Cette version ouvre le site web de test GABON 360 AI et nécessite Internet.
+          GABON 360 AI — Android 2.0.143 — Android 6.0 minimum, cible Android 15.
+          Extraire GABON-360-AI.apk de ce ZIP puis ouvrir le fichier sur Android.
+          Autoriser l'installation depuis cette source si Android le demande.
+          ATTENTION : APK de test signé en debug. Si une version de même application
+          est déjà installée avec une autre signature, Android exigera sa désinstallation
+          avant l'installation. Les données locales de l'ancienne application seront perdues.
+          Cette version nécessite Internet pour accéder au serveur web.
           EOF
           cd package && zip -j ../GABON-360-AI-Android.zip GABON-360-AI.apk LIRE-AVANT-INSTALLATION.txt
 
