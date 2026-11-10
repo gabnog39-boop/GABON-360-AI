@@ -99,7 +99,7 @@ jobs:
           mkdir -p package
           cp "$APK" package/GABON-360-AI.apk
           sha256sum package/GABON-360-AI.apk
-          printf '%s\n' "GABON 360 AI — Android 2.0.143 — $BUILD_KIND" "$LABEL" "Extraire GABON-360-AI.apk puis l'ouvrir sur Android." "Si la signature n'est pas celle de l'application installée, Android refusera la mise à jour." > package/LIRE-AVANT-INSTALLATION.txt
+          printf '%s\n' "GABON 360 AI — Android 2.0.144 — $BUILD_KIND" "$LABEL" "Extraire GABON-360-AI.apk puis l'ouvrir sur Android." "Si la signature n'est pas celle de l'application installée, Android refusera la mise à jour." > package/LIRE-AVANT-INSTALLATION.txt
           cd package && zip -j ../GABON-360-AI-Android.zip GABON-360-AI.apk LIRE-AVANT-INSTALLATION.txt
 
       - name: Save APK and ZIP
