@@ -32,13 +32,17 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
+      - name: Installer Pillow pour les icônes PNG
+        run: python3 -m pip install --disable-pip-version-check Pillow
+
       - name: Générer les icônes de lancement Android officielles
         run: |
           set -euo pipefail
           python3 scripts/generate_android_launcher_icons.py
-          test -s android/app/src/main/res/mipmap-mdpi/ic_launcher.xml
+          test -s android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          test -s android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
           test -s android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon.jpg
+          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon_foreground.png
 
       - name: Compiler le véritable projet Android du dépôt
         working-directory: android
