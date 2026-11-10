@@ -42,7 +42,7 @@ jobs:
       - name: Install image generator dependency
         run: python3 -m pip install --disable-pip-version-check Pillow
 
-      - name: Generate and verify official launcher icons
+      - name: Generate and verify GABON 360 launcher icons
         run: |
           set -euo pipefail
           python3 scripts/generate_android_launcher_icons.py
