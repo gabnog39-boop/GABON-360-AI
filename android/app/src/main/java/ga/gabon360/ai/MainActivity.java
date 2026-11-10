@@ -38,7 +38,7 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
     private static final int PERMISSION_REQUEST = 360;
     private static final String TRUSTED_HOST =
-        "gabon-360-ai-git-test-avatar-central-gabnog39-7241.vercel.app";
+        "gabon-360-ai.vercel.app";
 
     private WebView webView;
     private LocationManager locationManager;
