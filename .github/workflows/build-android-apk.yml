@@ -39,10 +39,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/generate_android_launcher_icons.py
-          test -s android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          test -s android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          test -s android/app/src/main/res/mipmap-mdpi/ic_launcher.xml
           test -s android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon_foreground.png
+          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon.jpg
 
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
