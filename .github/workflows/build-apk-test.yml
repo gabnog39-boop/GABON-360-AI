@@ -2,9 +2,6 @@ name: Construire APK GABON 360 AI depuis le projet Android existant
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - test-avatar-central
 
 permissions:
   contents: read
@@ -37,7 +34,7 @@ jobs:
       - name: Installer Pillow pour les icônes PNG
         run: python3 -m pip install --disable-pip-version-check Pillow
 
-      - name: Générer les icônes officielles
+      - name: Générer les icônes GABON 360
         run: |
           set -euo pipefail
           python3 scripts/generate_android_launcher_icons.py
