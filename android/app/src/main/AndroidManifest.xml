@@ -13,8 +13,8 @@
     <application
         android:allowBackup="false"
         android:label="GABON 360 AI"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@drawable/gabon360_icon"
+        android:roundIcon="@drawable/gabon360_icon"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:hardwareAccelerated="true">
