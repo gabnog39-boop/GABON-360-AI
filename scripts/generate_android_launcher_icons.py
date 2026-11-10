@@ -10,6 +10,7 @@ RES = ROOT / "android" / "app" / "src" / "main" / "res"
 if not SOURCE.is_file() or SOURCE.stat().st_size < 100:
     raise SystemExit(f"Official icon missing or empty: {SOURCE}")
 
+used_fallback = False
 try:
     with Image.open(SOURCE) as source:
         source.load()
@@ -17,6 +18,7 @@ try:
 except Exception as exc:
     # The repository JPEG is currently unreadable. Keep it untouched and
     # generate a deterministic branded fallback so Android builds do not stop.
+    used_fallback = True
     print(f"WARNING: source icon unreadable ({exc}); generating Gabon 360 fallback")
     size = 432
     artwork = Image.new("RGBA", (size, size), (5, 13, 25, 255))
@@ -93,4 +95,4 @@ adaptive_xml = '''<?xml version="1.0" encoding="utf-8"?>
 for name in ("ic_launcher.xml", "ic_launcher_round.xml"):
     (adaptive_dir / name).write_text(adaptive_xml, encoding="utf-8")
 
-print("OK — real PNG launcher icons and adaptive icons generated from the official artwork")
+print("OK — launcher PNGs and adaptive icons generated using the fallback mark" if used_fallback else "OK — launcher PNGs and adaptive icons generated from the supplied artwork")
