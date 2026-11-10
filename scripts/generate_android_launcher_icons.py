@@ -44,8 +44,8 @@ foreground.save(foreground_dir / "gabon360_icon_foreground.png", optimize=True)
 colors = RES / "values"
 colors.mkdir(parents=True, exist_ok=True)
 (colors / "gabon360_icon_colors.xml").write_text(
-    '<?xml version="1.0" encoding="utf-8"?>\\n'
-    '<resources><color name="gabon360_icon_background">#FFFFFF</color></resources>\\n',
+    '<?xml version="1.0" encoding="utf-8"?>\n'
+    '<resources><color name="gabon360_icon_background">#FFFFFF</color></resources>\n',
     encoding="utf-8",
 )
 
