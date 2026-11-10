@@ -2,6 +2,9 @@ name: Construire APK GABON 360 AI depuis le projet Android existant
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - test-avatar-central
 
 permissions:
   contents: read
