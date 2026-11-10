@@ -38,7 +38,6 @@ jobs:
       - name: Generate official Android launcher icons
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet Pillow
           python3 scripts/generate_android_launcher_icons.py
           test -s android/app/src/main/res/mipmap-mdpi/ic_launcher.png
           test -s android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
