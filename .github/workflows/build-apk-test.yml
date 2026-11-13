@@ -1,0 +1,100 @@
+name: Construire APK GABON 360 AI depuis le projet Android existant
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test-avatar-central
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    env:
+      HAS_ANDROID_SIGNING_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Récupérer le projet existant
+        uses: actions/checkout@v4
+
+      - name: Installer Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Installer Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Installer Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+
+      - name: Installer Pillow pour les icônes PNG
+        run: python3 -m pip install --disable-pip-version-check Pillow
+
+      - name: Générer les icônes GABON 360
+        run: |
+          set -euo pipefail
+          python3 scripts/generate_android_launcher_icons.py
+          test -s android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          test -s android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          test -s android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon_foreground.png
+
+      - name: Préparer la clé privée existante
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY == 'true' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          KEYSTORE="$RUNNER_TEMP/gabon360-upload.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+          test -s "$KEYSTORE"
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Compiler APK signé avec la clé existante
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY == 'true' }}
+        working-directory: android
+        run: gradle --no-daemon --stacktrace assembleRelease
+
+      - name: Compiler APK debug temporaire si la clé n'est pas configurée
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY != 'true' }}
+        working-directory: android
+        run: gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Vérifier et préparer l'APK
+        run: |
+          set -euo pipefail
+          if [ -n "${ANDROID_KEYSTORE_PATH:-}" ]; then
+            APK="android/app/build/outputs/apk/release/app-release.apk"
+            echo "APK compilé avec la clé privée configurée."
+          else
+            APK="android/app/build/outputs/apk/debug/app-debug.apk"
+            echo "ATTENTION : APK debug temporaire, mise à jour de l'application existante non garantie."
+          fi
+          test -s "$APK"
+          mkdir -p resultat
+          cp "$APK" resultat/GABON_360_AI_TEST.apk
+          sha256sum resultat/GABON_360_AI_TEST.apk
+
+      - name: Publier l'APK de test
+        uses: actions/upload-artifact@v4
+        with:
+          name: GABON-360-AI-APK-test
+          path: resultat/GABON_360_AI_TEST.apk
+          if-no-files-found: error
+          retention-days: 14

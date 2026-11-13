@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 from monitoring.center_state import build_center_state
-from monitoring.continuous_monitor import ContinuousMonitor
-
-_monitor = ContinuousMonitor()
+from monitoring.runtime import monitor as _monitor
 
 
 def get_center_state() -> dict:

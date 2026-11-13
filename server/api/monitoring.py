@@ -1,10 +1,8 @@
 """API-facing monitoring snapshot for the GABON 360 AI situation center."""
 from __future__ import annotations
 
-from monitoring.continuous_monitor import ContinuousMonitor
+from monitoring.runtime import monitor as _monitor
 from api.monitoring_contract import build_situation_contract
-
-_monitor = ContinuousMonitor()
 
 
 def get_situation_overview(lookback_hours: int = 168, limit: int = 20) -> dict:

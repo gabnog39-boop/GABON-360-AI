@@ -9,6 +9,13 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
+try:
+    from ai.agent_collaboration import build_collaboration_plan
+    from ai.agent_runtime import execute_collaboration
+except ModuleNotFoundError:  # repository-root test/import context
+    from server.ai.agent_collaboration import build_collaboration_plan
+    from server.ai.agent_runtime import execute_collaboration
+
 
 class CentralAIOrchestrator:
     """Fuse packets from specialized engines into one central AI response."""
@@ -26,12 +33,23 @@ class CentralAIOrchestrator:
         findings = []
         sources = Counter()
         domains = Counter()
+        collaboration_inputs: dict[str, tuple[str, str, list[dict[str, Any]]]] = {}
         for packet in items:
             source = packet.get("source") or packet.get("engine") or "source_inconnue"
             sources[str(source)] += 1
-            domain = packet.get("domain") or packet.get("type") or "territoire"
+            domain = packet.get("domain") or packet.get("kind") or packet.get("type") or source
             domains[str(domain)] += 1
-            for finding in packet.get("findings", packet.get("alerts", [])) or []:
+            route_key = str(domain)
+            packet_evidence = packet.get("findings", packet.get("alerts", [])) or []
+            evidence_rows = [packet]
+            if isinstance(packet_evidence, list):
+                evidence_rows.extend(item for item in packet_evidence[:20] if isinstance(item, dict))
+            collaboration_inputs[route_key] = (
+                route_key,
+                str(packet.get("priority", packet.get("severity", "INFO"))),
+                evidence_rows[:20],
+            )
+            for finding in packet_evidence:
                 if isinstance(finding, dict):
                     findings.append({**finding, "source": source})
 
@@ -46,8 +64,22 @@ class CentralAIOrchestrator:
         else:
             message = f"J'ai reçu {len(items)} flux spécialisés. Aucun événement confirmé n'est actuellement remonté."
 
+        collaboration_plans = [
+            build_collaboration_plan(page=page, severity=severity, evidence=evidence)
+            for page, severity, evidence in list(collaboration_inputs.values())[:8]
+        ]
+        collaboration_execution = [
+            execute_collaboration(plan, evidence)
+            for plan, (_, _, evidence) in zip(
+                collaboration_plans, list(collaboration_inputs.values())[:8]
+            )
+        ]
+
         return {
             "centre": self.name,
+            "collaboration_plans": collaboration_plans,
+            "collaboration_execution": collaboration_execution,
+            "collaboration_status": "shared_evidence_triage_executed_no_autonomous_models",
             "assistant": "central",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "message": message,

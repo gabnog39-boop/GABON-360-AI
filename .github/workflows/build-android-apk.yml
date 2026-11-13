@@ -1,0 +1,113 @@
+name: Build GABON 360 AI Android APK
+
+on:
+  push:
+    branches:
+      - test-avatar-central
+    paths:
+      - 'android/**'
+      - 'icons/gabon360-icon.jpg'
+      - 'scripts/generate_android_launcher_icons.py'
+      - '.github/workflows/build-android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HAS_ANDROID_SIGNING_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: Get source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+
+      - name: Install image generator dependency
+        run: python3 -m pip install --disable-pip-version-check Pillow
+
+      - name: Generate and verify GABON 360 launcher icons
+        run: |
+          set -euo pipefail
+          python3 scripts/generate_android_launcher_icons.py
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            test -s "android/app/src/main/res/mipmap-$density/ic_launcher.png"
+            test -s "android/app/src/main/res/mipmap-$density/ic_launcher_round.png"
+          done
+          test -s android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+          test -s android/app/src/main/res/drawable-nodpi/gabon360_icon_foreground.png
+
+      - name: Prepare private Android signing key
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY == 'true' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          KEYSTORE="$RUNNER_TEMP/gabon360-upload.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+          test -s "$KEYSTORE"
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK with the existing key
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY == 'true' }}
+        working-directory: android
+        run: gradle --no-daemon --stacktrace assembleRelease
+
+      - name: Build debug APK (temporary test only)
+        if: ${{ env.HAS_ANDROID_SIGNING_KEY != 'true' }}
+        working-directory: android
+        run: gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Verify APK and package installation bundle
+        run: |
+          set -euo pipefail
+          if [ -n "${ANDROID_KEYSTORE_PATH:-}" ]; then
+            APK="android/app/build/outputs/apk/release/app-release.apk"
+            LABEL="APK signé avec la clé privée fournie par le propriétaire"
+            BUILD_KIND="release-signé"
+          else
+            APK="android/app/build/outputs/apk/debug/app-debug.apk"
+            LABEL="APK DEBUG TEMPORAIRE : ne pas installer par-dessus l'application existante"
+            BUILD_KIND="debug-temporaire"
+          fi
+          test -s "$APK"
+          mkdir -p package
+          cp "$APK" package/GABON-360-AI.apk
+          sha256sum package/GABON-360-AI.apk
+          printf '%s\n' "GABON 360 AI — Android 2.0.144 — $BUILD_KIND" "$LABEL" "Extraire GABON-360-AI.apk puis l'ouvrir sur Android." "Si la signature n'est pas celle de l'application installée, Android refusera la mise à jour." > package/LIRE-AVANT-INSTALLATION.txt
+          cd package && zip -j ../GABON-360-AI-Android.zip GABON-360-AI.apk LIRE-AVANT-INSTALLATION.txt
+
+      - name: Save APK and ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: GABON-360-AI-Android-install
+          path: |
+            android/app/build/outputs/apk/**/*.apk
+            GABON-360-AI-Android.zip
+          if-no-files-found: error
+          retention-days: 14

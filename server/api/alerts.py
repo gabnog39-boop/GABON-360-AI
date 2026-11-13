@@ -1,9 +1,7 @@
 """Alert API helpers for the GABON 360 AI situation center."""
 from __future__ import annotations
 
-from monitoring.continuous_monitor import ContinuousMonitor
-
-_monitor = ContinuousMonitor()
+from monitoring.runtime import monitor as _monitor
 
 
 def get_alerts(limit: int = 50) -> dict:
